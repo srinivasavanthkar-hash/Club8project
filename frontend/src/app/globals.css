@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 40%;
+  --border: 214 32% 88%;
+  --primary: 199 89% 32%;
+  --primary-foreground: 0 0% 100%;
+  --destructive: 0 72% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --warning: 32 95% 40%;
+  --success: 142 70% 30%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 96%;
+    --muted: 217 33% 16%;
+    --muted-foreground: 215 20% 70%;
+    --border: 217 33% 22%;
+    --primary: 199 89% 55%;
+    --primary-foreground: 222 47% 8%;
+  }
+}
+
+html, body { @apply bg-background text-foreground; }
+*:focus-visible { @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background; }

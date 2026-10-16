@@ -1,0 +1,83 @@
+# Local development stack. Development-only credentials below; production secrets live in Azure Key Vault.
+name: club8-crm
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: crm_owner
+      POSTGRES_PASSWORD: crm_owner_dev
+      POSTGRES_DB: crm
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/local/init-roles.sql:/docker-entrypoint-initdb.d/01-roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_owner -d crm"]
+      interval: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.33.0
+    command: azurite-blob --blobHost 0.0.0.0 --loose
+    ports: ["10000:10000"]
+
+  clamav:
+    image: clamav/clamav:1.4
+    ports: ["3310:3310"]
+    profiles: ["scan"]
+
+  migrate:
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    environment: &backend-env
+      CRM_ENV: local
+      CRM_DATABASE_URL: postgresql+asyncpg://crm_app:crm_app_dev@postgres:5432/crm
+      CRM_MIGRATION_DATABASE_URL: postgresql+asyncpg://crm_owner:crm_owner_dev@postgres:5432/crm
+      CRM_REDIS_URL: redis://redis:6379/0
+      CRM_BLOB_PROVIDER: azurite
+      CRM_BLOB_ACCOUNT_URL: http://127.0.0.1:10000/devstoreaccount1
+      # Azurite's published, well-known development key (not a secret)
+      CRM_BLOB_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
+      CRM_VIRUS_SCAN_PROVIDER: none
+      CRM_COOKIE_SECURE: "false"
+      CRM_JWT_SIGNING_KEY: local-dev-only-signing-key-change-me-please-0123456789
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  api:
+    build: ./backend
+    environment: *backend-env
+    ports: ["8000:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_started}
+      azurite: {condition: service_started}
+
+  worker:
+    build: ./backend
+    command: ["dramatiq", "app.jobs.tasks", "--processes", "1", "--threads", "2"]
+    environment: *backend-env
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+
+  scheduler:
+    build: ./backend
+    command: ["python", "-m", "app.jobs.scheduler"]
+    environment: *backend-env
+    depends_on: [worker]
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        API_INTERNAL_URL: http://api:8000  # rewrites are resolved at build time
+    ports: ["3000:3000"]
+    depends_on: [api]
+
+volumes:
+  pgdata:

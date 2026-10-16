@@ -1,0 +1,60 @@
+name: Deploy
+
+# Builds images once, then promotes the same digests dev -> staging -> prod.
+# Azure auth uses OIDC federated credentials (no stored secrets). Production requires the
+# "prod" GitHub environment's required reviewers to approve.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ACR_NAME: ${{ vars.ACR_NAME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: dev
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: meta
+        run: echo "tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - run: az acr login --name "$ACR_NAME"
+      - name: Build & push API image
+        run: |
+          docker build -t "$ACR_NAME.azurecr.io/crm-api:${{ steps.meta.outputs.tag }}" backend
+          docker push "$ACR_NAME.azurecr.io/crm-api:${{ steps.meta.outputs.tag }}"
+      - name: Build & push web image
+        run: |
+          docker build --build-arg API_INTERNAL_URL=http://crm-api \
+            -t "$ACR_NAME.azurecr.io/crm-web:${{ steps.meta.outputs.tag }}" frontend
+          docker push "$ACR_NAME.azurecr.io/crm-web:${{ steps.meta.outputs.tag }}"
+
+  deploy-dev:
+    needs: build
+    uses: ./.github/workflows/deploy-env.yml
+    with: { environment: dev, tag: "${{ needs.build.outputs.tag }}" }
+    secrets: inherit
+
+  deploy-staging:
+    needs: [build, deploy-dev]
+    uses: ./.github/workflows/deploy-env.yml
+    with: { environment: staging, tag: "${{ needs.build.outputs.tag }}" }
+    secrets: inherit
+
+  deploy-prod:
+    needs: [build, deploy-staging]
+    uses: ./.github/workflows/deploy-env.yml
+    with: { environment: prod, tag: "${{ needs.build.outputs.tag }}" }
+    secrets: inherit

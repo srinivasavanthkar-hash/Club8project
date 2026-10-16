@@ -1,0 +1,47 @@
+name: Deploy environment
+
+on:
+  workflow_call:
+    inputs:
+      environment: { required: true, type: string }
+      tag: { required: true, type: string }
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  migrate-and-deploy:
+    runs-on: ubuntu-latest
+    # The "prod" environment is configured in GitHub with required reviewers (manual approval gate).
+    environment: ${{ inputs.environment }}
+    env:
+      RG: ${{ vars.RESOURCE_GROUP }}
+      ACR: ${{ vars.ACR_NAME }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Run Alembic migrations (pre-deploy Container Apps Job, inside the VNet)
+        run: |
+          az containerapp job update -g "$RG" -n crm-migrate --image "$ACR.azurecr.io/crm-api:$TAG"
+          EXEC=$(az containerapp job start -g "$RG" -n crm-migrate --query name -o tsv)
+          for i in $(seq 1 60); do
+            STATUS=$(az containerapp job execution show -g "$RG" -n crm-migrate --job-execution-name "$EXEC" --query properties.status -o tsv)
+            echo "migration: $STATUS"; [[ "$STATUS" == "Succeeded" ]] && break
+            [[ "$STATUS" == "Failed" ]] && exit 1; sleep 10
+          done
+          [[ "$STATUS" == "Succeeded" ]]
+      - name: Deploy API, worker, scheduler, web
+        run: |
+          az containerapp update -g "$RG" -n crm-api       --image "$ACR.azurecr.io/crm-api:$TAG"
+          az containerapp update -g "$RG" -n crm-worker    --image "$ACR.azurecr.io/crm-api:$TAG"
+          az containerapp update -g "$RG" -n crm-scheduler --image "$ACR.azurecr.io/crm-api:$TAG"
+          az containerapp update -g "$RG" -n crm-web       --image "$ACR.azurecr.io/crm-web:$TAG"
+      - name: Smoke test
+        run: |
+          URL=$(az containerapp show -g "$RG" -n crm-web --query properties.configuration.ingress.fqdn -o tsv)
+          for i in $(seq 1 30); do curl -fs "https://$URL/login" >/dev/null && exit 0; sleep 10; done; exit 1
