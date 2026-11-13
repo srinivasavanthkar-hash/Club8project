@@ -18,6 +18,7 @@ from app.core.middleware import CsrfMiddleware, RequestContextMiddleware, Securi
 from app.core.ratelimit import limiter
 from app.correspondence.router import router as correspondence_router
 from app.dashboard import router as dashboard_router
+from app.email.dispatch import install as install_email_dispatch
 from app.entitlement.router import router as entitlement_router
 from app.exports.router import router as exports_router
 from app.finance.router import router as finance_router
@@ -96,6 +97,9 @@ def create_app() -> FastAPI:
 
     if settings.env == "prod" and settings.e2e_target:
         raise RuntimeError("CRM_E2E_TARGET must never be set in production")
+    if settings.env in ("staging", "prod") and not settings.app_base_url.startswith("https://"):
+        raise RuntimeError("CRM_APP_BASE_URL must be the public https:// address (links in emails are built from it)")
+    install_email_dispatch()
 
     @app.get("/healthz", include_in_schema=False)
     async def healthz() -> dict[str, str]:

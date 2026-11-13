@@ -46,7 +46,24 @@ added here). The equivalent content is in USER_GUIDE.md and DECISIONS.md.
 | Roles multi-select with reason | ✓ | D-PW-11 |
 | Walkthrough | ✓ | Screenshots 27–35 retaken as demo.admin on the isolated stack; 36 (2FA step) and 37 (roles + 2FA policy) added |
 
-## Phase 2 (after Phase 1 is merged)
+## Phase 2 (13-11-2026): email and forgot password
+| Requirement | Done | Notes |
+|---|---|---|
+| `EmailSender` interface, Mailpit (docker-compose + local binary), Azure Communication Services (Terraform, Key Vault, managed identity) | ✓ | D-PW-19, D-PW-20 |
+| Forgot password: enumeration-safe answer and timing, registered email only, hashed single-use 30-minute tokens, newer invalidates older | ✓ | D-PW-14, D-PW-15 |
+| Rate limits 3/account/hour and 10/IP/hour (same answer, nothing sent); CAPTCHA after 3 per IP (configurable) | ✓ | D-PW-16 |
+| Reset page: checks the link first, removes the token from the address bar, no-referrer / no-store, policy checklist + strength meter, TOTP field with 2FA | ✓ | `/reset-password` |
+| Completing a reset: sessions revoked, lockout cleared, `password_changed_at`, notification email, not signed in | ✓ | D-PW-17 |
+| Admin option A (send reset link) next to option B; ADMIN-on-ADMIN approval for both; notifications | ✓ | D-PW-18 |
+| Notifications: password changed (self, reset), admin reset, 2FA reset; never a password in an email | ✓ | `security_notice` template |
+| Activity log: forgot requested (incl. unknown/inactive, truncated), email sent/failed, reset completed, link invalid/expired, rate limit | ✓ | |
+| Demo users with `@example.test` addresses | ✓ | D-PW-21 |
+| Tests | ✓ | backend `test_password_reset_email.py` (11) + template unit test; frontend `ResetPasswordPage.test.tsx`; Playwright `reset.spec.ts` (4, Mailpit): forgot → email → reset → sign in, used and replaced links, 2FA on the reset form, admin option A |
+| Walkthrough | ✓ | chapter 11 screenshots 38–42 (forgot confirmation, the email in Mailpit, reset form, invalid link, admin options) |
+
+Still outside this repository: `docs/BUILD_PROMPT.md` Section 3.1 (the file was never added here).
+
+## Phase 2 plan (as agreed)
 * `EmailSender` interface; Mailpit in docker-compose (local); Azure Communication Services Email for dev/prod
   (Terraform, Key Vault, managed identity, SPF/DKIM/DMARC); sending as a worker job with retry.
 * "Forgot password" (Section 2): enumeration-safe response, SHA-256-hashed single-use 30-minute tokens, rate limits

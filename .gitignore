@@ -24,3 +24,6 @@ infra/terraform/**/*.tfvars
 
 # embedded PostgreSQL for local runs without Docker
 .local/
+
+# Claude Code local scheduler lock
+.claude/scheduled_tasks.lock

@@ -161,17 +161,7 @@ class PasswordPolicyOut(BaseModel):
 @router.get("/password-policy", response_model=PasswordPolicyOut)
 async def password_policy(_: AccountUser, session: SessionDep) -> PasswordPolicyOut:
     """The configured policy (master data), shown up front on the change-password screen."""
-    from app.auth.policy import KEYS
-    from app.core.settings_store import get_settings_map
-
-    c = await get_settings_map(session, KEYS)
-    return PasswordPolicyOut(
-        min_length=int(c["password.min_length"]),
-        max_length=int(c["password.max_length"]),
-        history_count=int(c["password.history_count"]),
-        forbidden_words=[str(w) for w in c["password.forbidden_words"]],
-        breach_check=bool(c["password.breach_check"]),
-    )
+    return await _policy(session)
 
 
 class TotpConfirm(BaseModel):
@@ -191,3 +181,103 @@ async def totp_confirm(body: TotpConfirm, response: Response, user: AccountUser,
 
 
 __all__ = ["Depends", "router"]
+
+
+# ---------------------------------------------------------------- reset by email (Phase 2)
+class ForgotIn(BaseModel):
+    identifier: str = Field(min_length=1, max_length=255)  # username or registered email
+    captcha_token: str | None = Field(None, max_length=4096)
+
+
+class MessageOut(BaseModel):
+    message: str
+
+
+class ForgotConfigOut(BaseModel):
+    captcha_provider: str
+    captcha_site_key: str | None
+
+
+@router.get("/forgot-password/config", response_model=ForgotConfigOut)
+async def forgot_config() -> ForgotConfigOut:
+    s = get_settings()
+    return ForgotConfigOut(captcha_provider=s.captcha_provider, captcha_site_key=s.captcha_site_key)
+
+
+@router.post("/forgot-password", response_model=MessageOut, status_code=202)
+@limiter.limit(lambda: get_settings().rate_limit_forgot_ip)
+async def forgot_password(request: Request, response: Response, body: ForgotIn, session: SessionDep) -> MessageOut:
+    """Same answer, about the same time, for any input (no account enumeration). Only CaptchaRequired (428) differs,
+    and that depends on the caller's IP, not on the account."""
+    from app.auth import reset
+
+    try:
+        await reset.request_reset(session, body.identifier, body.captcha_token)
+    except DomainError:
+        await session.commit()
+        raise
+    return MessageOut(message=reset.GENERIC)
+
+
+class TokenIn(BaseModel):
+    token: str = Field(min_length=10, max_length=200)
+
+
+class TokenCheckOut(BaseModel):
+    valid: bool
+    requires_totp: bool = False
+    username: str | None = None
+    full_name: str | None = None
+    policy: PasswordPolicyOut | None = None
+
+
+async def _policy(session: SessionDep) -> PasswordPolicyOut:
+    from app.auth.policy import KEYS
+    from app.core.settings_store import get_settings_map
+
+    c = await get_settings_map(session, KEYS)
+    return PasswordPolicyOut(
+        min_length=int(c["password.min_length"]),
+        max_length=int(c["password.max_length"]),
+        history_count=int(c["password.history_count"]),
+        forbidden_words=[str(w) for w in c["password.forbidden_words"]],
+        breach_check=bool(c["password.breach_check"]),
+    )
+
+
+@router.post("/reset-password/check", response_model=TokenCheckOut)
+@limiter.limit(lambda: get_settings().rate_limit_reset_ip)
+async def reset_password_check(
+    request: Request, response: Response, body: TokenIn, session: SessionDep
+) -> TokenCheckOut:
+    """Validates a reset link before the form is shown. Invalid, used and expired links get the same answer."""
+    from app.auth import reset
+
+    user = await reset.check_token(session, body.token)
+    if user is None:
+        return TokenCheckOut(valid=False)
+    return TokenCheckOut(
+        valid=True,
+        requires_totp=user.totp_enabled,
+        username=user.username,
+        full_name=user.full_name,
+        policy=await _policy(session),
+    )
+
+
+class ResetIn(TokenIn):
+    new_password: str = Field(min_length=1, max_length=200)
+    totp_code: str | None = Field(None, max_length=10)
+
+
+@router.post("/reset-password", status_code=204)
+@limiter.limit(lambda: get_settings().rate_limit_reset_ip)
+async def reset_password(request: Request, response: Response, body: ResetIn, session: SessionDep) -> None:
+    """Sets the new password; every session ends. The user then signs in (never signed in automatically)."""
+    from app.auth import reset
+
+    try:
+        await reset.complete_reset(session, body.token, body.new_password, body.totp_code)
+    except DomainError:
+        await session.commit()  # keep the "invalid link" / failed-2FA entries in the activity log
+        raise

@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import service as audit
 from app.auth.models import AdminResetRequest, Role, User, user_roles
+from app.auth.notify import security_notice
 from app.auth.policy import KEYS as POLICY_KEYS
 from app.auth.policy import generate_temporary_password
 from app.auth.service import revoke_all_sessions
@@ -40,9 +41,13 @@ class TemporaryPassword:
 
 @dataclass(frozen=True)
 class ResetOutcome:
-    temporary: TemporaryPassword | None = None
+    temporary: TemporaryPassword | None = None  # option B
+    link_sent_to: str | None = None  # option A: masked registered address the reset link went to
     request: AdminResetRequest | None = None  # set when an ADMIN reset is waiting for a second admin
     super_admin: bool = False
+
+
+METHODS = ("TEMP_PASSWORD", "EMAIL_LINK")  # option B, option A
 
 
 def is_admin(user: User) -> bool:
@@ -101,7 +106,35 @@ async def issue_temporary_password(
     return TemporaryPassword(pw, expires)
 
 
-async def reset_password(session: AsyncSession, actor: User, target_id: uuid.UUID, reason: str) -> ResetOutcome:
+async def _perform(session: AsyncSession, actor: User, target: User, method: str, why: str) -> ResetOutcome:
+    """Carry out an admin reset. Both options end every session and notify the user by email when they have one.
+    Neither touches 2FA."""
+    if method == "EMAIL_LINK":
+        if not target.email:
+            raise Conflict("This user has no registered email. Use a temporary password instead.", code="NoEmail")
+        from app.auth.reset import issue_reset_link
+        from app.email.dispatch import mask_address
+
+        await revoke_all_sessions(session, target, why)
+        await issue_reset_link(session, target, purpose="ADMIN_LINK", created_by=actor.id)
+        return ResetOutcome(link_sent_to=mask_address(target.email))
+    temp = await issue_temporary_password(session, target, why=why)
+    security_notice(
+        session,
+        target,
+        "An administrator reset your password",
+        "Your administrator will give you a temporary password in person or by phone. "
+        "We never send passwords by email.",
+    )
+    return ResetOutcome(temporary=temp)
+
+
+async def reset_password(
+    session: AsyncSession, actor: User, target_id: uuid.UUID, reason: str, method: str = "TEMP_PASSWORD"
+) -> ResetOutcome:
+    """Option A (`EMAIL_LINK`, a reset link to the registered email) or option B (`TEMP_PASSWORD`)."""
+    if method not in METHODS:
+        raise Conflict("Unknown reset method", code="UnknownMethod")
     target = await _target(session, target_id)
     if target.id == actor.id:
         raise Forbidden(
@@ -109,9 +142,17 @@ async def reset_password(session: AsyncSession, actor: User, target_id: uuid.UUI
         )
     if not target.is_active:
         raise Conflict("This account is inactive. Activate it first.", code="UserInactive")
+    if method == "EMAIL_LINK" and not target.email:
+        raise Conflict("This user has no registered email. Use a temporary password instead.", code="NoEmail")
+    option = "option A: reset link emailed" if method == "EMAIL_LINK" else "option B: temporary password"
     if not is_admin(target):
-        _audit(session, "PASSWORD_RESET_BY_ADMIN", f"Password of {target.username} reset (reason: {reason})", target)
-        return ResetOutcome(temporary=await issue_temporary_password(session, target, why="admin reset"))
+        _audit(
+            session,
+            "PASSWORD_RESET_BY_ADMIN",
+            f"Password of {target.username} reset ({option}; reason: {reason})",
+            target,
+        )
+        return await _perform(session, actor, target, method, "admin reset")
 
     # ADMIN target: second-admin approval, or the super-admin fallback when no second admin exists.
     others = await _other_active_admins(session, target)
@@ -127,12 +168,11 @@ async def reset_password(session: AsyncSession, actor: User, target_id: uuid.UUI
             session,
             "PASSWORD_RESET_SUPER_ADMIN",
             f"[SUPER-ADMIN FALLBACK] Administrator {target.username} reset directly by super-admin "
-            f"{actor.username}: no second admin available to approve (reason: {reason})",
+            f"{actor.username}: no second admin available to approve ({option}; reason: {reason})",
             target,
         )
-        return ResetOutcome(
-            temporary=await issue_temporary_password(session, target, why="super-admin reset"), super_admin=True
-        )
+        out = await _perform(session, actor, target, method, "super-admin reset")
+        return ResetOutcome(temporary=out.temporary, link_sent_to=out.link_sent_to, super_admin=True)
     await expire_reset_requests(session)
     pending = (
         await session.execute(
@@ -145,15 +185,19 @@ async def reset_password(session: AsyncSession, actor: User, target_id: uuid.UUI
         raise Conflict("A reset of this administrator is already waiting for approval.", code="ResetAlreadyPending")
     hours = int(await get_setting(session, "password.admin_reset_approval_hours"))
     req = AdminResetRequest(
-        target_user_id=target.id, requested_by=actor.id, reason=reason, expires_at=now_utc() + timedelta(hours=hours)
+        target_user_id=target.id,
+        requested_by=actor.id,
+        reason=reason,
+        method=method,
+        expires_at=now_utc() + timedelta(hours=hours),
     )
     session.add(req)
     await session.flush()
     _audit(
         session,
         "ADMIN_RESET_REQUESTED",
-        f"Reset of administrator {target.username} requested; needs a different admin's approval within {hours} h "
-        f"(reason: {reason})",
+        f"Reset of administrator {target.username} requested ({option}); needs a different admin's approval within "
+        f"{hours} h (reason: {reason})",
         target,
     )
     return ResetOutcome(request=req)
@@ -186,8 +230,14 @@ async def approve_request(session: AsyncSession, actor: User, request_id: uuid.U
         f"Reset of administrator {target.username} approved by {actor.username} (reason: {reason})",
         target,
     )
-    _audit(session, "PASSWORD_RESET_BY_ADMIN", f"Password of {target.username} reset (reason: {req.reason})", target)
-    return ResetOutcome(temporary=await issue_temporary_password(session, target, why="admin reset, approved"))
+    option = "option A: reset link emailed" if req.method == "EMAIL_LINK" else "option B: temporary password"
+    _audit(
+        session,
+        "PASSWORD_RESET_BY_ADMIN",
+        f"Password of {target.username} reset ({option}; reason: {req.reason})",
+        target,
+    )
+    return await _perform(session, actor, target, req.method, "admin reset, approved")
 
 
 async def reject_request(session: AsyncSession, actor: User, request_id: uuid.UUID, reason: str) -> AdminResetRequest:
@@ -266,6 +316,12 @@ async def reset_totp(session: AsyncSession, actor: User, target_id: uuid.UUID, r
         "TOTP_RESET_BY_ADMIN",
         f"2FA of {target.username} reset by {actor.username}; must enrol again at next sign-in (reason: {reason})",
         target,
+    )
+    security_notice(
+        session,
+        target,
+        "An administrator reset your two-step verification",
+        "You'll set it up again with your authenticator app the next time you sign in.",
     )
     return target
 

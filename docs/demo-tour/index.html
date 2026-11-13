@@ -482,12 +482,33 @@
             <li>Temporary passwords expire after 24 hours and are passed on in person or by phone, never by WhatsApp or email.</li>
             <li>A password reset never switches off two-step verification. A lost phone is a separate <span class="ui">Reset 2FA</span>, and the user sets it up again at next sign-in.</li>
             <li>Admins can't reset their own account this way, and resetting an administrator needs a second administrator.</li>
+            <li>Every admin reset and 2FA reset also sends the person a notice by email.</li>
             <li>With two-step verification on, the code is asked for straight after the password, before the change-password screen. A password can't be changed from a session that hasn't passed it.</li>
             <li>Roles are ticked from the existing list, and every change needs a reason. Two-step verification can be made compulsory for chosen roles. It's off today, and Administrator, Management and Finance are recommended.</li>
           </ul>
         </div>
       </div>
-      <div class="note ok"><strong>Coming next (Phase 2)</strong><p>"Forgot password?" by email, and a "send reset link" option for admins, once email sending is set up. Until then, staff ask an administrator.</p></div>
+      <div class="cols">
+        <div>
+          <h3>Forgot password (by email)</h3>
+          <ol class="steps">
+            <li>On the sign-in page, click <span class="ui">Forgot password?</span> and enter a username or registered email.</li>
+            <li>The confirmation is the same whatever you type, so nobody can find out which accounts exist.</li>
+            <li>Open the email (in the demo it arrives in Mailpit) and click <span class="ui">Set a new password</span>.</li>
+            <li>Choose a new password, with the code if 2FA is on. Every device is signed out, and you sign in again.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>A link works once and for 30 minutes, and a newer request replaces older links. It goes only to the registered email address.</li>
+            <li>The link is removed from the address bar as soon as the page opens.</li>
+            <li>Requests are limited per account and per address. After several attempts, a "Verify you are human" check can be switched on.</li>
+            <li>Admins can now choose: <span class="ui">Email a reset link</span>, or a temporary password for staff without email.</li>
+            <li>A "Your password was changed" email goes out after every change. Emails never contain a password.</li>
+          </ul>
+        </div>
+      </div>
       <div class="shots two">
         <figure><a href="27-login-show-password.png" target="_blank" rel="noopener"><img src="27-login-show-password.png" alt="Sign-in page with the password shown by the eye button" loading="lazy" width="1440" height="900"></a><figcaption>Show / hide password on every password field.</figcaption></figure>
         <figure><a href="36-login-2fa-step.png" target="_blank" rel="noopener"><img src="36-login-2fa-step.png" alt="Sign-in asking demo.admin for the two-step verification code" loading="lazy" width="1440" height="900"></a><figcaption>With two-step verification on, the code comes before anything else.</figcaption></figure>
@@ -499,6 +520,11 @@
         <figure><a href="33-change-password.png" target="_blank" rel="noopener"><img src="33-change-password.png" alt="Change password from the user menu" loading="lazy" width="1440" height="900"></a><figcaption>Change password, signing out other devices.</figcaption></figure>
         <figure><a href="34-admin-reset-approval.png" target="_blank" rel="noopener"><img src="34-admin-reset-approval.png" alt="Administrator reset waiting for a second admin's approval" loading="lazy" width="1440" height="900"></a><figcaption>Resetting an administrator needs a second administrator.</figcaption></figure>
         <figure><a href="35-setup-2fa.png" target="_blank" rel="noopener"><img src="35-setup-2fa.png" alt="Two-step verification set-up with QR code" loading="lazy" width="1440" height="900"></a><figcaption>Setting up two-step verification again after a Reset 2FA.</figcaption></figure>
+        <figure><a href="38-forgot-confirmation.png" target="_blank" rel="noopener"><img src="38-forgot-confirmation.png" alt="Forgot password confirmation, the same for every request" loading="lazy" width="1440" height="900"></a><figcaption>Forgot password: the same answer for every request.</figcaption></figure>
+        <figure><a href="39-reset-email-mailpit.png" target="_blank" rel="noopener"><img src="39-reset-email-mailpit.png" alt="The password reset email as received in Mailpit" loading="lazy" width="1440" height="900"></a><figcaption>The reset email (demo mailbox: Mailpit).</figcaption></figure>
+        <figure><a href="40-reset-form.png" target="_blank" rel="noopener"><img src="40-reset-form.png" alt="Set a new password form with checklist and strength meter" loading="lazy" width="1440" height="900"></a><figcaption>Setting a new password from the link.</figcaption></figure>
+        <figure><a href="41-reset-link-invalid.png" target="_blank" rel="noopener"><img src="41-reset-link-invalid.png" alt="Reset link invalid or expired, with Request a new link" loading="lazy" width="1440" height="900"></a><figcaption>A used or expired link: one plain message and a way forward.</figcaption></figure>
+        <figure><a href="42-admin-reset-options.png" target="_blank" rel="noopener"><img src="42-admin-reset-options.png" alt="Admin reset dialog offering a reset link or a temporary password" loading="lazy" width="1440" height="900"></a><figcaption>Admin reset: email a link, or a temporary password.</figcaption></figure>
         <figure><a href="37-roles-and-2fa-policy.png" target="_blank" rel="noopener"><img src="37-roles-and-2fa-policy.png" alt="Roles shown as chips with Edit roles, and the two-step verification policy by role" loading="lazy" width="1440" height="900"></a><figcaption>Roles are picked from a list (with a reason), and 2FA can be required per role.</figcaption></figure>
       </div>
     </section>

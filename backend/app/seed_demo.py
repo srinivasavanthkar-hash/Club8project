@@ -190,7 +190,7 @@ async def seed_demo(session: AsyncSession) -> None:
                     full_name=name,
                     password_hash=hash_password(DEMO_PASSWORD),
                     roles=[roles[c] for c in rcodes],
-                    email=f"{username}@example.com",
+                    email=f"{username}@example.test",  # FICTITIOUS (reserved .test domain); shown in Mailpit
                 )
             )
     await session.flush()

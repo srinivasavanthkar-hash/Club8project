@@ -1,0 +1,10 @@
+{% extends "_base.html" %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ name }},</p>
+<p style="margin:0 0 16px;">{% if by_admin %}An administrator has sent you a link to set a new password for your {{ brand.name }} CRM account <strong>{{ username }}</strong>.{% else %}We received a request to reset the password for your {{ brand.name }} CRM account <strong>{{ username }}</strong>.{% endif %}</p>
+<p style="margin:0 0 24px;">
+<a href="{{ link }}" style="display:inline-block;background:{{ brand.primary }};color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:6px;">Set a new password</a>
+</p>
+<p style="margin:0 0 16px;">The link is valid for {{ minutes }} minutes and works once.{% if totp %} You'll also need a code from your authenticator app.{% endif %}</p>
+<p style="margin:0;color:#55536e;">If you didn't request this, you can ignore this email; your password hasn't changed.</p>
+{% endblock %}

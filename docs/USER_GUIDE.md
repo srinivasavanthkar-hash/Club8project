@@ -15,9 +15,14 @@ your name, the time, and the old and new values.
   characters; not your username or name, and not "club8" or "k8"; not one of your last 5 passwords; not a password
   known from data breaches. The strength meter is a guide only. **Sign out of all other devices** is ticked by
   default; leave it ticked if you think someone else may know your password.
-* **Forgot your password, or locked out?** Ask an administrator. They give you a **temporary password** (in person
-  or by phone). It works for 24 hours. When you sign in with it (and your 2FA code, if you use 2FA), you must choose
-  your own password before you can do anything else.
+* **Forgot your password, or locked out?** On the sign-in page click **Forgot password?**, enter your username or
+  registered email and check your inbox. The link works once, for 30 minutes; a newer request replaces older links.
+  Choose a new password (and enter your 2FA code if you use 2FA). You're signed out everywhere and then sign in with
+  the new password. The page always says the same thing, whether or not the account exists. Don't recognise a
+  "password changed" email? Contact your administrator immediately.
+* **No registered email, or no access to it?** Ask an administrator. They can email you a reset link or give you a
+  **temporary password** (in person or by phone). A temporary password works for 24 hours; when you sign in with it
+  (and your 2FA code, if you use 2FA), you must choose your own password before you can do anything else.
 * **Two-step verification (2FA):** when it's on, sign-in asks for the 6-digit code *before* anything else, including
   the change-password screen after a temporary password. To turn it on: user menu → **Set up two-step verification**. Scan the QR code with an
   authenticator app (Microsoft Authenticator, Google Authenticator), then enter the 6-digit code. From then on each
@@ -66,9 +71,11 @@ your name, the time, and the old and new values.
     are marked "Recommended").
   * **New user:** enter username, name and roles. You never type a password: the system creates a temporary one and
     shows it **once** (Show and Copy buttons). Pass it on in person or by phone, never by WhatsApp, SMS or email.
-  * **Reset password…** (permission `user.reset_password`, ADMIN only): give a reason; a temporary password is shown
-    once, the user is signed out on every device and must choose a new password at sign-in. 2FA is not changed. You
-    cannot reset your own password here (use Change password).
+  * **Reset password…** (permission `user.reset_password`, ADMIN only): choose **Email a reset link** (default when
+    the user has a registered email; the link goes to that address) or **Give a temporary password** (shown once;
+    the user must choose a new password at sign-in). Give a reason. Either way the user is signed out on every device
+    and gets a notice by email if they have an address. 2FA is not changed. You cannot reset your own password here
+    (use Change password or Forgot password).
   * **Resetting another administrator** creates a request that a **different** administrator must approve within
     24 hours (Admin → "Administrator resets waiting for approval" → Approve, with a reason). The approver receives the
     temporary password. If no second administrator exists, only the designated super-admin can reset directly.

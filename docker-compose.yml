@@ -26,6 +26,11 @@ services:
     command: azurite-blob --blobHost 0.0.0.0 --loose
     ports: ["10000:10000"]
 
+  # Local / CI mail catcher: every email the CRM sends appears at http://localhost:8025 (nothing leaves the machine)
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    ports: ["8025:8025", "1025:1025"]
+
   clamav:
     image: clamav/clamav:1.4
     ports: ["3310:3310"]
@@ -53,6 +58,12 @@ services:
       # Only a throwaway CI stack sets this (ci.yml): the Playwright specs that write data refuse to run otherwise,
       # so they can never write to a demo database started from this file.
       CRM_E2E_TARGET: "${CRM_E2E_TARGET:-false}"
+      # Email: Mailpit (above); sent by the worker after commit, with retries. Links use the public web address.
+      CRM_EMAIL_PROVIDER: smtp
+      CRM_SMTP_HOST: mailpit
+      CRM_SMTP_PORT: "1025"
+      CRM_EMAIL_DISPATCH: worker
+      CRM_APP_BASE_URL: http://localhost:3000
       # Designated super-admin for the ADMIN-reset fallback (docs/DECISIONS.md D-PW-3). Empty = no fallback.
       CRM_SUPER_ADMIN_USERNAME: ""
     depends_on:
@@ -73,6 +84,7 @@ services:
     environment: *backend-env
     depends_on:
       migrate: {condition: service_completed_successfully}
+      mailpit: {condition: service_started}
 
   scheduler:
     build: ./backend

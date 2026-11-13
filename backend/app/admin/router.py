@@ -89,6 +89,7 @@ class UserOut(BaseModel):
     must_change_password: bool = False
     must_enroll_totp: bool = False
     locked: bool = False
+    has_email: bool = False
 
 
 def _user_out(u: User) -> UserOut:
@@ -102,6 +103,7 @@ def _user_out(u: User) -> UserOut:
         must_change_password=u.must_change_password,
         must_enroll_totp=u.must_enroll_totp,
         locked=bool(u.locked_until and u.locked_until > now_utc()),
+        has_email=bool(u.email),
     )
 
 
@@ -129,8 +131,14 @@ class ReasonIn(BaseModel):
         return v
 
 
+class ResetIn(ReasonIn):
+    # option A: email a reset link to the registered address; option B: system-generated temporary password
+    method: Literal["EMAIL_LINK", "TEMP_PASSWORD"] = "TEMP_PASSWORD"
+
+
 class ResetOut(BaseModel):
-    status: Literal["RESET", "PENDING_APPROVAL"]
+    status: Literal["RESET", "LINK_SENT", "PENDING_APPROVAL"]
+    link_sent_to: str | None = None
     temporary_password: str | None = None
     expires_at: datetime | None = None
     request_id: uuid.UUID | None = None
@@ -141,6 +149,8 @@ class ResetOut(BaseModel):
 def _reset_out(o: recovery.ResetOutcome) -> ResetOut:
     if o.request is not None:
         return ResetOut(status="PENDING_APPROVAL", request_id=o.request.id, approval_expires_at=o.request.expires_at)
+    if o.link_sent_to is not None:
+        return ResetOut(status="LINK_SENT", link_sent_to=o.link_sent_to, super_admin_fallback=o.super_admin)
     assert o.temporary is not None
     return ResetOut(
         status="RESET",
@@ -156,6 +166,7 @@ class ResetRequestOut(BaseModel):
     target_full_name: str
     requested_by: str
     requested_by_id: uuid.UUID
+    method: str
     reason: str
     created_at: datetime
     expires_at: datetime
@@ -189,12 +200,13 @@ async def create_user(
 @router.post("/users/{user_id}/reset-password", response_model=ResetOut)
 async def reset_password(
     user_id: uuid.UUID,
-    body: ReasonIn,
+    body: ResetIn,
     session: SessionDep,
     actor: User = Depends(require_permission("user.reset_password")),
 ) -> ResetOut:
-    """Non-admin target: a temporary password now. ADMIN target: a request a different admin must approve."""
-    return _reset_out(await recovery.reset_password(session, actor, user_id, body.reason))
+    """Option A (reset link by email) or B (temporary password, shown once). Non-admin target: done now.
+    ADMIN target: a request that a different admin must approve."""
+    return _reset_out(await recovery.reset_password(session, actor, user_id, body.reason, body.method))
 
 
 @router.post("/users/{user_id}/reset-2fa", response_model=UserOut)
@@ -215,6 +227,7 @@ async def list_reset_requests(
             target_full_name=t.full_name,
             requested_by=q.username,
             requested_by_id=q.id,
+            method=r.method,
             reason=r.reason,
             created_at=r.created_at,
             expires_at=r.expires_at,

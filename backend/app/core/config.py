@@ -72,9 +72,33 @@ class Settings(BaseSettings):
     rate_limit_change_password: str = "5/minute"  # noqa: S105 - a rate (per account), not a secret
     # per IP: generous, because an office shares one NAT address; the per-account limit above is the strict one
     rate_limit_change_password_ip: str = "30/minute"  # noqa: S105 - a rate, not a secret
+    # per IP, abuse caps on the unauthenticated reset endpoints (the hourly per-account / per-IP limits that decide
+    # whether an email is sent are business settings: password.forgot_per_*_per_hour)
+    rate_limit_forgot_ip: str = "30/minute"
+    rate_limit_reset_ip: str = "30/minute"
     # per client IP; offices share one NAT address, so this is deliberately generous (login is strict)
     rate_limit_default: str = "1200/minute"
     max_upload_mb: int = Field(default=15, description="Default; overridable in system_settings table")
+
+    # Links in emails are built from this, never from the request's Host header (host-header poisoning).
+    app_base_url: str = "http://localhost:3000"
+
+    # Email (docs/PASSWORD_PROMPT.md Section 7). smtp = Mailpit locally / CI; acs = Azure Communication Services
+    # (managed identity, endpoint from Key Vault); memory = tests (kept in-process); none = drop and log.
+    email_provider: Literal["smtp", "acs", "memory", "none"] = "smtp"
+    email_from: str = "Club8 CRM <no-reply@club8-crm.example>"  # FICTITIOUS default; real domain: OPEN_QUESTIONS 29
+    smtp_host: str = "127.0.0.1"
+    smtp_port: int = 1025
+    acs_endpoint: str | None = None
+    # worker = Dramatiq job with retries (Azure, docker); inline = in-process task with retries (local, tests)
+    email_dispatch: Literal["worker", "inline"] = "inline"
+    default_brand: Literal["club8", "k8"] = "club8"  # logo and colours in emails (same as NEXT_PUBLIC_DEFAULT_BRAND)
+    admin_contact: str = "your CRM administrator"  # shown in emails ("Questions? Contact ...")
+
+    # CAPTCHA on "Forgot password" after N requests per IP per hour (N in system_settings). none = off.
+    captcha_provider: Literal["none", "turnstile", "hcaptcha"] = "none"
+    captcha_site_key: str | None = None
+    captcha_secret_key: SecretStr | None = None
 
     otel_enabled: bool = False
     applicationinsights_connection_string: SecretStr | None = None

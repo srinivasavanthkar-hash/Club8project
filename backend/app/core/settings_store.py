@@ -41,6 +41,11 @@ DEFAULTS: dict[str, Any] = {
     # Roles that must use two-step verification; users in them enrol at their next sign-in. Off by default
     # (OPEN_QUESTIONS 30); recommended: ["ADMIN", "MANAGEMENT", "FINANCE"].
     "security.require_2fa_roles": [],
+    # Self-service reset (Section 2)
+    "password.reset_token_minutes": 30,
+    "password.forgot_per_account_per_hour": 3,
+    "password.forgot_per_ip_per_hour": 10,
+    "password.captcha_after_per_ip_per_hour": 3,
 }
 
 

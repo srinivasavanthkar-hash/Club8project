@@ -280,7 +280,8 @@ export function Dialog({
       onCancel={(e) => { e.preventDefault(); onClose(); }}
       aria-labelledby={titleId}
       className={cn(
-        "fixed inset-0 z-50 m-auto max-h-[90vh] w-[94vw] animate-fade-in flex-col overflow-hidden rounded-lg border border-border bg-surface-raised p-0 text-fg shadow-dialog open:flex",
+        // text-left / whitespace-normal: a dialog opened from a right-aligned table cell must not inherit its alignment
+        "fixed inset-0 z-50 m-auto max-h-[90vh] w-[94vw] animate-fade-in flex-col overflow-hidden rounded-lg border border-border bg-surface-raised p-0 text-left font-normal whitespace-normal text-fg shadow-dialog open:flex",
         size === "sm" && "max-w-md", size === "md" && "max-w-2xl", size === "lg" && "max-w-4xl",
       )}
     >

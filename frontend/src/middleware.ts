@@ -5,7 +5,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * let the API client refresh an expired access token transparently. */
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname.startsWith("/login") || pathname.startsWith("/api/") || pathname.startsWith("/_next") || pathname === "/favicon.ico" || pathname.startsWith("/brand/")) {
+  // public: sign-in and the password-reset pages (a reset link is opened signed out)
+  if (pathname.startsWith("/login") || pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password") || pathname.startsWith("/api/") || pathname.startsWith("/_next") || pathname === "/favicon.ico" || pathname.startsWith("/brand/")) {
     return NextResponse.next();
   }
   const signedIn = req.cookies.has("crm_access") || req.cookies.has("crm_csrf");

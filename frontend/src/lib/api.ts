@@ -34,7 +34,11 @@ function csrfToken(): string {
 
 type Opts = { headers?: Record<string, string>; signal?: AbortSignal };
 
-const NO_REFRESH = new Set(["/auth/login", "/auth/refresh", "/auth/change-password"]);
+// 401s from these are answers (wrong password, 2FA needed), not an expired session
+const NO_REFRESH = new Set([
+  "/auth/login", "/auth/refresh", "/auth/change-password",
+  "/auth/forgot-password", "/auth/reset-password", "/auth/reset-password/check",
+]);
 export const FORCED_STEPS: Record<string, string> = {
   PasswordChangeRequired: "/change-password",
   TotpEnrolmentRequired: "/setup-2fa",

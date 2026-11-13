@@ -23,6 +23,7 @@ locals {
     "jwt-signing-key"  = "jwt-signing-key"
     "redis-url"        = "redis-url"
     "appinsights-conn" = "appinsights-conn"
+    "acs-endpoint"     = "acs-endpoint"
   }
   backend_env = {
     CRM_ENV                 = var.env
@@ -37,12 +38,18 @@ locals {
     # 5 hex characters of a SHA-1 hash leave the app). Falls back to a bundled list if unreachable.
     CRM_PASSWORD_BREACH_API_URL = "https://api.pwnedpasswords.com/range/"
     CRM_SUPER_ADMIN_USERNAME    = var.super_admin_username
+    # Email: ACS via managed identity, sent by the worker with retries; links built from the public address only
+    CRM_EMAIL_PROVIDER = "acs"
+    CRM_EMAIL_DISPATCH = "worker"
+    CRM_EMAIL_FROM     = local.email_from
+    CRM_APP_BASE_URL   = local.app_base_url
   }
   backend_secret_env = {
     CRM_DATABASE_URL                          = "database-url"
     CRM_JWT_SIGNING_KEY                       = "jwt-signing-key"
     CRM_REDIS_URL                             = "redis-url"
     CRM_APPLICATIONINSIGHTS_CONNECTION_STRING = "appinsights-conn"
+    CRM_ACS_ENDPOINT                          = "acs-endpoint"
   }
 }
 

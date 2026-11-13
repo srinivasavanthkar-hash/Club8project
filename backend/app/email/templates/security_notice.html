@@ -1,0 +1,11 @@
+{% extends "_base.html" %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ name }},</p>
+<p style="margin:0 0 16px;">{{ what }} for your {{ brand.name }} CRM account <strong>{{ username }}</strong>.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;font-size:14px;">
+<tr><td style="padding:2px 16px 2px 0;color:#55536e;">When</td><td>{{ when }} (India time)</td></tr>
+{% if ip %}<tr><td style="padding:2px 16px 2px 0;color:#55536e;">From</td><td>IP address {{ ip }}</td></tr>{% endif %}
+</table>
+{% if note %}<p style="margin:0 0 16px;">{{ note }}</p>{% endif %}
+<p style="margin:0;padding:12px 14px;background:#fff4d9;border-left:3px solid #8a5a00;"><strong>If this wasn't you, contact your administrator immediately.</strong></p>
+{% endblock %}

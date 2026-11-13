@@ -2,6 +2,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { KeyRound, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -51,6 +52,9 @@ export function LoginForm() {
           {needTotp ? "Enter the 6-digit code from your authenticator app." : "Use your Club8 CRM staff account."}
         </p>
       </div>
+      {params.get("reset") === "done" && !error && (
+        <Alert kind="success" className="mb-4">Your password has been changed. Sign in with your new password.</Alert>
+      )}
       {params.get("reason") === "session-ended" && !error && (
         <Alert kind="info" className="mb-4">Your session ended because your password or two-step verification was changed. Sign in again.</Alert>
       )}
@@ -58,9 +62,12 @@ export function LoginForm() {
         <Field label="Username" htmlFor="username" error={formState.errors.username?.message}>
           <Input id="username" autoComplete="username" autoFocus {...register("username")} />
         </Field>
-        <Field label="Password" htmlFor="password" error={formState.errors.password?.message}>
-          <PasswordInput id="password" autoComplete="current-password" {...register("password")} />
-        </Field>
+        <div className="flex flex-col gap-1">
+          <Field label="Password" htmlFor="password" error={formState.errors.password?.message}>
+            <PasswordInput id="password" autoComplete="current-password" {...register("password")} />
+          </Field>
+          {!needTotp && <Link href="/forgot-password" className="self-start text-sm text-primary underline-offset-2 hover:underline">Forgot password?</Link>}
+        </div>
         {needTotp && (
           <Field label="Two-factor code" htmlFor="totp" hint="The code changes every 30 seconds.">
             <Input id="totp" inputMode="numeric" autoComplete="one-time-code" className="font-mono text-lg tracking-widest" autoFocus {...register("totp_code")} />
@@ -75,9 +82,6 @@ export function LoginForm() {
         <Button type="submit" className="mt-1 h-10 w-full" disabled={formState.isSubmitting}>
           {formState.isSubmitting ? "Signing in…" : "Sign in"}
         </Button>
-        {!needTotp && (
-          <p className="text-center text-sm text-fg-muted">Forgot your password? Ask an administrator to reset it.</p>
-        )}
         {needTotp && (
           <Alert kind="info" className="text-sm">
             <span className="inline-flex items-center gap-1"><ShieldCheck aria-hidden className="size-4" />Two-step verification is on for this account.</span>

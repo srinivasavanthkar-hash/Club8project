@@ -271,6 +271,14 @@ async def change_password(
         f"other devices {'signed out' if end_others else 'left signed in'}",
         user,
     )
+    from app.auth.notify import security_notice
+
+    security_notice(
+        session,
+        user,
+        "Your password was changed",
+        "Other devices were signed out." if end_others else "Other devices stayed signed in.",
+    )
     if not end_others:
         return None
     await revoke_all_sessions(session, user, "password changed")

@@ -89,9 +89,29 @@ class AdminResetRequest(Base, UUIDPk):
     reason: Mapped[str] = mapped_column(String(500))
     expires_at: Mapped[datetime] = mapped_column()
     status: Mapped[str] = mapped_column(String(20), default="PENDING")  # PENDING/APPROVED/REJECTED/EXPIRED/CANCELLED
+    # TEMP_PASSWORD (option B) or EMAIL_LINK (option A): what happens once a second admin approves
+    method: Mapped[str] = mapped_column(String(20), default="TEMP_PASSWORD", server_default="TEMP_PASSWORD")
     decided_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     decision_reason: Mapped[str | None] = mapped_column(String(500))
     decided_at: Mapped[datetime | None] = mapped_column()
+
+
+class PasswordResetToken(Base, UUIDPk):
+    """Single-use password-reset link (Forgot password, or an admin's "send reset link"). Only the SHA-256 of the
+    token is stored; the token itself exists only in the email. A newer token invalidates older unused ones."""
+
+    __tablename__ = "password_reset_tokens"
+    __audited__ = False  # requests, use and expiry are recorded explicitly in the activity log
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    purpose: Mapped[str] = mapped_column(String(20), default="SELF")  # SELF / ADMIN_LINK
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column()
+    used_at: Mapped[datetime | None] = mapped_column()
+    invalidated_at: Mapped[datetime | None] = mapped_column()
+    request_ip: Mapped[str | None] = mapped_column(String(45))
+    user_agent: Mapped[str | None] = mapped_column(String(400))
 
 
 class RefreshToken(Base, UUIDPk):

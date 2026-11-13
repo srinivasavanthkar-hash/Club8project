@@ -1,0 +1,14 @@
+Hello {{ name }},
+
+{% if by_admin %}An administrator has sent you a link to set a new password for your {{ brand.name }} CRM account {{ username }}.{% else %}We received a request to reset the password for your {{ brand.name }} CRM account {{ username }}.{% endif %}
+
+Set a new password:
+{{ link }}
+
+The link is valid for {{ minutes }} minutes and works once.{% if totp %} You'll also need a code from your authenticator app.{% endif %}
+
+If you didn't request this, you can ignore this email; your password hasn't changed.
+
+--
+This is an automatic message from {{ brand.name }} CRM. Please don't reply to it.
+Questions? Contact {{ admin_contact }}.

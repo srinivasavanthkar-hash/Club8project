@@ -12,13 +12,14 @@ import { ErrorText, useCan, useMe } from "@/components/providers";
 import { Alert, Button, Card, Dialog, Field } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export type AdminUser = {
   id: string; username: string; full_name: string; is_active: boolean; roles: string[];
-  totp_enabled: boolean; must_change_password: boolean; must_enroll_totp: boolean; locked: boolean;
+  totp_enabled: boolean; must_change_password: boolean; must_enroll_totp: boolean; locked: boolean; has_email: boolean;
 };
 type ResetOut = {
-  status: "RESET" | "PENDING_APPROVAL"; temporary_password: string | null; expires_at: string | null;
+  status: "RESET" | "LINK_SENT" | "PENDING_APPROVAL"; link_sent_to: string | null; temporary_password: string | null; expires_at: string | null;
   request_id: string | null; approval_expires_at: string | null; super_admin_fallback: boolean;
 };
 export type OneTime = { username: string; password: string; expiresAt: string; context: "reset" | "new" };
@@ -61,14 +62,17 @@ export function UserRecoveryActions({ user, onTemporary }: { user: AdminUser; on
   const qc = useQueryClient();
   const toast = useToast();
   const [dialog, setDialog] = React.useState<"password" | "2fa" | null>(null);
+  const [method, setMethod] = React.useState<"EMAIL_LINK" | "TEMP_PASSWORD">(user.has_email ? "EMAIL_LINK" : "TEMP_PASSWORD");
+  React.useEffect(() => { if (dialog === "password") setMethod(user.has_email ? "EMAIL_LINK" : "TEMP_PASSWORD"); }, [dialog, user.has_email]);
   const isAdminTarget = user.roles.includes("ADMIN");
   const resetPw = useMutation({
-    mutationFn: (reason: string) => api.post<ResetOut>(`/admin/users/${user.id}/reset-password`, { reason }),
+    mutationFn: (reason: string) => api.post<ResetOut>(`/admin/users/${user.id}/reset-password`, { reason, method }),
     onSuccess: (r) => {
       setDialog(null);
       qc.invalidateQueries({ queryKey: ["users"] });
       qc.invalidateQueries({ queryKey: ["reset-requests"] });
       if (r.status === "PENDING_APPROVAL") toast.success(`Request sent. Another administrator must approve it by ${formatDateTime(r.approval_expires_at ?? "")}.`);
+      else if (r.status === "LINK_SENT") toast.success(`Reset link sent to ${r.link_sent_to}. ${user.username} has been signed out everywhere.`);
       else onTemporary({ username: user.username, password: r.temporary_password ?? "", expiresAt: r.expires_at ?? "", context: "reset" });
     },
   });
@@ -91,13 +95,24 @@ export function UserRecoveryActions({ user, onTemporary }: { user: AdminUser; on
         onConfirm={(reason) => resetPw.mutate(reason)}
         pending={resetPw.isPending}
         title={`Reset password for ${user.username}?`}
-        confirmLabel={isAdminTarget ? "Request reset" : "Reset password"}
+        confirmLabel={isAdminTarget ? "Request reset" : method === "EMAIL_LINK" ? "Send reset link" : "Reset password"}
         description={
           isAdminTarget
-            ? "This is an administrator account. A different administrator must approve the reset within 24 hours before a temporary password is issued."
-            : "The system creates a temporary password for you to pass on. It expires in 24 hours and must be changed at sign-in. All of the user's devices are signed out now. Two-step verification is not changed."
+            ? "This is an administrator account. A different administrator must approve the reset within 24 hours before anything happens."
+            : "All of the user's devices are signed out now. Two-step verification is not changed."
         }
       >
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm font-medium text-fg">How should {user.username} get back in?</legend>
+          <label className={cn("flex cursor-pointer items-start gap-2 rounded-md border p-3", method === "EMAIL_LINK" ? "border-primary bg-primary-subtle/40" : "border-border", !user.has_email && "cursor-not-allowed opacity-60")}>
+            <input type="radio" name={`m-${user.id}`} className="mt-1 accent-primary" checked={method === "EMAIL_LINK"} disabled={!user.has_email} onChange={() => setMethod("EMAIL_LINK")} />
+            <span><span className="font-medium text-fg">Email a reset link</span><span className="block text-sm text-fg-muted">{user.has_email ? "Sent to their registered email. Valid for 30 minutes, works once." : "Not available: this user has no registered email."}</span></span>
+          </label>
+          <label className={cn("flex cursor-pointer items-start gap-2 rounded-md border p-3", method === "TEMP_PASSWORD" ? "border-primary bg-primary-subtle/40" : "border-border")}>
+            <input type="radio" name={`m-${user.id}`} className="mt-1 accent-primary" checked={method === "TEMP_PASSWORD"} onChange={() => setMethod("TEMP_PASSWORD")} />
+            <span><span className="font-medium text-fg">Give a temporary password</span><span className="block text-sm text-fg-muted">For users without email access. Shown to you once; you pass it on in person or by phone. Expires in 24 hours.</span></span>
+          </label>
+        </fieldset>
         <ErrorText error={resetPw.error} />
       </ConfirmDialog>
       <ConfirmDialog
@@ -117,7 +132,7 @@ export function UserRecoveryActions({ user, onTemporary }: { user: AdminUser; on
 
 type ResetRequest = {
   id: string; target_username: string; target_full_name: string; requested_by: string; requested_by_id: string;
-  reason: string; created_at: string; expires_at: string;
+  reason: string; created_at: string; expires_at: string; method: "EMAIL_LINK" | "TEMP_PASSWORD";
 };
 
 /** Pending resets of ADMIN accounts, waiting for a different admin. Shown only when there are some. */
@@ -135,7 +150,8 @@ export function PendingAdminResets({ onTemporary }: { onTemporary: (v: OneTime) 
       setDecide(null);
       qc.invalidateQueries({ queryKey: ["reset-requests"] });
       qc.invalidateQueries({ queryKey: ["users"] });
-      if (r?.temporary_password) onTemporary({ username: v.req.target_username, password: r.temporary_password, expiresAt: r.expires_at ?? "", context: "reset" });
+      if (r?.status === "LINK_SENT") toast.success(`Reset link sent to ${r.link_sent_to}`);
+      else if (r?.temporary_password) onTemporary({ username: v.req.target_username, password: r.temporary_password, expiresAt: r.expires_at ?? "", context: "reset" });
       else toast.success(v.req.requested_by_id === me?.id ? "Request withdrawn" : "Request rejected");
     },
   });
@@ -150,7 +166,7 @@ export function PendingAdminResets({ onTemporary }: { onTemporary: (v: OneTime) 
             <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div className="min-w-0">
                 <p className="font-medium text-fg"><span className="font-mono">{r.target_username}</span> · {r.target_full_name}</p>
-                <p className="text-sm text-fg-muted">Requested by {r.requested_by} on {formatDateTime(r.created_at)}: “{r.reason}”. Expires {formatDateTime(r.expires_at)}.</p>
+                <p className="text-sm text-fg-muted">{r.method === "EMAIL_LINK" ? "Reset link by email" : "Temporary password"} · requested by {r.requested_by} on {formatDateTime(r.created_at)}: “{r.reason}”. Expires {formatDateTime(r.expires_at)}.</p>
               </div>
               <div className="flex gap-2">
                 {!mine && <Button size="sm" onClick={() => setDecide({ req: r, approve: true })}><UserCheck aria-hidden />Approve…</Button>}
@@ -168,7 +184,7 @@ export function PendingAdminResets({ onTemporary }: { onTemporary: (v: OneTime) 
         destructive={!decide?.approve}
         title={decide?.approve ? `Approve the reset of ${decide.req.target_username}?` : `${decide?.req.requested_by_id === me?.id ? "Withdraw" : "Reject"} this request?`}
         confirmLabel={decide?.approve ? "Approve and issue password" : decide?.req.requested_by_id === me?.id ? "Withdraw" : "Reject"}
-        description={decide?.approve ? "A temporary password is issued and shown to you once. The administrator is signed out everywhere and must change it at sign-in." : undefined}
+        description={decide?.approve ? (decide.req.method === "EMAIL_LINK" ? "A reset link is emailed to the administrator's registered address. They are signed out everywhere." : "A temporary password is issued and shown to you once. The administrator is signed out everywhere and must change it at sign-in.") : undefined}
       >
         <ErrorText error={act.error} />
       </ConfirmDialog>

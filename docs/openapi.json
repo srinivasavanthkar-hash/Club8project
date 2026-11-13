@@ -233,6 +233,146 @@
     }
    }
   },
+  "/api/v1/auth/forgot-password/config": {
+   "get": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Forgot Config",
+    "operationId": "forgot_config_api_v1_auth_forgot_password_config_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ForgotConfigOut"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/auth/forgot-password": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Forgot Password",
+    "description": "Same answer, about the same time, for any input (no account enumeration). Only CaptchaRequired (428) differs,\nand that depends on the caller's IP, not on the account.",
+    "operationId": "forgot_password_api_v1_auth_forgot_password_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ForgotIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MessageOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/auth/reset-password/check": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Reset Password Check",
+    "description": "Validates a reset link before the form is shown. Invalid, used and expired links get the same answer.",
+    "operationId": "reset_password_check_api_v1_auth_reset_password_check_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TokenIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TokenCheckOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/auth/reset-password": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Reset Password",
+    "description": "Sets the new password; every session ends. The user then signs in (never signed in automatically).",
+    "operationId": "reset_password_api_v1_auth_reset_password_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/app__auth__router__ResetIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/v1/admin/master/{slug}": {
    "get": {
     "tags": [
@@ -539,7 +679,7 @@
      "admin"
     ],
     "summary": "Reset Password",
-    "description": "Non-admin target: a temporary password now. ADMIN target: a request a different admin must approve.",
+    "description": "Option A (reset link by email) or B (temporary password, shown once). Non-admin target: done now.\nADMIN target: a request that a different admin must approve.",
     "operationId": "reset_password_api_v1_admin_users__user_id__reset_password_post",
     "parameters": [
      {
@@ -558,7 +698,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/ReasonIn"
+        "$ref": "#/components/schemas/app__admin__router__ResetIn"
        }
       }
      }
@@ -6375,6 +6515,58 @@
     ],
     "title": "EmailIn"
    },
+   "ForgotConfigOut": {
+    "properties": {
+     "captcha_provider": {
+      "type": "string",
+      "title": "Captcha Provider"
+     },
+     "captcha_site_key": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Captcha Site Key"
+     }
+    },
+    "type": "object",
+    "required": [
+     "captcha_provider",
+     "captcha_site_key"
+    ],
+    "title": "ForgotConfigOut"
+   },
+   "ForgotIn": {
+    "properties": {
+     "identifier": {
+      "type": "string",
+      "maxLength": 255,
+      "minLength": 1,
+      "title": "Identifier"
+     },
+     "captcha_token": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 4096
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Captcha Token"
+     }
+    },
+    "type": "object",
+    "required": [
+     "identifier"
+    ],
+    "title": "ForgotIn"
+   },
    "HTTPValidationError": {
     "properties": {
      "detail": {
@@ -8447,6 +8639,19 @@
     "title": "MemberPatch",
     "description": "Editable profile fields (finance figures are changed through Finance, not here)."
    },
+   "MessageOut": {
+    "properties": {
+     "message": {
+      "type": "string",
+      "title": "Message"
+     }
+    },
+    "type": "object",
+    "required": [
+     "message"
+    ],
+    "title": "MessageOut"
+   },
    "MoveIn": {
     "properties": {
      "thread_id": {
@@ -9875,9 +10080,21 @@
       "type": "string",
       "enum": [
        "RESET",
+       "LINK_SENT",
        "PENDING_APPROVAL"
       ],
       "title": "Status"
+     },
+     "link_sent_to": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Link Sent To"
      },
      "temporary_password": {
       "anyOf": [
@@ -9962,6 +10179,10 @@
       "format": "uuid",
       "title": "Requested By Id"
      },
+     "method": {
+      "type": "string",
+      "title": "Method"
+     },
      "reason": {
       "type": "string",
       "title": "Reason"
@@ -9984,6 +10205,7 @@
      "target_full_name",
      "requested_by",
      "requested_by_id",
+     "method",
      "reason",
      "created_at",
      "expires_at"
@@ -10319,6 +10541,71 @@
     ],
     "title": "TerminateIn"
    },
+   "TokenCheckOut": {
+    "properties": {
+     "valid": {
+      "type": "boolean",
+      "title": "Valid"
+     },
+     "requires_totp": {
+      "type": "boolean",
+      "title": "Requires Totp",
+      "default": false
+     },
+     "username": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Username"
+     },
+     "full_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Full Name"
+     },
+     "policy": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PasswordPolicyOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "type": "object",
+    "required": [
+     "valid"
+    ],
+    "title": "TokenCheckOut"
+   },
+   "TokenIn": {
+    "properties": {
+     "token": {
+      "type": "string",
+      "maxLength": 200,
+      "minLength": 10,
+      "title": "Token"
+     }
+    },
+    "type": "object",
+    "required": [
+     "token"
+    ],
+    "title": "TokenIn"
+   },
    "TotpConfirm": {
     "properties": {
      "code": {
@@ -10378,6 +10665,11 @@
      "locked": {
       "type": "boolean",
       "title": "Locked",
+      "default": false
+     },
+     "has_email": {
+      "type": "boolean",
+      "title": "Has Email",
       "default": false
      },
      "temporary_password": {
@@ -10500,6 +10792,11 @@
       "type": "boolean",
       "title": "Locked",
       "default": false
+     },
+     "has_email": {
+      "type": "boolean",
+      "title": "Has Email",
+      "default": false
      }
     },
     "type": "object",
@@ -10551,6 +10848,64 @@
      "type"
     ],
     "title": "ValidationError"
+   },
+   "app__admin__router__ResetIn": {
+    "properties": {
+     "reason": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 5,
+      "title": "Reason"
+     },
+     "method": {
+      "type": "string",
+      "enum": [
+       "EMAIL_LINK",
+       "TEMP_PASSWORD"
+      ],
+      "title": "Method",
+      "default": "TEMP_PASSWORD"
+     }
+    },
+    "type": "object",
+    "required": [
+     "reason"
+    ],
+    "title": "ResetIn"
+   },
+   "app__auth__router__ResetIn": {
+    "properties": {
+     "token": {
+      "type": "string",
+      "maxLength": 200,
+      "minLength": 10,
+      "title": "Token"
+     },
+     "new_password": {
+      "type": "string",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "New Password"
+     },
+     "totp_code": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 10
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Totp Code"
+     }
+    },
+    "type": "object",
+    "required": [
+     "token",
+     "new_password"
+    ],
+    "title": "ResetIn"
    },
    "app__leads__schemas__StatusHistoryOut": {
     "properties": {

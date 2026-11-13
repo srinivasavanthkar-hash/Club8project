@@ -166,6 +166,7 @@ resource "azurerm_key_vault_secret" "secrets" {
     "appinsights-conn"  = azurerm_application_insights.ai.connection_string
     "pg-app-password"   = random_password.pg_app.result
     "pg-owner-password" = random_password.pg_owner.result
+    "acs-endpoint"      = "https://${azurerm_communication_service.acs.hostname}"
   }
   name         = each.key
   value        = each.value

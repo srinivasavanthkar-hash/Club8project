@@ -37,6 +37,9 @@ python scripts/local_db.py --name crm_local        # embedded PostgreSQL 16, mig
 cd backend && CRM_DATABASE_URL=<printed url> CRM_BLOB_PROVIDER=memory CRM_VIRUS_SCAN_PROVIDER=none \
   CRM_COOKIE_SECURE=false uvicorn app.main:app --port 8000
 cd frontend && npm ci && npm run build && npm start   # http://localhost:3000, proxies /api/v1 to :8000
+# Emails (password reset, notices): Mailpit catches them. Docker: the `mailpit` service (http://localhost:8025).
+# Without Docker: unzip mailpit-windows-amd64.zip (github.com/axllent/mailpit, v1.32.0) into .local/mailpit/ and run
+#   .local/mailpit/mailpit.exe --smtp 127.0.0.1:1025 --listen 127.0.0.1:8025   (the API's default SMTP is :1025)
 ```
 
 ## Tests

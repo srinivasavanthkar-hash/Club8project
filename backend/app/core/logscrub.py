@@ -51,10 +51,20 @@ _installed = False
 
 
 def _scrub_record(record: logging.LogRecord) -> None:
+    # Scrub the arguments in place, keeping their shape: some formatters (uvicorn's access log) unpack them.
+    if isinstance(record.args, tuple):
+        record.args = tuple(_scrub_value(a) for a in record.args)
+    elif isinstance(record.args, dict):
+        record.args = _scrub_value(record.args)
+    if isinstance(record.msg, str):
+        record.msg = scrub(record.msg)
     try:
-        # Render now so a secret passed as an argument cannot reappear when a handler formats the record.
-        msg = record.getMessage()
-        record.msg, record.args = scrub(msg), None
+        # A secret split between the format string and an argument ("password=%s", secret) only shows once
+        # rendered: then keep the scrubbed rendering instead.
+        rendered = record.getMessage()
+        clean = scrub(rendered)
+        if clean != rendered:
+            record.msg, record.args = clean, None
     except Exception:
         record.msg, record.args = scrub(str(record.msg)), None
     for attr in ("exc_text", "stack_info"):

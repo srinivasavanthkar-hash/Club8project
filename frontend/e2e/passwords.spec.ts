@@ -21,9 +21,11 @@ test.beforeAll(requireIsolatedStack);
 async function snap(page: Page, name: string) {
   if (!TOUR) return;
   await page.waitForLoadState("networkidle");
-  await page.addStyleTag({ content: '[aria-live="polite"].fixed { display: none !important; }' });
+  // hide toasts for the screenshot only, then show them again (later assertions may look for one)
+  const hide = await page.addStyleTag({ content: '[aria-live="polite"].fixed { display: none !important; }' });
   await page.waitForTimeout(250);
   await page.screenshot({ path: path.join(OUT, `${name}.png`), animations: "disabled", caret: "hide" });
+  await hide.evaluate((el) => el.remove());
 }
 
 async function axe(page: Page) {

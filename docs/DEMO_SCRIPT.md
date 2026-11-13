@@ -38,6 +38,10 @@ Open http://localhost:3000. All demo users share the password `Demo-Passw0rd!` (
 | 9e | the user | User menu → **Change password** | "Sign out of all other devices" ticked by default |
 | 9f | `demo.admin` + a 2nd admin | Reset another ADMIN → the 2nd admin approves in "Administrator resets waiting for approval" | Two-person rule; all steps in the activity log |
 | 9g | `demo.admin` | **Reset 2FA…** on a user with 2FA | The user must set up 2FA again (QR code) at next sign-in; password unchanged |
+| 9h | (anyone) | Sign-in → **Forgot password?** → `demo.sales@example.test` → **Send reset link** | The same confirmation for any input. The email appears in Mailpit (http://localhost:8025) |
+| 9i | | Open the link from the email | Token removed from the address bar; checklist + strength meter; set a new password; signed out everywhere; "password changed" email |
+| 9j | | Open the same link again | "This reset link is invalid or has expired" → Request a new link |
+| 9k | `demo.admin` | **Reset password…** → **Email a reset link** | Link sent to the registered address (masked in the message); the user is signed out |
 
 Automated with screenshots: `TOUR=1 python scripts/run_e2e.py passwords --project=desktop` (fresh throwaway
 database; the specs that write data refuse to run against the demo).

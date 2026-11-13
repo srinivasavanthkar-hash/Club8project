@@ -77,7 +77,7 @@ describe("MemberForm", () => {
     await user.selectOptions(screen.getByLabelText("By (payment method)"), ids.card);
     await user.click(screen.getByRole("button", { name: "Save application" }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-  });
+  }, 20_000); // types a whole application: slower than the 5 s default when the suite runs in parallel
 
   it("builds the API payload with EMI month/year and the down payment entry", () => {
     const p = toPayload({

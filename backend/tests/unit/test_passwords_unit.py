@@ -115,3 +115,40 @@ def test_log_records_are_scrubbed_before_any_handler(caplog):
     rec = caplog.records[-1]
     assert rec.new_password == REDACTED  # type: ignore[attr-defined]
     assert "abc123secret" not in rec.detail  # type: ignore[attr-defined]
+
+
+def test_email_templates_escape_html_and_use_the_configured_base_url(monkeypatch):
+    from app.email.dispatch import mask_address, render
+
+    s = get_settings()
+    monkeypatch.setattr(s, "app_base_url", "https://crm.club8.example")
+    for brand, name in (("club8", "Club8 Holidays"), ("k8", "K8")):
+        monkeypatch.setattr(s, "default_brand", brand)
+        html, text = render(
+            "reset_link",
+            "Reset your Club8 CRM password",
+            {
+                "name": "<b>Priya</b>",
+                "username": "priya.s",
+                "link": "https://crm.club8.example/reset-password?token=T",
+                "minutes": 30,
+                "totp": True,
+                "by_admin": False,
+            },
+        )
+        assert "&lt;b&gt;Priya&lt;/b&gt;" in html and "<b>Priya</b>" not in html  # escaped in HTML
+        assert "Hello <b>Priya</b>," in text  # plain text is not HTML
+        assert f"https://crm.club8.example/brand/{brand}/{brand}-logo.png" in html and name in html
+        assert "valid for 30 minutes" in text and "authenticator app" in text
+        assert "your password hasn't changed" in text
+    assert mask_address("priya.s@example.test") == "p***@example.test"
+
+
+def test_scrubber_keeps_argument_shape_for_uvicorn_access_logs(caplog):
+    install()
+    access = logging.getLogger("uvicorn.access.test")
+    with caplog.at_level(logging.INFO):
+        access.info('%s - "%s %s HTTP/%s" %d', "127.0.0.1:5000", "GET", "/healthz?token=abc123secret", "1.1", 200)
+    rec = caplog.records[-1]
+    assert isinstance(rec.args, tuple) and len(rec.args) == 5  # uvicorn's AccessFormatter unpacks these
+    assert "abc123secret" not in rec.getMessage() and rec.args[4] == 200
