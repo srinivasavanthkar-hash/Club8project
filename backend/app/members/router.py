@@ -41,6 +41,7 @@ def _item(m: Member) -> MemberListItem:
         id=m.id,
         membership_number=m.membership_number,
         status=m.status,
+        company_id=m.company_id,
         email=m.email,
         city=m.city,
         purchase_date=m.purchase_date,

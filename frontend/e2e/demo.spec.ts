@@ -203,6 +203,8 @@ test("Section 14 demo: lead → member → finance → reservation → correspon
   await page.getByLabel("Comments", { exact: true }).fill("Prefers sea-facing rooms");
   await page.getByLabel("Reason for change (recorded in history)", { exact: true }).fill("Welcome call");
   await page.getByRole("button", { name: "Save" }).click();
+  // wait for the save to land (edit mode closes) before navigating, so the PATCH is not aborted mid-flight
+  await expect(page.getByRole("button", { name: "Edit" })).toBeVisible();
   await page.goto(`${memberUrl}?tab=history`);
   const trail = page.getByRole("region").filter({ hasText: "Activity trail" }).or(page.locator("section", { hasText: "Activity trail" }));
   for (const action of ["LEAD_CONVERTED", "MEMBER_APPROVED", "PAYMENT", "SCHEDULE_GENERATED", "ASF_RAISED", "ENTITLEMENT_DEDUCTED", "UPLOAD"]) {

@@ -1,0 +1,487 @@
+<title>Club8 CRM Walkthrough</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  /* Layout: a sticky chapter rail beside one reading column; each chapter = who / clicks / what to point out, then screenshots. */
+  :root {
+    --bg: #F7F7FB;            /* faint indigo-biased paper */
+    --surface: #FFFFFF;
+    --fg: #1C1A33;
+    --muted: #55536E;
+    --line: #DEDCEC;
+    --indigo: #393186;        /* Club8 "HOLIDAYS" indigo */
+    --indigo-subtle: #EEEDF8;
+    --orange: #EF7F1B;        /* the "8": thin rules and markers only */
+    --orange-text: #B35F14;
+    --ok: #1F7A4D; --ok-bg: #E6F4EC;
+    --warn: #8A5A00; --warn-bg: #FFF4D9;
+    --shot-ring: rgba(28, 26, 51, .10);
+    --f-display: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+    --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121120; --surface: #1B1A2E; --fg: #ECEBF7; --muted: #A9A7C4; --line: #2F2D49;
+      --indigo: #A9A2F0; --indigo-subtle: #26234A; --orange: #F29A4A; --orange-text: #F5B57A;
+      --ok: #7FD3A6; --ok-bg: #173527; --warn: #F2C66B; --warn-bg: #3A2E12; --shot-ring: rgba(255,255,255,.12);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121120; --surface: #1B1A2E; --fg: #ECEBF7; --muted: #A9A7C4; --line: #2F2D49;
+    --indigo: #A9A2F0; --indigo-subtle: #26234A; --orange: #F29A4A; --orange-text: #F5B57A;
+    --ok: #7FD3A6; --ok-bg: #173527; --warn: #F2C66B; --warn-bg: #3A2E12; --shot-ring: rgba(255,255,255,.12);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg); font: 400 17px/1.6 var(--f-body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.2; margin: 0; }
+  h1 { font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 700; letter-spacing: -.01em; }
+  h2 { font-size: 1.6rem; font-weight: 700; }
+  h3 { font-size: 1rem; font-weight: 600; }
+  p { margin: 0; }
+  a { color: var(--indigo); }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; border-radius: 4px; }
+  code, .id { font-family: var(--f-mono); font-size: .85em; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-block: 48px 80px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 24px 56px; } }
+
+  /* rail */
+  nav.rail { position: sticky; top: calc(24px + env(safe-area-inset-top, 0px)); align-self: start; display: grid; gap: 4px; font-size: .95rem; }
+  nav.rail .label { font: 600 .72rem/1 var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  nav.rail a { display: grid; grid-template-columns: 1.6em 1fr; gap: 6px; padding: 6px 8px; border-radius: 6px; text-decoration: none; color: var(--fg); }
+  nav.rail a:hover { background: var(--indigo-subtle); }
+  nav.rail a span { color: var(--muted); font-variant-numeric: tabular-nums; }
+  @media (max-width: 900px) {
+    nav.rail { position: static; grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; padding-bottom: 6px; }
+    nav.rail .label { display: none; }
+  }
+
+  main { display: grid; gap: 72px; min-width: 0; }
+  header.intro { display: grid; gap: 16px; }
+  .eyebrow { font: 600 .78rem/1 var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--orange-text); display: flex; align-items: center; gap: 10px; }
+  .eyebrow::before { content: ""; width: 28px; height: 3px; background: var(--orange); border-radius: 2px; }
+  .lede { font-size: 1.15rem; color: var(--muted); max-width: 62ch; }
+
+  .journey { display: flex; flex-wrap: wrap; gap: 6px 4px; align-items: center; font: 500 .9rem/1 var(--f-display); margin-top: 8px; }
+  .journey b { font-weight: 600; background: var(--surface); border: 1px solid var(--line); padding: 8px 12px; border-radius: 999px; }
+  .journey i { color: var(--orange); font-style: normal; }
+
+  .setup { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; display: grid; gap: 16px; }
+  .setup .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px 32px; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+  th, td { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 600 .75rem/1.2 var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  td:first-child { white-space: nowrap; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* chapters */
+  section.ch { display: grid; gap: 24px; scroll-margin-top: 24px; }
+  .ch-head { display: grid; gap: 10px; border-top: 3px solid var(--orange); padding-top: 20px; }
+  .ch-head .n { font: 600 .8rem/1 var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--orange-text); font-variant-numeric: tabular-nums; }
+  .ch-head p { color: var(--muted); max-width: 65ch; }
+  .who { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .92rem; color: var(--muted); }
+  .who .id { background: var(--indigo-subtle); color: var(--indigo); padding: 3px 8px; border-radius: 6px; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }
+  @media (max-width: 700px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+  .cols h3 { margin-bottom: 10px; color: var(--indigo); }
+  ol.steps, ul.points { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; }
+  ol.steps li::marker { font-family: var(--f-display); font-weight: 600; color: var(--indigo); }
+  ul.points li::marker { color: var(--orange); }
+  .ui { font-weight: 600; }
+
+  figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+  figure a { display: block; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px var(--shot-ring), 0 12px 32px -18px rgba(28,26,51,.45); background: var(--surface); }
+  figure img { display: block; width: 100%; height: auto; }
+  figcaption { font-size: .88rem; color: var(--muted); }
+  .shots { display: grid; gap: 28px; }
+  .shots.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shots.phones { grid-template-columns: repeat(2, minmax(0, 260px)); }
+  @media (max-width: 700px) { .shots.two { grid-template-columns: minmax(0, 1fr); } .shots.phones { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+
+  .note { border-radius: 10px; padding: 14px 16px; font-size: .95rem; display: grid; gap: 4px; }
+  .note.ok { background: var(--ok-bg); color: var(--fg); border-left: 3px solid var(--ok); }
+  .note.warn { background: var(--warn-bg); color: var(--fg); border-left: 3px solid var(--warn); }
+  .note strong { font-family: var(--f-display); font-weight: 600; font-size: .9rem; }
+  footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); padding-top: 20px; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+  <nav class="rail" aria-label="Chapters">
+    <div class="label">Walkthrough</div>
+    <a href="#start"><span>·</span>Before you start</a>
+    <a href="#dashboard"><span>1</span>Dashboard &amp; search</a>
+    <a href="#lead"><span>2</span>Capture a lead</a>
+    <a href="#member"><span>3</span>Convert to member</a>
+    <a href="#approve"><span>4</span>Approve</a>
+    <a href="#finance"><span>5</span>Payments &amp; EMIs</a>
+    <a href="#reserve"><span>6</span>Book a stay</a>
+    <a href="#service"><span>7</span>Member services</a>
+    <a href="#audit"><span>8</span>Audit trail</a>
+    <a href="#screens"><span>9</span>Lists &amp; admin</a>
+    <a href="#phone"><span>10</span>On the phone</a>
+    <a href="#rules"><span>·</span>Rules at a glance</a>
+  </nav>
+
+  <main>
+    <header class="intro">
+      <div class="eyebrow">Club8 Holidays / K8 · Cloud CRM</div>
+      <h1>From street lead to confirmed holiday</h1>
+      <p class="lede">This guide follows one new member through the whole system: the first conversation, the membership application, payments, a holiday booking and the paperwork after it. Each chapter says who signs in, what to click and what to look for. Every screenshot was taken from the running application.</p>
+      <div class="journey" aria-label="The member journey">
+        <b>Lead</b><i>→</i><b>Application</b><i>→</i><b>Approval</b><i>→</i><b>Payments</b><i>→</i><b>Reservation</b><i>→</i><b>ASF &amp; confirmation</b><i>→</i><b>Service &amp; audit</b>
+      </div>
+    </header>
+
+    <section class="ch" id="start">
+      <div class="ch-head">
+        <div class="n">Before you start</div>
+        <h2>Demo environment and roles</h2>
+        <p>All names, phone numbers, PANs and payments in the demo are fictitious. Prices, ASF and GST rates are labelled DEMO values and are set by the business in <span class="ui">Admin → Master data &amp; rates</span>.</p>
+      </div>
+      <div class="setup">
+        <p>Each person sees only the menus and buttons their role allows, and the server enforces the same rules. To show this, sign in as different users during the demo. The project team will give you the shared demo password separately.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Demo user</th><th>Role</th><th>Does in this walkthrough</th></tr></thead>
+            <tbody>
+              <tr><td class="id">demo.sales</td><td>Sales</td><td>Captures the lead and fills in the membership application</td></tr>
+              <tr><td class="id">demo.marketing</td><td>Marketing (OPC)</td><td>Captures street leads</td></tr>
+              <tr><td class="id">demo.manager</td><td>Management</td><td>Approves the member and edits records (a reason is required)</td></tr>
+              <tr><td class="id">demo.finance</td><td>Finance</td><td>EMI schedule, payments, receipts, ASF</td></tr>
+              <tr><td class="id">demo.reservations</td><td>Reservations</td><td>Books, approves and confirms stays, issues vouchers</td></tr>
+              <tr><td class="id">demo.service</td><td>Member services</td><td>Emails, calls, documents</td></tr>
+              <tr><td class="id">demo.admin</td><td>Administrator</td><td>Users, roles, rates and the activity log</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="color:var(--muted);font-size:.92rem">A live demo of chapters 1–8 takes about 25 minutes. Chapters 9 and 10 are optional extras.</p>
+      </div>
+    </section>
+
+    <section class="ch" id="dashboard">
+      <div class="ch-head">
+        <div class="n">Chapter 1</div>
+        <h2>Sign in, dashboard and search</h2>
+        <div class="who">Sign in as <span class="id">demo.sales</span> (any user works)</div>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>What to click</h3>
+          <ol class="steps">
+            <li>Sign in with username and password.</li>
+            <li>The <span class="ui">Dashboard</span> opens on what needs attention today.</li>
+            <li>Click any tile to open the matching filtered list.</li>
+            <li>Press <span class="ui">Ctrl + K</span> and type a membership number, lead ID, name or mobile.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>Six tiles: follow-ups due, approvals pending, overdue EMIs, reservations waiting on ASF, default notices expiring, upcoming check-ins.</li>
+            <li>Search accepts any format: <code>9001</code>, <code>MSMC8-9001</code>, or a mobile with or without <code>+91</code>.</li>
+            <li>The orange DEV badge appears on test environments only, never in production.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shots two">
+        <figure><a href="01-login.png" target="_blank" rel="noopener"><img src="01-login.png" alt="Sign-in page with the Club8 Holidays and K8 logos" loading="lazy" width="1440" height="900"></a><figcaption>Sign-in page carrying both brands.</figcaption></figure>
+        <figure><a href="02-dashboard.png" target="_blank" rel="noopener"><img src="02-dashboard.png" alt="Dashboard with six attention tiles and lists" loading="lazy" width="1440" height="900"></a><figcaption>The dashboard: today's work at a glance.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="lead">
+      <div class="ch-head">
+        <div class="n">Chapter 2</div>
+        <h2>Capture a lead</h2>
+        <div class="who">Sign in as <span class="id">demo.sales</span> or <span class="id">demo.marketing</span></div>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>What to click</h3>
+          <ol class="steps">
+            <li><span class="ui">Leads → New lead</span>. Enter name, mobile, email, city and the OPC's name. Click <span class="ui">Save lead</span>.</li>
+            <li>On the lead, click <span class="ui">Mark contacted</span>.</li>
+            <li>Enter the presentation date and time, then <span class="ui">Mark presentation scheduled</span>.</li>
+            <li>After the presentation, click <span class="ui">Attended</span>.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>Each lead gets an ID such as <code>L-2026-000002</code>.</li>
+            <li>A matching mobile or email triggers a possible-duplicate warning. Saving anyway needs a reason, and the reason is logged.</li>
+            <li>Every status change is kept in the history at the bottom of the lead. Notes are added, never overwritten.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shots two">
+        <figure><a href="03-new-lead.png" target="_blank" rel="noopener"><img src="03-new-lead.png" alt="New lead form filled in" loading="lazy" width="1440" height="900"></a><figcaption>New lead form.</figcaption></figure>
+        <figure><a href="04-lead-attended.png" target="_blank" rel="noopener"><img src="04-lead-attended.png" alt="Lead in Attended status with status history" loading="lazy" width="1440" height="900"></a><figcaption>The lead after the presentation, ready to convert.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="member">
+      <div class="ch-head">
+        <div class="n">Chapter 3</div>
+        <h2>Convert the lead to a member</h2>
+        <div class="who">Still <span class="id">demo.sales</span></div>
+        <p>The application screen follows the paper membership form from top to bottom, so staff can key it in without hunting for fields.</p>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>What to click</h3>
+          <ol class="steps">
+            <li>On the attended lead, click <span class="ui">Convert to member</span>. Name, mobile and email are already filled in.</li>
+            <li><span class="ui">Purchaser details</span>: date of birth, PAN, address, PIN code, state.</li>
+            <li><span class="ui">Membership details</span>: brand CLUB8, Premium, Red season, Studio, 7 nights a year, 10 years.</li>
+            <li><span class="ui">Payment details</span>: price ₹2,50,000, admin fees ₹5,000, down payment ₹55,000 by card. Then EMI ₹20,000 × 10 from next month.</li>
+            <li>Tick the signatures and click <span class="ui">Create member &amp; convert lead</span>.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>Total (₹2,55,000.00) and balance (₹2,00,000.00) are calculated as you type, and the last year of use is filled in automatically.</li>
+            <li>Only the last 4 digits of a card are ever stored. For Aadhaar, only the last 4 digits and a masked copy are kept.</li>
+            <li>The membership number (<code>MSMC8-…</code>) is assigned automatically. The member starts as <span class="ui">Pending approval</span>.</li>
+            <li>The lead is kept, marked <span class="ui">Converted</span> and linked to the new member.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shots two">
+        <figure><a href="05-application-purchaser.png" target="_blank" rel="noopener"><img src="05-application-purchaser.png" alt="Membership application, purchaser section" loading="lazy" width="1440" height="900"></a><figcaption>Purchaser section, with section navigation on the left.</figcaption></figure>
+        <figure><a href="06-application-payment.png" target="_blank" rel="noopener"><img src="06-application-payment.png" alt="Membership application, payment section with totals" loading="lazy" width="1440" height="900"></a><figcaption>Payment section: totals and balance are calculated automatically.</figcaption></figure>
+        <figure><a href="07-member-pending.png" target="_blank" rel="noopener"><img src="07-member-pending.png" alt="New member record in Pending approval" loading="lazy" width="1440" height="900"></a><figcaption>The new member record, pending approval.</figcaption></figure>
+        <figure><a href="24-lead-converted.png" target="_blank" rel="noopener"><img src="24-lead-converted.png" alt="Lead marked Converted with a link to the member" loading="lazy" width="1440" height="900"></a><figcaption>The original lead, now converted and linked.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="approve">
+      <div class="ch-head">
+        <div class="n">Chapter 4</div>
+        <h2>Approve the membership</h2>
+        <div class="who">Upload as <span class="id">demo.sales</span>, approve as <span class="id">demo.manager</span></div>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>What to click</h3>
+          <ol class="steps">
+            <li>On the member, open <span class="ui">Correspondence &amp; Documents</span> and upload the signed agreement (type "Membership Agreement (signed)").</li>
+            <li>Sign in as the manager and open the member's <span class="ui">Profile</span>.</li>
+            <li>The approval panel shows "All checks passed". Click <span class="ui">Approve member</span>.</li>
+            <li>Open the <span class="ui">Entitlement</span> tab.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>The panel lists anything missing, such as the down payment, signed agreement, KYC or mandatory fields. Approval is blocked until they are done.</li>
+            <li>On approval the member becomes <span class="ui">Active</span> and 7 nights are credited for each of the 10 years.</li>
+            <li>The header always shows nights left this year, outstanding balance, next check-in and this year's ASF status.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shots two">
+        <figure><a href="08-approval-panel.png" target="_blank" rel="noopener"><img src="08-approval-panel.png" alt="Approval panel showing all checks passed" loading="lazy" width="1440" height="900"></a><figcaption>Approval panel.</figcaption></figure>
+        <figure><a href="09-entitlement-active.png" target="_blank" rel="noopener"><img src="09-entitlement-active.png" alt="Entitlement table with 7 nights per year for 10 years" loading="lazy" width="1440" height="900"></a><figcaption>Entitlement: 7 nights a year, 2026–2035.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="finance">
+      <div class="ch-head">
+        <div class="n">Chapter 5</div>
+        <h2>Payments, EMIs and receipts</h2>
+        <div class="who">Sign in as <span class="id">demo.finance</span></div>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>What to click</h3>
+          <ol class="steps">
+            <li>Open the member's <span class="ui">Finance</span> tab. The card down payment is already in the ledger with a receipt.</li>
+            <li>Click <span class="ui">Generate EMI schedule</span>: 10 instalments of ₹20,000.</li>
+            <li>Click <span class="ui">Record payment</span>. Choose Membership EMI, ₹20,000, UPI, enter the reference and save.</li>
+            <li>Click <span class="ui">Receipt</span> on the ledger row to open the PDF.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>Instalment 1 changes to <span class="ui">Paid</span>. Payments are applied to the oldest instalments first, and any overpayment is kept as credit.</li>
+            <li>Cash is not offered as a payment method. A reference is required for every payment.</li>
+            <li>Payments are never edited. <span class="ui">Correct</span> posts a reversal or adjustment with a reason, so the history stays complete.</li>
+            <li>GST appears only on the ASF, shown separately from the base amount.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shots two">
+        <figure><a href="10-record-payment.png" target="_blank" rel="noopener"><img src="10-record-payment.png" alt="Record payment dialog" loading="lazy" width="1440" height="900"></a><figcaption>Recording an EMI payment.</figcaption></figure>
+        <figure><a href="11-finance-tab.png" target="_blank" rel="noopener"><img src="11-finance-tab.png" alt="Finance tab with money summary, EMI schedule, ASF and ledger" loading="lazy"></a><figcaption>The full Finance tab: summary, EMI schedule, ASF by year and payment ledger.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="reserve">
+      <div class="ch-head">
+        <div class="n">Chapter 6</div>
+        <h2>Book a stay, pay the ASF, confirm</h2>
+        <div class="who">Sign in as <span class="id">demo.reservations</span>, with <span class="id">demo.finance</span> for the ASF</div>
+        <p>This is the centre of the demo. The system works out the entitlement and the annual fee before anything is submitted, and it will not confirm a booking while the year's ASF is unpaid.</p>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>What to click</h3>
+          <ol class="steps">
+            <li>On the member, open <span class="ui">Reservations → New reservation</span>.</li>
+            <li>Choose Goa → Demo Beach Resort, dates about 3 weeks ahead, 4 nights. Watch the calculation on the right.</li>
+            <li>Click <span class="ui">Submit request</span>, then open the new reservation (<code>R-2026-…</code>).</li>
+            <li>Click <span class="ui">Approve (deduct entitlement)</span>. Enter the property's confirmation number and click <span class="ui">Confirm</span>. It is refused.</li>
+            <li>As finance: <span class="ui">Finance → Pay ASF 2026</span>, card, reference, save.</li>
+            <li>Back as reservations: <span class="ui">Confirm</span> now works. Click <span class="ui">Generate confirmation / voucher PDF</span>.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>Before submitting, staff see the nights used and which years they come from (saved, current or borrowed), plus the ASF due: ₹12,000 + 5% GST = ₹12,600.00 at the demo rate.</li>
+            <li>Nights are held when requested and deducted exactly once on approval. Clicking again cannot deduct twice.</li>
+            <li>The ASF is raised at the first booking in a membership year. A second booking in the same year shows "ASF payable: none".</li>
+            <li>The entitlement now shows 4 nights used and 3 remaining for 2026.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note warn"><strong>Confirmation is blocked until the ASF is paid</strong><p>The agreement says non-payment of ASF results in non-confirmation, so the server refuses Confirm. A user with the override permission can confirm anyway with a written reason, which is recorded.</p></div>
+      <div class="shots">
+        <figure><a href="12-reservation-quote.png" target="_blank" rel="noopener"><img src="12-reservation-quote.png" alt="New reservation form with live entitlement and ASF calculation" loading="lazy" width="1440" height="900"></a><figcaption>The live calculation: 4 entitlement nights from 2026 and ASF of ₹12,600.00 including GST.</figcaption></figure>
+      </div>
+      <div class="shots two">
+        <figure><a href="13-confirm-blocked.png" target="_blank" rel="noopener"><img src="13-confirm-blocked.png" alt="Approved reservation with Confirm blocked because ASF is unpaid" loading="lazy" width="1440" height="900"></a><figcaption>Approved, but Confirm is blocked: ASF 2026 unpaid.</figcaption></figure>
+        <figure><a href="14-reservation-confirmed.png" target="_blank" rel="noopener"><img src="14-reservation-confirmed.png" alt="Confirmed reservation with ASF paid and voucher generated" loading="lazy" width="1440" height="900"></a><figcaption>After the ASF payment: confirmed, with a voucher.</figcaption></figure>
+        <figure><a href="15-entitlement-used.png" target="_blank" rel="noopener"><img src="15-entitlement-used.png" alt="Entitlement showing 4 nights used and 3 remaining in 2026" loading="lazy" width="1440" height="900"></a><figcaption>Entitlement after the stay is confirmed.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="service">
+      <div class="ch-head">
+        <div class="n">Chapter 7</div>
+        <h2>Emails, calls and documents</h2>
+        <div class="who">Sign in as <span class="id">demo.service</span></div>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>What to click</h3>
+          <ol class="steps">
+            <li>Open the member's <span class="ui">Correspondence &amp; Documents</span> tab.</li>
+            <li><span class="ui">Log an email</span>: subject "Early check-in request", then <span class="ui">Add email</span>.</li>
+            <li><span class="ui">Log a call</span>: summary "Welcome call", then <span class="ui">Add call</span>.</li>
+            <li>Upload a PDF and click <span class="ui">Preview</span>.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>Emails can also be imported from <code>.eml</code> or <code>.msg</code> files, and replies are threaded automatically.</li>
+            <li>The timeline shows everything about the member in date order and can be filtered by type.</li>
+            <li>Documents open in a viewer through a short-lived link. Deleting one needs a reason.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shots">
+        <figure><a href="16-correspondence.png" target="_blank" rel="noopener"><img src="16-correspondence.png" alt="Correspondence tab with emails, calls, documents and timeline" loading="lazy" width="1440" height="900"></a><figcaption>Correspondence, documents and the member timeline.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="audit">
+      <div class="ch-head">
+        <div class="n">Chapter 8</div>
+        <h2>Every change on record</h2>
+        <div class="who">Sign in as <span class="id">demo.manager</span>, then <span class="id">demo.admin</span></div>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>What to click</h3>
+          <ol class="steps">
+            <li>On the member's <span class="ui">Profile</span>, click <span class="ui">Edit</span>, change the comments and give a reason. Save.</li>
+            <li>Open the <span class="ui">History</span> tab.</li>
+            <li>As admin, open <span class="ui">Activity log</span> and click <span class="ui">Verify integrity</span>.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>Each change shows who made it, when, the reason, and the old and new values side by side.</li>
+            <li>The history covers every step of this demo: lead, conversion, approval, payments, ASF, entitlement, reservation, emails, calls and uploads.</li>
+            <li>The activity log is chained like a ledger, so any tampering is detected. It can be filtered and exported to Excel.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shots two">
+        <figure><a href="17-member-history.png" target="_blank" rel="noopener"><img src="17-member-history.png" alt="Member history with old and new values" loading="lazy" width="1440" height="900"></a><figcaption>Member history: old → new values with the reason.</figcaption></figure>
+        <figure><a href="18-activity-log.png" target="_blank" rel="noopener"><img src="18-activity-log.png" alt="Activity log with hash chain verified" loading="lazy" width="1440" height="900"></a><figcaption>Activity log, verified intact.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="screens">
+      <div class="ch-head">
+        <div class="n">Chapter 9 · optional</div>
+        <h2>Everyday lists and administration</h2>
+        <p>Lists can be filtered, saved as searches and exported. Admin covers users, roles, a permission grid, and master data such as rates, which are added as new dated rows so the old rate stays on record.</p>
+      </div>
+      <div class="shots two">
+        <figure><a href="19-members-list.png" target="_blank" rel="noopener"><img src="19-members-list.png" alt="Members list" loading="lazy" width="1440" height="900"></a><figcaption>Members, with a brand column for Club8 and K8.</figcaption></figure>
+        <figure><a href="23-leads-list.png" target="_blank" rel="noopener"><img src="23-leads-list.png" alt="Leads list with status counts" loading="lazy" width="1440" height="900"></a><figcaption>Leads, with counts per status.</figcaption></figure>
+        <figure><a href="20-reservations-list.png" target="_blank" rel="noopener"><img src="20-reservations-list.png" alt="Reservations list" loading="lazy" width="1440" height="900"></a><figcaption>All reservations.</figcaption></figure>
+        <figure><a href="21-finance-dashboard.png" target="_blank" rel="noopener"><img src="21-finance-dashboard.png" alt="Finance dashboard" loading="lazy" width="1440" height="900"></a><figcaption>Finance dashboard: overdue EMIs, ASF waits, default notices.</figcaption></figure>
+        <figure><a href="22-admin.png" target="_blank" rel="noopener"><img src="22-admin.png" alt="Administration: users and role permissions" loading="lazy" width="1440" height="900"></a><figcaption>Admin: users, roles and permissions.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="phone">
+      <div class="ch-head">
+        <div class="n">Chapter 10 · optional</div>
+        <h2>On the phone</h2>
+        <p>The same application works on a phone browser, so a salesperson on the street can look up a member or lead in seconds.</p>
+      </div>
+      <div class="shots phones">
+        <figure><a href="25-phone-dashboard.png" target="_blank" rel="noopener"><img src="25-phone-dashboard.png" alt="Dashboard on a phone" loading="lazy" width="390" height="844"></a><figcaption>Dashboard.</figcaption></figure>
+        <figure><a href="26-phone-search.png" target="_blank" rel="noopener"><img src="26-phone-search.png" alt="Search results on a phone" loading="lazy" width="390" height="844"></a><figcaption>Search finds the member and the lead.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="ch" id="rules">
+      <div class="ch-head">
+        <div class="n">Reference</div>
+        <h2>Rules at a glance</h2>
+        <p>Every rule below is enforced by the server, not just the screen. Figures marked as settings are master data the business can change.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Rule</th></tr></thead>
+          <tbody>
+            <tr><td>ASF</td><td>One fee per membership year, raised at the first booking that uses that year's nights, plus 5% GST. It is paid in full in one payment.</td></tr>
+            <tr><td>Confirmation</td><td>Blocked while the ASF for the years used is unpaid. An override needs the permission and a reason.</td></tr>
+            <tr><td>Saving nights</td><td>Unused nights can be saved for up to 2 years (a setting). Expired nights are recorded, not deleted.</td></tr>
+            <tr><td>Borrowing</td><td>Up to 2 future years (a setting), never beyond the last year of use.</td></tr>
+            <tr><td>Deduction</td><td>Nights are held at request and deducted once on approval. A season and category matrix converts booked nights to entitlement nights.</td></tr>
+            <tr><td>Cancellation</td><td>Needs a reason. A confirmed booking also needs the member's written request. Nights credited back: more than 30 days' notice 100%, 15–30 days 50%, under 15 days none.</td></tr>
+            <tr><td>Reschedule</td><td>Original dates are kept in the history, and nights are adjusted, never deducted twice. A third reschedule needs a manager.</td></tr>
+            <tr><td>Payments</td><td>No cash. A reference is required, and a receipt PDF is produced. Mistakes are corrected with reversals, never edits.</td></tr>
+            <tr><td>Default</td><td>Overdue EMIs can trigger a default notice with a 14-day deadline. Paying in time returns the member to Active.</td></tr>
+            <tr><td>Rates</td><td>Added as new dated rows. ASF increases above 5% need an override reason and special permission.</td></tr>
+            <tr><td>Personal data</td><td>Card numbers: last 4 digits only. Aadhaar: last 4 digits and a masked copy. Viewing full KYC numbers is logged and hides again after 30 seconds.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note ok"><strong>Two brands, one system</strong><p>Club8 Holidays and K8 share one CRM. Each member record carries its brand, and receipts, notices and vouchers print with that brand's logo, colours and legal entity.</p></div>
+    </section>
+
+    <footer>Screenshots were taken on 10-11-2026 from the demo environment using fictitious data. Click any screenshot to open it at full size.</footer>
+  </main>
+</div>

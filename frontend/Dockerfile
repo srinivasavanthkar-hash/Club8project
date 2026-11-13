@@ -10,6 +10,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Rewrites (/api/v1 -> FastAPI) are resolved at build time: pass the internal API URL as a build arg.
 ARG API_INTERNAL_URL=http://api:8000
 ENV API_INTERNAL_URL=$API_INTERNAL_URL
+# App shell theme and favicon: club8 (default) or k8. Inlined at build time (docs/DESIGN_DECISIONS.md).
+ARG NEXT_PUBLIC_DEFAULT_BRAND=club8
+ENV NEXT_PUBLIC_DEFAULT_BRAND=$NEXT_PUBLIC_DEFAULT_BRAND
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

@@ -1,4 +1,4 @@
-import { addMoney, formatDate, formatMoney, subMoney } from "./format";
+import { addMoney, formatDate, formatDateTime, formatMoney, formatNights, formatPhone, formatPhoneMasked, humanize, subMoney } from "./format";
 import { aadhaarSchema, isAdult, mobileSchema, normalizePhone, panSchema, verhoeffValid } from "./validation";
 
 describe("formatting", () => {
@@ -12,6 +12,15 @@ describe("formatting", () => {
   it("shows dates as DD-MM-YYYY in Asia/Kolkata", () => {
     expect(formatDate("2026-10-15")).toBe("15-10-2026");
     expect(formatDate("2026-10-14T20:00:00Z")).toBe("15-10-2026"); // 01:30 IST next day
+  });
+  it("shows 12-hour IST times, masked phones and human labels", () => {
+    expect(formatDateTime("2026-10-15T10:35:00Z")).toBe("15-10-2026 4:05 pm");
+    expect(formatPhoneMasked("9845012308")).toBe("+91 98XXX XX308");
+    expect(formatPhoneMasked("+91 98450 12308")).toBe("+91 98XXX XX308");
+    expect(formatPhone("9845012345")).toBe("+91 98450 12345");
+    expect(formatNights("7")).toBe("7.0");
+    expect(formatNights("3.50")).toBe("3.5");
+    expect(humanize("MEMBERSHIP_EMI")).toBe("Membership EMI");
   });
   it("adds and subtracts money exactly (no floating point)", () => {
     expect(addMoney("250000.10", "5000.20")).toBe("255000.30");

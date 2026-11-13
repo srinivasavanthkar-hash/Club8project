@@ -14,7 +14,15 @@ export function useListState<F extends Record<string, unknown>>(key: string, ini
     } catch {
       /* storage unavailable */
     }
-  }, [key]);
+    // deep links from elsewhere in the UI (dashboard tiles, duplicate-match warnings): ?status=ACTIVE&q=...
+    const sp = new URLSearchParams(window.location.search);
+    const patch: Record<string, unknown> = {};
+    for (const k of Object.keys(initial)) {
+      const v = sp.get(k);
+      if (v !== null) patch[k] = typeof initial[k] === "boolean" ? v === "1" || v === "true" : v;
+    }
+    if (Object.keys(patch).length) setFilters((f) => ({ ...f, ...patch }));
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = useCallback((patch: Partial<F>) => {
     setFilters((f) => ({ ...f, ...patch }));

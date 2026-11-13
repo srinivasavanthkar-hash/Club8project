@@ -19,3 +19,7 @@ infra/terraform/**/.terraform/
 infra/terraform/**/*.tfstate*
 infra/terraform/**/*.tfvars
 !infra/terraform/**/example.tfvars
+*.log
+
+# embedded PostgreSQL for local runs without Docker
+.local/

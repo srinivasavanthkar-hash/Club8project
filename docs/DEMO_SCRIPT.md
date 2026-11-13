@@ -33,3 +33,10 @@ Open http://localhost:3000. All demo users share the password `Demo-Passw0rd!` (
 docker compose run --rm api python -m app.demo_cli --base-url http://web:3000
 cd frontend && E2E_BASE_URL=http://localhost:3000 npx playwright test
 ```
+
+## Illustrated walkthrough for clients
+`docs/demo-tour/index.html` is the same flow with screenshots, written for the client (open it in a browser). To retake
+the screenshots after UI changes, run against a freshly seeded stack:
+```bash
+cd frontend && TOUR=1 npx playwright test tour --project=desktop --workers=1   # writes docs/demo-tour/*.png
+```

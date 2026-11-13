@@ -29,6 +29,13 @@ class Company(Base, _Coded):
     registered_address: Mapped[str] = mapped_column(Text, default="")
     gstin: Mapped[str | None] = mapped_column(String(15))
     next_membership_seq: Mapped[int] = mapped_column(Integer, default=1)
+    # Branding for generated documents (docs/BRAND_PROMPT.md section 5). logo_path is relative to the brand asset
+    # folder, e.g. "club8/club8-logo.png"; colours are "#RRGGBB" (validated before use in PDF styles).
+    logo_path: Mapped[str] = mapped_column(String(200), default="")
+    primary_colour: Mapped[str] = mapped_column(String(7), default="")
+    accent_colour: Mapped[str] = mapped_column(String(7), default="")
+    # True until the client confirms the legal entity / address; blocks issuing receipts in production.
+    details_pending_confirmation: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class ResortCategory(Base, _Coded):

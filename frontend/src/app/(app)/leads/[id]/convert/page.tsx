@@ -2,6 +2,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { use } from "react";
+import { PageHeader } from "@/components/crm/Display";
+import { PageSkeleton } from "@/components/crm/States";
 import { MemberForm, toPayload } from "@/components/MemberForm";
 import { api } from "@/lib/api";
 import type { Member } from "@/lib/types";
@@ -17,12 +19,11 @@ export default function ConvertLeadPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const router = useRouter();
   const prefill = useQuery({ queryKey: ["prefill", id], queryFn: () => api.get<Prefill>(`/leads/${id}/conversion-prefill`) });
-  if (!prefill.data) return <p>Loading…</p>;
+  if (!prefill.data) return <PageSkeleton variant="record" />;
   const p = prefill.data;
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold">Convert lead to member</h1>
-      <p className="text-sm text-muted-foreground">Pre-filled from the lead. The lead is kept and linked to the new member in one transaction.</p>
+    <div className="flex flex-col gap-5">
+      <PageHeader title="Convert lead to member" description="Pre-filled from the lead. The lead is kept and linked to the new member in one transaction." />
       <MemberForm
         submitLabel="Create member & convert lead"
         defaults={{

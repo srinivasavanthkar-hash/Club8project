@@ -1,9 +1,10 @@
 "use client";
+import { Download, Eye } from "lucide-react";
 import { useState } from "react";
-import { Dialog } from "@/components/ui";
+import { Button, Drawer } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 
-/** Opens a short-lived signed URL (issued after a server-side permission check) in an inline viewer. */
+/** Opens a short-lived signed URL (issued after a server-side permission check) in an inline preview drawer. */
 export function DocLink({ id, label, contentType }: { id: string; label: string; contentType?: string }) {
   const [url, setUrl] = useState<string | null>(null);
   const [type, setType] = useState(contentType ?? "application/pdf");
@@ -24,17 +25,21 @@ export function DocLink({ id, label, contentType }: { id: string; label: string;
   };
   return (
     <>
-      <button className="text-xs underline" onClick={open}>{label}</button>
-      {err && <span role="alert" className="text-xs text-destructive"> {err}</span>}
-      <Dialog open={!!url} onClose={() => setUrl(null)} title={label}>
+      <Button variant="ghost" size="sm" onClick={open}><Eye aria-hidden />{label}</Button>
+      {err && <span role="alert" className="text-xs text-danger"> {err}</span>}
+      <Drawer
+        open={!!url}
+        onClose={() => setUrl(null)}
+        title={label}
+        footer={<Button variant="outline" onClick={download}><Download aria-hidden />Download</Button>}
+      >
         {url && (type.startsWith("image/") ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt={label} className="max-h-[65vh] w-full object-contain" />
+          <img src={url} alt={label} className="mx-auto max-h-full w-full rounded-md object-contain" />
         ) : (
-          <iframe src={url} title={label} className="h-[65vh] w-full" data-testid="doc-preview" />
+          <iframe src={url} title={label} className="h-full min-h-[70vh] w-full rounded-md border border-border" data-testid="doc-preview" />
         ))}
-        <button className="mt-2 text-sm underline" onClick={download}>Download</button>
-      </Dialog>
+      </Drawer>
     </>
   );
 }

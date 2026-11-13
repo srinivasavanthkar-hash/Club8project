@@ -15,7 +15,9 @@ correspondence and documents, and a tamper-evident activity log.
 [Plan](docs/PLAN.md) · [Architecture](docs/ARCHITECTURE.md) · [Data model](docs/DATA_MODEL.md) ·
 [Form mapping](docs/FORM_MAPPING.md) · [Business rules](docs/BUSINESS_RULES.md) · [Decisions](docs/DECISIONS.md) ·
 [Open questions](docs/OPEN_QUESTIONS.md) · [Backup & restore runbook](docs/BACKUP_RESTORE_RUNBOOK.md) ·
-[User guide](docs/USER_GUIDE.md) · [Demo script](docs/DEMO_SCRIPT.md) · [OpenAPI](docs/openapi.json)
+[User guide](docs/USER_GUIDE.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Client walkthrough](docs/demo-tour/index.html) · [OpenAPI](docs/openapi.json) ·
+[Design system](docs/DESIGN_SYSTEM.md) · [Design decisions](docs/DESIGN_DECISIONS.md) · [UI audit](docs/ui-audit/AUDIT.md) ·
+[Brand prompt](docs/BRAND_PROMPT.md)
 (live at `/api/v1/docs` outside prod)
 
 ## Run locally with Docker
@@ -42,8 +44,9 @@ cd backend
 ruff check app tests alembic && mypy app
 pytest --cov=app                 # unit + integration (real PostgreSQL via testcontainers, or pgserver, or CRM_TEST_DATABASE_URL)
 cd ../frontend
-npm run lint && npm run typecheck && npm test
-npx playwright test              # needs the full stack running (E2E_BASE_URL, default http://127.0.0.1:3000)
+npm run lint && npm run typecheck && npm test   # lint includes the design-token check
+npm run check:contrast           # WCAG AA contrast of the colour tokens
+npx playwright test              # Section 14 demo (needs the full stack) + axe a11y + visual regression (recorded data)
 ```
 Status at hand-over: 110 backend tests passing (65 unit/property tests + 45 integration tests on PostgreSQL 16,
 including the full Section 14 demo); 90% coverage on the service + domain layer (CI gate: 80%); ruff and mypy clean;

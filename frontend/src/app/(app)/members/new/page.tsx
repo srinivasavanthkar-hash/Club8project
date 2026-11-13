@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { PageHeader } from "@/components/crm/Display";
 import { MemberForm, toPayload } from "@/components/MemberForm";
 import { api } from "@/lib/api";
 import type { Member } from "@/lib/types";
@@ -7,8 +8,8 @@ import type { Member } from "@/lib/types";
 export default function NewMemberPage() {
   const router = useRouter();
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold">New membership application</h1>
+    <div className="flex flex-col gap-5">
+      <PageHeader title="New membership application" description="Key in the paper Membership Application Form section by section, top to bottom." />
       <MemberForm
         submitLabel="Save application"
         onSubmit={async (v) => {

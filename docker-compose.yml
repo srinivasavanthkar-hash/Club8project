@@ -76,6 +76,9 @@ services:
       context: ./frontend
       args:
         API_INTERNAL_URL: http://api:8000  # rewrites are resolved at build time
+        NEXT_PUBLIC_DEFAULT_BRAND: club8  # app shell theme: club8 | k8
+    environment:
+      CRM_ENV: local  # read per request: shows the DEV ribbon (staging -> STAGING, prod -> none)
     ports: ["3000:3000"]
     depends_on: [api]
 

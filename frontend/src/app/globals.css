@@ -2,31 +2,178 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 40%;
-  --border: 214 32% 88%;
-  --primary: 199 89% 32%;
-  --primary-foreground: 0 0% 100%;
-  --destructive: 0 72% 45%;
-  --destructive-foreground: 0 0% 100%;
-  --warning: 32 95% 40%;
-  --success: 142 70% 30%;
-}
-
-@media (prefers-color-scheme: dark) {
+/* Design tokens (docs/DESIGN_SYSTEM.md). HSL channels so Tailwind opacity modifiers work (bg-primary/10).
+ * Components never use raw colours, and never a specific brand's colours: they use the semantic --brand-* tokens,
+ * which the active theme (<html data-brand>) maps to Club8 or K8. Contrast is checked by `npm run check:contrast`. */
+@layer base {
   :root {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 96%;
-    --muted: 217 33% 16%;
-    --muted-foreground: 215 20% 70%;
-    --border: 217 33% 22%;
-    --primary: 199 89% 55%;
-    --primary-foreground: 222 47% 8%;
+    /* Brand palettes, sampled from the supplied logos (docs/BRAND_PROMPT.md section 2). Never used directly. */
+    --c8-indigo: 245.6 46.4% 35.9%;         /* #393186 "HOLIDAYS", dark end of the "Club" gradient */
+    --c8-indigo-hover: 245.5 46.1% 27.6%;   /* #2C2667 */
+    --c8-indigo-subtle: 245.5 44% 95.1%;    /* #EEEDF8 */
+    --c8-indigo-border: 245.7 38.2% 78.4%;  /* #B7B3DD */
+    --c8-blue: 213.9 69.7% 38.8%;           /* #1E5AA8 middle of the gradient */
+    --c8-cyan: 198 98.2% 43.3%;             /* #029ADB light end of the gradient: large text / icons only */
+    --c8-orange: 28.3 86.9% 52.2%;          /* #EF7F1B the "8" and the sun: never text */
+    --c8-orange-subtle: 30 92.9% 94.5%;     /* #FEF1E4 */
+    --c8-orange-text: 28.3 79.9% 39%;       /* #B35F14 orange text, on white only */
+    --k8-navy: 226.8 47.1% 17.1%;           /* #172040 "KLUB EIGHT ASIA VENTURES" */
+    --k8-navy-hover: 226.7 50.9% 10.4%;     /* #0D1328 */
+    --k8-navy-subtle: 226.7 25.7% 93.1%;    /* #E9EBF2 */
+    --k8-navy-border: 226.7 20% 73.5%;      /* #AEB4C9 */
+    --k8-navy-tint: 224 23.3% 37.8%;        /* #4A5677 muted navy tint (K8 secondary) */
+    --k8-gold: 47.5 68.6% 43.7%;            /* #BC9C23 the "K8" letters: never text */
+    --k8-gold-subtle: 47 62.2% 92.7%;       /* #F8F3E1 */
+    --k8-gold-text: 47.4 69.5% 32.2%;       /* #8B7319 gold text, on white only */
+
+    /* Semantic brand tokens: Club8 theme (default) */
+    --brand-primary: var(--c8-indigo);              /* primary buttons, links, active nav text, focus ring */
+    --brand-primary-hover: var(--c8-indigo-hover);
+    --brand-primary-subtle: var(--c8-indigo-subtle); /* active nav / tab / selected row backgrounds */
+    --brand-primary-border: var(--c8-indigo-border);
+    --brand-accent: var(--c8-orange);               /* active-nav bar, thin rules, highlights: fills only */
+    --brand-accent-subtle: var(--c8-orange-subtle);
+    --brand-accent-text: var(--c8-orange-text);     /* accent-coloured text, on white surfaces only */
+    --brand-secondary: var(--c8-blue);              /* secondary charts, info highlights */
+
+    /* Neutrals (warm) */
+    --bg: 40 23% 97%;                   /* #FAF9F7 page */
+    --surface: 0 0% 100%;               /* #FFFFFF cards, panels */
+    --surface-raised: 0 0% 100%;        /* popovers, dialogs (plus shadow) */
+    --surface-sunken: 40 20% 94%;       /* #F3F1ED table headers, read-only inputs, wells */
+    --border: 42 16% 87%;               /* #E4E1DA dividers */
+    --border-strong: 37 5% 54%;         /* #8F8A82 input borders (3.4:1 on surface) */
+    --text: 248 13% 13%;                /* #1D1C24 */
+    --text-muted: 250 7% 35%;           /* #55535F */
+    --text-subtle: 250 5% 44%;          /* #6B6975 */
+    --on-fill: 0 0% 100%;               /* text on primary / danger fills */
+
+    /* Semantic */
+    --success: 146 61% 27%;             /* #1B6E3F */
+    --success-subtle: 141 37% 93%;      /* #E5F3EA */
+    --warning: 36 100% 27%;             /* #8A5300 */
+    --warning-subtle: 39 86% 91%;       /* #FCEFD6 */
+    --warning-strong: 41 82% 81%;       /* #F6DCA6 */
+    --danger: 3 71% 41%;                /* #B3261E */
+    --danger-subtle: 6 71% 95%;         /* #FBE9E7 */
+    --info: 202 81% 30%;                /* #0F5F8C */
+    --info-subtle: 202 61% 93%;         /* #E2F0F8 */
+
+    /* Domain: seasons (deliberately distinct from danger / navy) */
+    --season-red: 6 54% 32%;            /* #7C2D25 */
+    --season-red-bg: 11 46% 91%;        /* #F2E0DC */
+    --season-blue: 209 60% 29%;         /* #1E4C78 */
+    --season-blue-bg: 210 58% 93%;      /* #E1ECF7 */
+
+    /* Shape and depth */
+    --radius-control: 6px;
+    --radius-card: 10px;
+    --shadow-color: 248 30% 10%;
+
+    /* Type scale */
+    --font-size-xs: 0.75rem;    /* 12 */
+    --font-size-sm: 0.8125rem;  /* 13 */
+    --font-size-base: 0.875rem; /* 14 - default body for dense screens */
+    --font-size-md: 1rem;       /* 16 */
+    --font-size-lg: 1.125rem;   /* 18 */
+    --font-size-xl: 1.25rem;    /* 20 */
+    --font-size-2xl: 1.5rem;    /* 24 */
+    --font-size-3xl: 1.875rem;  /* 30 */
+
+    --sidebar-width: 15rem;
+    --topbar-height: 3.5rem;
+  }
+
+  /* Club8 mapping, explicit so a [data-brand="club8"] block (style guide) works inside the K8 theme too. */
+  [data-brand="club8"] {
+    --brand-primary: var(--c8-indigo);
+    --brand-primary-hover: var(--c8-indigo-hover);
+    --brand-primary-subtle: var(--c8-indigo-subtle);
+    --brand-primary-border: var(--c8-indigo-border);
+    --brand-accent: var(--c8-orange);
+    --brand-accent-subtle: var(--c8-orange-subtle);
+    --brand-accent-text: var(--c8-orange-text);
+    --brand-secondary: var(--c8-blue);
+  }
+
+  /* K8 theme (NEXT_PUBLIC_DEFAULT_BRAND=k8): swaps the semantic brand tokens only. */
+  [data-brand="k8"] {
+    --brand-primary: var(--k8-navy);
+    --brand-primary-hover: var(--k8-navy-hover);
+    --brand-primary-subtle: var(--k8-navy-subtle);
+    --brand-primary-border: var(--k8-navy-border);
+    --brand-accent: var(--k8-gold);
+    --brand-accent-subtle: var(--k8-gold-subtle);
+    --brand-accent-text: var(--k8-gold-text);
+    --brand-secondary: var(--k8-navy-tint);
+  }
+
+  /* Dark mode is a token swap under `.dark`; intentionally not shipped yet (docs/DESIGN_DECISIONS.md). */
+
+  html {
+    @apply bg-bg text-fg;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bg text-base text-fg antialiased;
+  }
+  /* Figures line up in every table, and IDs / amounts elsewhere opt in with .tabular-nums or <Money>/<Mono>. */
+  table, input, .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--brand-primary));
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  /* Inputs show the ring inside their own rounded box */
+  input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline-offset: 0;
+    border-color: hsl(var(--brand-primary));
+  }
+  ::selection {
+    background: hsl(var(--brand-primary-subtle));
+    color: hsl(var(--text));
+  }
+  h1, h2, h3, h4 {
+    @apply font-semibold text-fg;
+  }
+  dialog::backdrop {
+    background: hsl(var(--shadow-color) / 0.45);
   }
 }
 
-html, body { @apply bg-background text-foreground; }
-*:focus-visible { @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background; }
+@layer components {
+  .select-chevron {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236B6975' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 1rem;
+  }
+}
+
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  aside, header[data-shell], [data-no-print] {
+    display: none !important;
+  }
+}

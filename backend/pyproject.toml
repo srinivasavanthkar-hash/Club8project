@@ -55,6 +55,10 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["app*"]
 
+[tool.setuptools.package-data]
+# brand logos embedded in generated PDFs (copies of frontend/public/brand, kept identical by a test)
+app = ["correspondence/brand/*/*.png"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"

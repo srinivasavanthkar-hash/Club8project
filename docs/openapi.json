@@ -7360,6 +7360,18 @@
       "type": "string",
       "title": "Status"
      },
+     "company_id": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "uuid"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Company Id"
+     },
      "email": {
       "type": "string",
       "title": "Email"

@@ -59,6 +59,9 @@ async def seed_demo(session: AsyncSession) -> None:
         receipt_prefix="RC8",
         registered_address="DEMO ADDRESS - Bengaluru, Karnataka",
         next_membership_seq=9001,
+        logo_path="club8/club8-logo.png",
+        primary_colour="#393186",
+        accent_colour="#EF7F1B",
     )
     await _get_or_add(
         session,
@@ -66,12 +69,17 @@ async def seed_demo(session: AsyncSession) -> None:
         "code",
         "K8",
         name="K8",
-        legal_name="Multiple Sales and Marketing LLP",
+        # K8's legal entity and address are not confirmed (docs/OPEN_QUESTIONS.md); never assume the Club8 LLP.
+        legal_name="Klub Eight Asia Ventures",
         brand="K8",
         membership_prefix="MSMK8",
         receipt_prefix="RK8",
-        registered_address="DEMO ADDRESS - Bengaluru, Karnataka",
+        registered_address="DEMO ADDRESS - pending confirmation",
         next_membership_seq=5001,
+        logo_path="k8/k8-logo.png",
+        primary_colour="#172040",
+        accent_colour="#BC9C23",
+        details_pending_confirmation=True,
     )
     await _get_or_add(
         session,

@@ -1,0 +1,5094 @@
+{
+ "recordedAt": "2026-10-19T08:24:20.310Z",
+ "ids": {
+  "member": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+  "reservation": "c9a57cd3-5eb8-4c36-bffc-c9767ee9ba84"
+ },
+ "responses": {
+  "GET /api/v1/auth/me?": {
+   "id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+   "username": "demo.admin",
+   "full_name": "Demo Admin",
+   "roles": [
+    "ADMIN"
+   ],
+   "permissions": [
+    "admin.customfields",
+    "admin.masterdata",
+    "admin.rates",
+    "admin.rates.override_cap",
+    "admin.roles",
+    "admin.templates",
+    "admin.users",
+    "auditlog.verify",
+    "auditlog.view",
+    "correspondence.create",
+    "correspondence.view",
+    "document.delete",
+    "document.upload",
+    "document.view",
+    "entitlement.adjust",
+    "entitlement.view",
+    "export.run",
+    "finance.default_notice",
+    "finance.view",
+    "kyc.view_full",
+    "lead.convert",
+    "lead.create",
+    "lead.duplicate_override",
+    "lead.status.change",
+    "lead.update",
+    "lead.view",
+    "letter.generate",
+    "member.approve",
+    "member.create",
+    "member.duplicate_override",
+    "member.status.change",
+    "member.terminate",
+    "member.update",
+    "member.view",
+    "payment.correct",
+    "payment.create",
+    "reservation.create",
+    "reservation.override",
+    "reservation.status.change",
+    "reservation.update",
+    "reservation.view",
+    "schedule.manage"
+   ],
+   "totp_enabled": false
+  },
+  "GET /api/v1/dashboard?": {
+   "follow_ups": [],
+   "approvals_pending": [
+    {
+     "id": "d7ec8a71-38d9-44d7-8ec7-780ed4f565b4",
+     "membership_number": "MSMC8-9008",
+     "purchase_date": "2026-10-16"
+    },
+    {
+     "id": "bb9e276d-8669-47c8-ab5a-818ef4f270ab",
+     "membership_number": "MSMC8-9012",
+     "purchase_date": "2026-10-16"
+    }
+   ],
+   "overdue_emis": [],
+   "overdue_asf": [],
+   "default_notices_expiring": [],
+   "upcoming_check_ins": [
+    {
+     "id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "reservation_number": "R-2026-000001",
+     "check_in": "2026-10-28",
+     "status": "CONFIRMED"
+    }
+   ],
+   "pending_reservations": 8
+  },
+  "GET /api/v1/admin/staff?": [
+   {
+    "id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+    "username": "demo.admin",
+    "full_name": "Demo Admin",
+    "is_active": true,
+    "roles": [
+     "ADMIN"
+    ]
+   },
+   {
+    "id": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "username": "demo.finance",
+    "full_name": "Demo Finance",
+    "is_active": true,
+    "roles": [
+     "FINANCE"
+    ]
+   },
+   {
+    "id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+    "username": "demo.manager",
+    "full_name": "Demo Manager",
+    "is_active": true,
+    "roles": [
+     "MANAGEMENT"
+    ]
+   },
+   {
+    "id": "e4c1bb82-fa7c-4cd1-84d2-e83a23e2c600",
+    "username": "demo.marketing",
+    "full_name": "Demo Marketer",
+    "is_active": true,
+    "roles": [
+     "MARKETING"
+    ]
+   },
+   {
+    "id": "a664156d-2743-4122-8770-06737f625fc9",
+    "username": "demo.service",
+    "full_name": "Demo Member Services",
+    "is_active": true,
+    "roles": [
+     "MEMBER_SERVICES"
+    ]
+   },
+   {
+    "id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+    "username": "demo.reservations",
+    "full_name": "Demo Reservations",
+    "is_active": true,
+    "roles": [
+     "RESERVATIONS"
+    ]
+   },
+   {
+    "id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "username": "demo.sales",
+    "full_name": "Demo Salesperson",
+    "is_active": true,
+    "roles": [
+     "SALES"
+    ]
+   },
+   {
+    "id": "3203a9a3-8652-4ddf-ba07-de1e6593b61e",
+    "username": "demo.team",
+    "full_name": "Demo Team Manager",
+    "is_active": true,
+    "roles": [
+     "SALES"
+    ]
+   },
+   {
+    "id": "6599f5fc-b303-488e-b1fa-07b819d40185",
+    "username": "jay18",
+    "full_name": "jay s",
+    "is_active": true,
+    "roles": [
+     "ADMIN"
+    ]
+   }
+  ],
+  "GET /api/v1/admin/master/venues?include_inactive=false": [
+   {
+    "city": "Bengaluru",
+    "code": "DEMO-MALL",
+    "name": "Demo Mall Atrium",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "ede9be12-db32-48a9-adf7-6051b4eff76f",
+    "created_at": "2026-10-16T05:45:53.829182Z",
+    "updated_at": "2026-10-16T05:45:53.829182Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   }
+  ],
+  "GET /api/v1/leads?page=1&page_size=1&status=NEW": {
+   "items": [],
+   "total": 0,
+   "page": 1,
+   "page_size": 1
+  },
+  "GET /api/v1/leads?page=1&page_size=1&status=CONTACTED": {
+   "items": [],
+   "total": 0,
+   "page": 1,
+   "page_size": 1
+  },
+  "GET /api/v1/leads?page=1&page_size=25": {
+   "items": [
+    {
+     "id": "2143a178-d05a-425b-9848-52c3befb935c",
+     "lead_number": "L-2026-000014",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo LKWR",
+     "mobile": "9837575614",
+     "whatsapp": "9837575614",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.lkwr@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "converted_at": "2026-10-16T07:59:44.279982Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "c0f83517-8a0e-4613-aecd-ca45433225bd",
+     "lead_number": "L-2026-000013",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo FDBH",
+     "mobile": "9836694962",
+     "whatsapp": "9836694962",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.fdbh@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "bb9e276d-8669-47c8-ab5a-818ef4f270ab",
+     "converted_at": "2026-10-16T07:45:03.886117Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "ca9e0dca-df44-42ad-80ca-09aac3c5d43f",
+     "lead_number": "L-2026-000012",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo TU0N",
+     "mobile": "9836651076",
+     "whatsapp": "9836651076",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.tu0n@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "ab8b4aea-4111-417e-88c8-4016648a0ba7",
+     "converted_at": "2026-10-16T07:44:20.162234Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "90779442-744b-4667-b6c0-5a7aaeef8f11",
+     "lead_number": "L-2026-000011",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo 4XWT",
+     "mobile": "9836595445",
+     "whatsapp": "9836595445",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.4xwt@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "cf299880-1baa-45fb-80bd-7ec30fc03bef",
+     "converted_at": "2026-10-16T07:43:24.419755Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "6ab9c481-aa06-493c-b964-2a08e8414d3f",
+     "lead_number": "L-2026-000010",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo 30W6",
+     "mobile": "9836520971",
+     "whatsapp": "9836520971",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.30w6@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "ce9fd20d-9528-44ed-bca0-6f3eeff9887b",
+     "converted_at": "2026-10-16T07:42:09.942197Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "f4c2e93d-e6b0-4bc2-8065-d5f0413debad",
+     "lead_number": "L-2026-000009",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo ZJY6",
+     "mobile": "9836488130",
+     "whatsapp": "9836488130",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.zjy6@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "d7ec8a71-38d9-44d7-8ec7-780ed4f565b4",
+     "converted_at": "2026-10-16T07:41:37.111388Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "816c1e24-0e48-4654-9709-5e134eaaea12",
+     "lead_number": "L-2026-000008",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo 24F9",
+     "mobile": "9836446054",
+     "whatsapp": "9836446054",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.24f9@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "f758d906-baa3-42d2-ac8e-53e7ff605faf",
+     "converted_at": "2026-10-16T07:40:55.228021Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "b2834968-048f-40eb-a939-d65b0a349999",
+     "lead_number": "L-2026-000007",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo DUTU",
+     "mobile": "9836372619",
+     "whatsapp": "9836372619",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.dutu@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "dea53abc-673f-475b-898b-9ef223e8aab3",
+     "converted_at": "2026-10-16T07:39:42.899664Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "0c79f14a-8e6a-48c6-b986-24bf4b0ce181",
+     "lead_number": "L-2026-000006",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo RIGB",
+     "mobile": "9836298640",
+     "whatsapp": "9836298640",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.rigb@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "29681662-ead6-488d-80c1-b907a3c81363",
+     "converted_at": "2026-10-16T07:38:32.852352Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "63ea1352-fbc0-4097-b5a1-7619c4bf6bdb",
+     "lead_number": "L-2026-000005",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo O2WC",
+     "mobile": "9836298581",
+     "whatsapp": "9836298581",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.o2wc@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "d884e96a-1785-46d7-9166-8d9ff00f2675",
+     "converted_at": "2026-10-16T07:38:30.167279Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "898c024d-a08d-4f92-8fcf-d415feb06378",
+     "lead_number": "L-2026-000004",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo YTME",
+     "mobile": "9836236828",
+     "whatsapp": "9836236828",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.ytme@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "ff95507d-ef9e-49fe-b555-f172e2682497",
+     "converted_at": "2026-10-16T07:37:25.878586Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "2eef3039-2ebc-4a73-b464-f7923bcbc953",
+     "lead_number": "L-2026-000003",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo IIXV",
+     "mobile": "9836106251",
+     "whatsapp": "9836106251",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.iixv@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "eaaab140-afbc-41d9-bd3e-abc5f9eac6ad",
+     "converted_at": "2026-10-16T07:35:17.235952Z",
+     "version": 5,
+     "notes": []
+    },
+    {
+     "id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "lead_number": "L-2026-000002",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Asha Demo LRKZ",
+     "mobile": "9502209714",
+     "whatsapp": "9502209714",
+     "whatsapp_same_as_mobile": true,
+     "email": "asha.demo.lrkz@example.com",
+     "city": "Bengaluru",
+     "venue_id": "ede9be12-db32-48a9-adf7-6051b4eff76f",
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-15T18:30:00Z",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "converted_at": "2026-10-16T06:34:26.507833Z",
+     "version": 5,
+     "notes": [
+      {
+       "id": "e4d7a00a-d554-48b6-abfc-e8f39d797288",
+       "note": "Met at demo stall",
+       "created_at": "2026-10-16T06:34:25.593371Z",
+       "created_by": "e4c1bb82-fa7c-4cd1-84d2-e83a23e2c600"
+      }
+     ]
+    },
+    {
+     "id": "d9fd8631-acab-41a0-a01a-733b64ba3b4d",
+     "lead_number": "L-2026-000001",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Deekshith",
+     "mobile": "9800775550",
+     "whatsapp": "9800775550",
+     "whatsapp_same_as_mobile": true,
+     "email": "deek@gmail.com",
+     "city": "Washroom",
+     "venue_id": "ede9be12-db32-48a9-adf7-6051b4eff76f",
+     "source_id": null,
+     "opc_name": "Umesh",
+     "salesperson_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "follow_up_date": "2026-10-31",
+     "status": "NOT_INTERESTED",
+     "presentation_at": "2026-10-31T07:00:00Z",
+     "member_id": null,
+     "converted_at": null,
+     "version": 5,
+     "notes": [
+      {
+       "id": "443c9b3f-436c-47d6-b6c4-8692287698ae",
+       "note": "Interested Client",
+       "created_at": "2026-10-16T05:52:41.657026Z",
+       "created_by": "bea30114-4e4a-4bbf-b62d-0a69d20655ec"
+      },
+      {
+       "id": "65e6598c-0f32-4a95-aa36-97723edd1a74",
+       "note": "asdfasdf",
+       "created_at": "2026-10-16T05:53:33.523617Z",
+       "created_by": "bea30114-4e4a-4bbf-b62d-0a69d20655ec"
+      }
+     ]
+    }
+   ],
+   "total": 14,
+   "page": 1,
+   "page_size": 25
+  },
+  "GET /api/v1/leads?page=1&page_size=1&status=CONVERTED": {
+   "items": [
+    {
+     "id": "2143a178-d05a-425b-9848-52c3befb935c",
+     "lead_number": "L-2026-000014",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Kiran Demo LKWR",
+     "mobile": "9837575614",
+     "whatsapp": "9837575614",
+     "whatsapp_same_as_mobile": true,
+     "email": "kiran.lkwr@example.com",
+     "city": "Bengaluru",
+     "venue_id": null,
+     "source_id": null,
+     "opc_name": "Demo OPC",
+     "salesperson_id": null,
+     "follow_up_date": null,
+     "status": "CONVERTED",
+     "presentation_at": "2026-10-16T05:30:00Z",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "converted_at": "2026-10-16T07:59:44.279982Z",
+     "version": 5,
+     "notes": []
+    }
+   ],
+   "total": 13,
+   "page": 1,
+   "page_size": 1
+  },
+  "GET /api/v1/leads?page=1&page_size=1&status=NOT_INTERESTED": {
+   "items": [
+    {
+     "id": "d9fd8631-acab-41a0-a01a-733b64ba3b4d",
+     "lead_number": "L-2026-000001",
+     "entry_date": "2026-10-16",
+     "prospect_name": "Deekshith",
+     "mobile": "9800775550",
+     "whatsapp": "9800775550",
+     "whatsapp_same_as_mobile": true,
+     "email": "deek@gmail.com",
+     "city": "Washroom",
+     "venue_id": "ede9be12-db32-48a9-adf7-6051b4eff76f",
+     "source_id": null,
+     "opc_name": "Umesh",
+     "salesperson_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "follow_up_date": "2026-10-31",
+     "status": "NOT_INTERESTED",
+     "presentation_at": "2026-10-31T07:00:00Z",
+     "member_id": null,
+     "converted_at": null,
+     "version": 5,
+     "notes": [
+      {
+       "id": "443c9b3f-436c-47d6-b6c4-8692287698ae",
+       "note": "Interested Client",
+       "created_at": "2026-10-16T05:52:41.657026Z",
+       "created_by": "bea30114-4e4a-4bbf-b62d-0a69d20655ec"
+      },
+      {
+       "id": "65e6598c-0f32-4a95-aa36-97723edd1a74",
+       "note": "asdfasdf",
+       "created_at": "2026-10-16T05:53:33.523617Z",
+       "created_by": "bea30114-4e4a-4bbf-b62d-0a69d20655ec"
+      }
+     ]
+    }
+   ],
+   "total": 1,
+   "page": 1,
+   "page_size": 1
+  },
+  "GET /api/v1/leads?page=1&page_size=1&status=ATTENDED": {
+   "items": [],
+   "total": 0,
+   "page": 1,
+   "page_size": 1
+  },
+  "GET /api/v1/leads?page=1&page_size=1&status=PRESENTATION_SCHEDULED": {
+   "items": [],
+   "total": 0,
+   "page": 1,
+   "page_size": 1
+  },
+  "GET /api/v1/admin/master/companies?include_inactive=false": [
+   {
+    "legal_name": "Multiple Sales and Marketing LLP",
+    "brand": "CLUB8 Holidays",
+    "membership_prefix": "MSMC8",
+    "receipt_prefix": "RC8",
+    "registered_address": "DEMO ADDRESS - Bengaluru, Karnataka",
+    "gstin": null,
+    "next_membership_seq": 9014,
+    "logo_path": "club8/club8-logo.png",
+    "primary_colour": "#393186",
+    "accent_colour": "#EF7F1B",
+    "details_pending_confirmation": false,
+    "code": "CLUB8",
+    "name": "CLUB8 Holidays",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+    "created_at": "2026-10-16T05:45:53.804809Z",
+    "updated_at": "2026-10-16T07:59:44.131027Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 14
+   },
+   {
+    "legal_name": "Klub Eight Asia Ventures",
+    "brand": "K8",
+    "membership_prefix": "MSMK8",
+    "receipt_prefix": "RK8",
+    "registered_address": "DEMO ADDRESS - Bengaluru, Karnataka",
+    "gstin": null,
+    "next_membership_seq": 5001,
+    "logo_path": "k8/k8-logo.png",
+    "primary_colour": "#172040",
+    "accent_colour": "#BC9C23",
+    "details_pending_confirmation": true,
+    "code": "K8",
+    "name": "K8",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "a7e462c6-0695-4646-bcdf-2f5fee8b188a",
+    "created_at": "2026-10-16T05:45:53.810968Z",
+    "updated_at": "2026-10-16T05:45:53.810968Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   }
+  ],
+  "GET /api/v1/members?page=1&page_size=25": {
+   "items": [
+    {
+     "id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "membership_number": "MSMC8-9001",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "asha.demo.lrkz@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Asha Demo LRKZ",
+     "mobile": "9502209714"
+    },
+    {
+     "id": "cf299880-1baa-45fb-80bd-7ec30fc03bef",
+     "membership_number": "MSMC8-9010",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.4xwt@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo 4XWT",
+     "mobile": "9836595445"
+    },
+    {
+     "id": "eaaab140-afbc-41d9-bd3e-abc5f9eac6ad",
+     "membership_number": "MSMC8-9002",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.iixv@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo IIXV",
+     "mobile": "9836106251"
+    },
+    {
+     "id": "f758d906-baa3-42d2-ac8e-53e7ff605faf",
+     "membership_number": "MSMC8-9007",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.24f9@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo 24F9",
+     "mobile": "9836446054"
+    },
+    {
+     "id": "ff95507d-ef9e-49fe-b555-f172e2682497",
+     "membership_number": "MSMC8-9003",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.ytme@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo YTME",
+     "mobile": "9836236828"
+    },
+    {
+     "id": "d884e96a-1785-46d7-9166-8d9ff00f2675",
+     "membership_number": "MSMC8-9004",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.o2wc@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo O2WC",
+     "mobile": "9836298581"
+    },
+    {
+     "id": "29681662-ead6-488d-80c1-b907a3c81363",
+     "membership_number": "MSMC8-9005",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.rigb@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo RIGB",
+     "mobile": "9836298640"
+    },
+    {
+     "id": "dea53abc-673f-475b-898b-9ef223e8aab3",
+     "membership_number": "MSMC8-9006",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.dutu@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo DUTU",
+     "mobile": "9836372619"
+    },
+    {
+     "id": "d7ec8a71-38d9-44d7-8ec7-780ed4f565b4",
+     "membership_number": "MSMC8-9008",
+     "status": "PENDING_APPROVAL",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.zjy6@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo ZJY6",
+     "mobile": "9836488130"
+    },
+    {
+     "id": "ce9fd20d-9528-44ed-bca0-6f3eeff9887b",
+     "membership_number": "MSMC8-9009",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.30w6@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo 30W6",
+     "mobile": "9836520971"
+    },
+    {
+     "id": "ab8b4aea-4111-417e-88c8-4016648a0ba7",
+     "membership_number": "MSMC8-9011",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.tu0n@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo TU0N",
+     "mobile": "9836651076"
+    },
+    {
+     "id": "bb9e276d-8669-47c8-ab5a-818ef4f270ab",
+     "membership_number": "MSMC8-9012",
+     "status": "PENDING_APPROVAL",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.fdbh@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo FDBH",
+     "mobile": "9836694962"
+    },
+    {
+     "id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "membership_number": "MSMC8-9013",
+     "status": "ACTIVE",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "email": "kiran.lkwr@example.com",
+     "city": "Bengaluru",
+     "purchase_date": "2026-10-16",
+     "applicant_name": "Kiran Demo LKWR",
+     "mobile": "9837575614"
+    }
+   ],
+   "total": 13,
+   "page": 1,
+   "page_size": 25
+  },
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3?": {
+   "id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+   "membership_number": "MSMC8-9001",
+   "status": "ACTIVE",
+   "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+   "product_id": null,
+   "email": "asha.demo.lrkz@example.com",
+   "address_line1": "12 Demo Street",
+   "address_line2": null,
+   "city": "Bengaluru",
+   "postcode": "560001",
+   "state": "Karnataka",
+   "country": "India",
+   "purchase_date": "2026-10-16",
+   "tenure_years": 10,
+   "first_year_of_use": 2026,
+   "last_year_of_use": 2035,
+   "last_year_override_reason": null,
+   "resort_category_id": "30db43bc-9dc0-489f-a724-0cc2955e5042",
+   "season_id": "d1f0b207-5238-4fef-a123-819dfa20ab63",
+   "unit_type_id": "d991d72a-539c-47d1-85ea-1451463eab77",
+   "nights_per_year": "7.0",
+   "currency": "INR",
+   "purchase_price": "250000.00",
+   "admin_fees": "5000.00",
+   "total_price": "255000.00",
+   "down_payment_amount": "55000.00",
+   "down_payment_method_id": "f371c95e-ef34-4178-aa61-a66b08ba0f83",
+   "balance": "200000.00",
+   "balance_mode": "EMI",
+   "emi_amount": "20000.00",
+   "emi_count": 10,
+   "emi_start_month": 11,
+   "emi_start_year": 2026,
+   "instalment_start_date": null,
+   "relationship_manager_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+   "team_manager_id": "3203a9a3-8652-4ddf-ba07-de1e6593b61e",
+   "approved_by": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+   "approved_at": "2026-10-16T06:34:27.193413Z",
+   "comments": "Prefers sea-facing rooms\nDemo approval",
+   "agreement_signed_applicant1": true,
+   "agreement_signed_applicant2": false,
+   "agreement_signed_company": true,
+   "agreement_signed_date": "2026-10-16",
+   "source_lead_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+   "opc_name": "Demo OPC",
+   "venue_id": "ede9be12-db32-48a9-adf7-6051b4eff76f",
+   "custom_fields": {},
+   "credit_balance": "0.00",
+   "version": 3,
+   "applicants": [
+    {
+     "id": "9f1bf91c-8f9b-4b6c-b15e-78b5310ca79d",
+     "position": 1,
+     "full_name": "Asha Demo LRKZ",
+     "dob": "1988-04-12",
+     "mobile": "9502209714",
+     "email": "asha.demo.lrkz@example.com",
+     "kyc": [
+      {
+       "id": "a0833ee4-27dd-434c-b84d-25faf0fa9a78",
+       "id_type": "PAN",
+       "masked": "******368Y",
+       "expiry_date": null,
+       "document_id": null
+      },
+      {
+       "id": "4b91be0d-1226-401f-8ce1-95dffef67fde",
+       "id_type": "AADHAAR",
+       "masked": "XXXX-XXXX-5751",
+       "expiry_date": null,
+       "document_id": null
+      }
+     ]
+    }
+   ],
+   "joining_offers": []
+  },
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/documents?": [
+   {
+    "id": "b7929fe6-d01e-4e79-8d96-4410b572929e",
+    "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "document_type_id": "e98f0fde-6a33-41b9-aca8-e30e97503ab2",
+    "description": null,
+    "file_name": "demo-note.pdf",
+    "content_type": "application/pdf",
+    "size_bytes": 193,
+    "scan_status": "CLEAN",
+    "is_generated": false,
+    "created_at": "2026-10-16T06:34:30.504908Z",
+    "created_by": "a664156d-2743-4122-8770-06737f625fc9",
+    "links": [
+     {
+      "entity_type": "MEMBER",
+      "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3"
+     }
+    ]
+   },
+   {
+    "id": "e7a1d78e-ecf3-4619-ac39-144e57148d5e",
+    "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "document_type_id": "10dd7e14-cfc2-45d9-abcf-faac004d3a0b",
+    "description": "Generated RECEIPT",
+    "file_name": "receipt-RC8-2026-000003.pdf",
+    "content_type": "application/pdf",
+    "size_bytes": 1035,
+    "scan_status": "CLEAN",
+    "is_generated": true,
+    "created_at": "2026-10-16T06:34:29.125630Z",
+    "created_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "links": [
+     {
+      "entity_type": "MEMBER",
+      "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3"
+     },
+     {
+      "entity_type": "PAYMENT",
+      "entity_id": "260ed4ce-2271-44df-8a32-5e6f872ab7c2"
+     },
+     {
+      "entity_type": "RESERVATION",
+      "entity_id": "58d75c45-1696-41dd-bd36-59615f3493aa"
+     }
+    ]
+   },
+   {
+    "id": "c8e3d54a-ad9c-4abb-b0e9-a143135f9be2",
+    "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "document_type_id": "10dd7e14-cfc2-45d9-abcf-faac004d3a0b",
+    "description": "Generated RECEIPT",
+    "file_name": "receipt-RC8-2026-000002.pdf",
+    "content_type": "application/pdf",
+    "size_bytes": 984,
+    "scan_status": "CLEAN",
+    "is_generated": true,
+    "created_at": "2026-10-16T06:34:27.803455Z",
+    "created_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "links": [
+     {
+      "entity_type": "MEMBER",
+      "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3"
+     },
+     {
+      "entity_type": "PAYMENT",
+      "entity_id": "a9a5449e-f63e-4230-ac48-2e07ac2261d7"
+     }
+    ]
+   },
+   {
+    "id": "98832ec0-1cc9-40e2-a63c-e6b33dbec496",
+    "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "document_type_id": "5c2de483-5f1a-4ecd-a448-1d2a42cf6ca1",
+    "description": "Signed agreement (demo)",
+    "file_name": "signed-agreement.pdf",
+    "content_type": "application/pdf",
+    "size_bytes": 193,
+    "scan_status": "CLEAN",
+    "is_generated": false,
+    "created_at": "2026-10-16T06:34:26.702385Z",
+    "created_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "links": [
+     {
+      "entity_type": "MEMBER",
+      "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3"
+     }
+    ]
+   },
+   {
+    "id": "d7b1652a-fa4c-40c8-a60e-b1151629c1fc",
+    "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "document_type_id": "10dd7e14-cfc2-45d9-abcf-faac004d3a0b",
+    "description": "Generated RECEIPT",
+    "file_name": "receipt-RC8-2026-000001.pdf",
+    "content_type": "application/pdf",
+    "size_bytes": 996,
+    "scan_status": "CLEAN",
+    "is_generated": true,
+    "created_at": "2026-10-16T06:34:26.482858Z",
+    "created_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "links": [
+     {
+      "entity_type": "MEMBER",
+      "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3"
+     },
+     {
+      "entity_type": "PAYMENT",
+      "entity_id": "03de48c5-5dcb-4b92-abd1-d574649480f8"
+     }
+    ]
+   }
+  ],
+  "GET /api/v1/reservations?member_id=bcd03408-6441-44cb-a389-a65e40c34ae3&page_size=100": {
+   "items": [
+    {
+     "id": "c9a57cd3-5eb8-4c36-bffc-c9767ee9ba84",
+     "reservation_number": "R-2026-000002",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "request_date": "2026-10-16",
+     "destination_id": "a15596d4-bf35-4f9e-af2d-e9ca8c26c5cd",
+     "property_id": "f0253fdd-1f34-4344-a367-4c6b09a3f684",
+     "resort_category_code": "PREMIUM",
+     "season_code": "WHITE",
+     "season_overridden": false,
+     "unit_type_id": "d991d72a-539c-47d1-85ea-1451463eab77",
+     "rooms": 1,
+     "adults": 2,
+     "child_ages": [],
+     "occupancy_type": "SELF",
+     "guest_name": null,
+     "guest_contact": null,
+     "check_in": "2026-11-04",
+     "check_out": "2026-11-06",
+     "nights": 2,
+     "entitlement_nights": "2.0",
+     "additional_paid_nights": "0.0",
+     "deduction_explanation": "2 night(s) x 1.000 (matrix rule; booked PREMIUM/WHITE/T0, purchased PREMIUM/RED/T0) = 2.0 entitlement night(s)",
+     "status": "REQUESTED",
+     "confirmation_number": null,
+     "reschedule_count": 0,
+     "remarks": null,
+     "warnings_overridden": null,
+     "version": 1,
+     "status_history": [
+      {
+       "from_status": null,
+       "to_status": "REQUESTED",
+       "changed_at": "2026-10-16T06:34:29.838918Z",
+       "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+       "reason_id": null,
+       "reason_text": null,
+       "override": false
+      }
+     ],
+     "date_versions": [
+      {
+       "version_no": 1,
+       "check_in": "2026-11-04",
+       "check_out": "2026-11-06",
+       "entitlement_nights": "2.0",
+       "created_at": "2026-10-16T06:34:29.837923Z",
+       "reason": "Original"
+      }
+     ]
+    },
+    {
+     "id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "reservation_number": "R-2026-000001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "request_date": "2026-10-16",
+     "destination_id": "a15596d4-bf35-4f9e-af2d-e9ca8c26c5cd",
+     "property_id": "f0253fdd-1f34-4344-a367-4c6b09a3f684",
+     "resort_category_code": "PREMIUM",
+     "season_code": "WHITE",
+     "season_overridden": false,
+     "unit_type_id": "d991d72a-539c-47d1-85ea-1451463eab77",
+     "rooms": 1,
+     "adults": 2,
+     "child_ages": [
+      6
+     ],
+     "occupancy_type": "SELF",
+     "guest_name": null,
+     "guest_contact": null,
+     "check_in": "2026-10-28",
+     "check_out": "2026-11-01",
+     "nights": 4,
+     "entitlement_nights": "4.0",
+     "additional_paid_nights": "0.0",
+     "deduction_explanation": "4 night(s) x 1.000 (matrix rule; booked PREMIUM/WHITE/T0, purchased PREMIUM/RED/T0) = 4.0 entitlement night(s)",
+     "status": "CONFIRMED",
+     "confirmation_number": "CNF-DEMO-1",
+     "reschedule_count": 0,
+     "remarks": null,
+     "warnings_overridden": null,
+     "version": 3,
+     "status_history": [
+      {
+       "from_status": null,
+       "to_status": "REQUESTED",
+       "changed_at": "2026-10-16T06:34:28.423683Z",
+       "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+       "reason_id": null,
+       "reason_text": null,
+       "override": false
+      },
+      {
+       "from_status": "REQUESTED",
+       "to_status": "APPROVED",
+       "changed_at": "2026-10-16T06:34:28.633142Z",
+       "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+       "reason_id": null,
+       "reason_text": null,
+       "override": false
+      },
+      {
+       "from_status": "APPROVED",
+       "to_status": "CONFIRMED",
+       "changed_at": "2026-10-16T06:34:29.553160Z",
+       "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+       "reason_id": null,
+       "reason_text": null,
+       "override": false
+      }
+     ],
+     "date_versions": [
+      {
+       "version_no": 1,
+       "check_in": "2026-10-28",
+       "check_out": "2026-11-01",
+       "entitlement_nights": "4.0",
+       "created_at": "2026-10-16T06:34:28.418181Z",
+       "reason": "Original"
+      }
+     ]
+    }
+   ],
+   "total": 2,
+   "page": 1,
+   "page_size": 100
+  },
+  "GET /api/v1/admin/master/resort-categories?include_inactive=false": [
+   {
+    "code": "CLASSIC",
+    "name": "Classic",
+    "is_active": true,
+    "sort_order": 1,
+    "id": "30de094b-fe63-4301-b975-9e4200891e58",
+    "created_at": "2026-10-16T05:45:53.465358Z",
+    "updated_at": "2026-10-16T05:45:53.465358Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "code": "PREMIUM",
+    "name": "Premium",
+    "is_active": true,
+    "sort_order": 2,
+    "id": "30db43bc-9dc0-489f-a724-0cc2955e5042",
+    "created_at": "2026-10-16T05:45:53.469346Z",
+    "updated_at": "2026-10-16T05:45:53.469346Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "code": "SUPREME",
+    "name": "Supreme",
+    "is_active": true,
+    "sort_order": 3,
+    "id": "8eac9b57-c0e8-4077-96c6-6de0e34ebaf1",
+    "created_at": "2026-10-16T05:45:53.472381Z",
+    "updated_at": "2026-10-16T05:45:53.472381Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   }
+  ],
+  "GET /api/v1/admin/master/seasons?include_inactive=false": [
+   {
+    "description": "Peak",
+    "priority": 1,
+    "code": "RED",
+    "name": "Red",
+    "is_active": true,
+    "sort_order": 1,
+    "id": "d1f0b207-5238-4fef-a123-819dfa20ab63",
+    "created_at": "2026-10-16T05:45:53.479357Z",
+    "updated_at": "2026-10-16T05:45:53.479357Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "description": "Mid",
+    "priority": 2,
+    "code": "WHITE",
+    "name": "White",
+    "is_active": true,
+    "sort_order": 2,
+    "id": "0ca6191e-90a3-43b7-bfe1-982eeb31d0e7",
+    "created_at": "2026-10-16T05:45:53.483308Z",
+    "updated_at": "2026-10-16T05:45:53.483308Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "description": "Off",
+    "priority": 3,
+    "code": "BLUE",
+    "name": "Blue",
+    "is_active": true,
+    "sort_order": 3,
+    "id": "38342ad5-0ee9-473b-b3e3-05e25d2cce15",
+    "created_at": "2026-10-16T05:45:53.486300Z",
+    "updated_at": "2026-10-16T05:45:53.486300Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   }
+  ],
+  "GET /api/v1/admin/master/unit-types?include_inactive=false": [
+   {
+    "max_adults": 2,
+    "max_children": 2,
+    "child_age_limit": 10,
+    "max_total": 4,
+    "occupancy_text": "2 adults + 2 children below 10 years",
+    "code": "T0",
+    "name": "Studio",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "d991d72a-539c-47d1-85ea-1451463eab77",
+    "created_at": "2026-10-16T05:45:53.493243Z",
+    "updated_at": "2026-10-16T05:45:53.493243Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "max_adults": 4,
+    "max_children": 0,
+    "child_age_limit": 10,
+    "max_total": 4,
+    "occupancy_text": "4 adults",
+    "code": "T1",
+    "name": "One-Bedroom",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "5230cd2b-250e-4e95-a356-4eccf9dbef32",
+    "created_at": "2026-10-16T05:45:53.498540Z",
+    "updated_at": "2026-10-16T05:45:53.498540Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   }
+  ],
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/entitlement?": {
+   "years": [
+    {
+     "year": 2026,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "4.0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "2.0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "1.0",
+     "flags": []
+    },
+    {
+     "year": 2027,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "7.0",
+     "flags": []
+    },
+    {
+     "year": 2028,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "7.0",
+     "flags": []
+    },
+    {
+     "year": 2029,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "7.0",
+     "flags": []
+    },
+    {
+     "year": 2030,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "7.0",
+     "flags": []
+    },
+    {
+     "year": 2031,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "7.0",
+     "flags": []
+    },
+    {
+     "year": 2032,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "7.0",
+     "flags": []
+    },
+    {
+     "year": 2033,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "7.0",
+     "flags": []
+    },
+    {
+     "year": 2034,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "7.0",
+     "flags": []
+    },
+    {
+     "year": 2035,
+     "allocated": "7.0",
+     "bonus": "0",
+     "saved_in": "0",
+     "used": "0",
+     "used_later": "0",
+     "borrowed_out": "0",
+     "on_hold": "0",
+     "credited_back": "0",
+     "expired": "0",
+     "adjustments": "0",
+     "remaining": "7.0",
+     "flags": []
+    }
+   ],
+   "past": [],
+   "upcoming": [
+    {
+     "id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "reservation_number": "R-2026-000001",
+     "check_in": "2026-10-28",
+     "check_out": "2026-11-01",
+     "status": "CONFIRMED",
+     "entitlement_nights": "4.0"
+    },
+    {
+     "id": "c9a57cd3-5eb8-4c36-bffc-c9767ee9ba84",
+     "reservation_number": "R-2026-000002",
+     "check_in": "2026-11-04",
+     "check_out": "2026-11-06",
+     "status": "REQUESTED",
+     "entitlement_nights": "2.0"
+    }
+   ]
+  },
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/finance-summary?": {
+   "purchase_price": "250000.00",
+   "admin_fees": "5000.00",
+   "total_price": "255000.00",
+   "down_payment": "55000.00",
+   "down_payment_received": "55000.00",
+   "balance": "200000.00",
+   "balance_display": "200000.00",
+   "currency": "INR",
+   "credit_balance": "0.00",
+   "totals": {
+    "collected": {
+     "INR": {
+      "DOWN_PAYMENT": {
+       "base": "55000.00",
+       "gst": "0.00",
+       "total": "55000.00"
+      },
+      "MEMBERSHIP_EMI": {
+       "base": "20000.00",
+       "gst": "0.00",
+       "total": "20000.00"
+      },
+      "ASF": {
+       "base": "12000.00",
+       "gst": "600.00",
+       "total": "12600.00"
+      }
+     }
+    },
+    "outstanding": {
+     "MEMBERSHIP_EMI": {
+      "INR": "180000.00"
+     },
+     "ASF": {}
+    },
+    "overdue": {
+     "MEMBERSHIP_EMI": {}
+    }
+   }
+  },
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/asf?": [
+   {
+    "membership_year": 2026,
+    "status": "PAID",
+    "charge": {
+     "id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+     "membership_year": 2026,
+     "raised_on": "2026-10-16",
+     "reason": "CURRENT",
+     "base_amount": "12000.00",
+     "gst_rate": "5.0000",
+     "gst_amount": "600.00",
+     "total_amount": "12600.00",
+     "currency": "INR",
+     "amount_paid": "12600.00",
+     "status": "PAID",
+     "raised_by_reservation_id": "58d75c45-1696-41dd-bd36-59615f3493aa"
+    },
+    "receipt_numbers": [
+     "RC8-2026-000003"
+    ]
+   },
+   {
+    "membership_year": 2027,
+    "status": "NOT_YET_DUE",
+    "charge": null,
+    "receipt_numbers": []
+   },
+   {
+    "membership_year": 2028,
+    "status": "NOT_YET_DUE",
+    "charge": null,
+    "receipt_numbers": []
+   },
+   {
+    "membership_year": 2029,
+    "status": "NOT_YET_DUE",
+    "charge": null,
+    "receipt_numbers": []
+   },
+   {
+    "membership_year": 2030,
+    "status": "NOT_YET_DUE",
+    "charge": null,
+    "receipt_numbers": []
+   },
+   {
+    "membership_year": 2031,
+    "status": "NOT_YET_DUE",
+    "charge": null,
+    "receipt_numbers": []
+   },
+   {
+    "membership_year": 2032,
+    "status": "NOT_YET_DUE",
+    "charge": null,
+    "receipt_numbers": []
+   },
+   {
+    "membership_year": 2033,
+    "status": "NOT_YET_DUE",
+    "charge": null,
+    "receipt_numbers": []
+   },
+   {
+    "membership_year": 2034,
+    "status": "NOT_YET_DUE",
+    "charge": null,
+    "receipt_numbers": []
+   },
+   {
+    "membership_year": 2035,
+    "status": "NOT_YET_DUE",
+    "charge": null,
+    "receipt_numbers": []
+   }
+  ],
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/payments?": [
+   {
+    "id": "260ed4ce-2271-44df-8a32-5e6f872ab7c2",
+    "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "payment_type_code": "ASF",
+    "entry_kind": "NORMAL",
+    "corrects_payment_id": null,
+    "base_amount": "12000.00",
+    "gst_rate": "5.0000",
+    "gst_amount": "600.00",
+    "total_amount": "12600.00",
+    "currency": "INR",
+    "due_date": null,
+    "payment_date": "2026-10-16",
+    "payment_method_id": "f371c95e-ef34-4178-aa61-a66b08ba0f83",
+    "transaction_ref": "DEMO-ASF-LRKZ",
+    "cheque_number": null,
+    "bank_name": null,
+    "card_last4": "4242",
+    "receipt_number": "RC8-2026-000003",
+    "remarks": null,
+    "reservation_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+    "asf_charge_id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+    "asf_year": 2026,
+    "is_forfeited": false,
+    "receipt_document_id": "e7a1d78e-ecf3-4619-ac39-144e57148d5e",
+    "correction_reason": null,
+    "created_at": "2026-10-16T06:34:29.094715Z",
+    "version": 2
+   },
+   {
+    "id": "a9a5449e-f63e-4230-ac48-2e07ac2261d7",
+    "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "payment_type_code": "MEMBERSHIP_EMI",
+    "entry_kind": "NORMAL",
+    "corrects_payment_id": null,
+    "base_amount": "20000.00",
+    "gst_rate": "0.0000",
+    "gst_amount": "0.00",
+    "total_amount": "20000.00",
+    "currency": "INR",
+    "due_date": null,
+    "payment_date": "2026-10-16",
+    "payment_method_id": "8051acfa-941f-41c1-beb4-c450c3279279",
+    "transaction_ref": "DEMO-UPI-LRKZ",
+    "cheque_number": null,
+    "bank_name": null,
+    "card_last4": null,
+    "receipt_number": "RC8-2026-000002",
+    "remarks": null,
+    "reservation_id": null,
+    "asf_charge_id": null,
+    "asf_year": null,
+    "is_forfeited": false,
+    "receipt_document_id": "c8e3d54a-ad9c-4abb-b0e9-a143135f9be2",
+    "correction_reason": null,
+    "created_at": "2026-10-16T06:34:27.768634Z",
+    "version": 2
+   },
+   {
+    "id": "03de48c5-5dcb-4b92-abd1-d574649480f8",
+    "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "payment_type_code": "DOWN_PAYMENT",
+    "entry_kind": "NORMAL",
+    "corrects_payment_id": null,
+    "base_amount": "55000.00",
+    "gst_rate": "0.0000",
+    "gst_amount": "0.00",
+    "total_amount": "55000.00",
+    "currency": "INR",
+    "due_date": null,
+    "payment_date": "2026-10-16",
+    "payment_method_id": "f371c95e-ef34-4178-aa61-a66b08ba0f83",
+    "transaction_ref": "DEMO-CARD-LRKZ",
+    "cheque_number": null,
+    "bank_name": null,
+    "card_last4": "4242",
+    "receipt_number": "RC8-2026-000001",
+    "remarks": "Down payment recorded with the membership application",
+    "reservation_id": null,
+    "asf_charge_id": null,
+    "asf_year": null,
+    "is_forfeited": false,
+    "receipt_document_id": "d7b1652a-fa4c-40c8-a60e-b1151629c1fc",
+    "correction_reason": null,
+    "created_at": "2026-10-16T06:34:26.440316Z",
+    "version": 2
+   }
+  ],
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/schedule?": {
+   "id": "7edc047c-657e-451a-8b6a-457d9b3ddb59",
+   "balance": "200000.00",
+   "emi_amount": "20000.00",
+   "emi_count": 10,
+   "start_year": 2026,
+   "start_month": 11,
+   "generation_warning": null,
+   "instalments": [
+    {
+     "id": "97ee8f0a-90c5-43c1-8c92-1d1b2c515961",
+     "number": 1,
+     "due_date": "2026-11-01",
+     "amount_due": "20000.00",
+     "amount_paid": "20000.00",
+     "status": "PAID",
+     "version": 2
+    },
+    {
+     "id": "2737e035-f6a8-45f3-8902-0aa10c9c82e9",
+     "number": 2,
+     "due_date": "2026-12-01",
+     "amount_due": "20000.00",
+     "amount_paid": "0.00",
+     "status": "PENDING",
+     "version": 1
+    },
+    {
+     "id": "729861d4-9c58-409a-a1fc-cb750e9e33e5",
+     "number": 3,
+     "due_date": "2027-01-01",
+     "amount_due": "20000.00",
+     "amount_paid": "0.00",
+     "status": "PENDING",
+     "version": 1
+    },
+    {
+     "id": "6edfb918-5393-42c7-9fec-5dc08fdabc72",
+     "number": 4,
+     "due_date": "2027-02-01",
+     "amount_due": "20000.00",
+     "amount_paid": "0.00",
+     "status": "PENDING",
+     "version": 1
+    },
+    {
+     "id": "7f381162-93fd-4b71-9880-33f38d8d0d5f",
+     "number": 5,
+     "due_date": "2027-03-01",
+     "amount_due": "20000.00",
+     "amount_paid": "0.00",
+     "status": "PENDING",
+     "version": 1
+    },
+    {
+     "id": "82d52ac8-0e82-42b0-a832-9af767fc62fb",
+     "number": 6,
+     "due_date": "2027-04-01",
+     "amount_due": "20000.00",
+     "amount_paid": "0.00",
+     "status": "PENDING",
+     "version": 1
+    },
+    {
+     "id": "c5b38f96-42c8-4f5d-96f4-0d76822b9ebb",
+     "number": 7,
+     "due_date": "2027-05-01",
+     "amount_due": "20000.00",
+     "amount_paid": "0.00",
+     "status": "PENDING",
+     "version": 1
+    },
+    {
+     "id": "279e2215-d8f9-4ab7-934c-d231d676756d",
+     "number": 8,
+     "due_date": "2027-06-01",
+     "amount_due": "20000.00",
+     "amount_paid": "0.00",
+     "status": "PENDING",
+     "version": 1
+    },
+    {
+     "id": "84f4bec2-a397-41a7-b02c-a34ff9381e48",
+     "number": 9,
+     "due_date": "2027-07-01",
+     "amount_due": "20000.00",
+     "amount_paid": "0.00",
+     "status": "PENDING",
+     "version": 1
+    },
+    {
+     "id": "0d8575fa-797c-4b86-ba57-2dccebd63a3e",
+     "number": 10,
+     "due_date": "2027-08-01",
+     "amount_due": "20000.00",
+     "amount_paid": "0.00",
+     "status": "PENDING",
+     "version": 1
+    }
+   ]
+  },
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/default-notices?": [],
+  "GET /api/v1/admin/master/document-types?include_inactive=false": [
+   {
+    "is_kyc": false,
+    "is_sensitive": false,
+    "code": "BOOKING_CONFIRMATION",
+    "name": "Booking Confirmation",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "6cc309e7-4e2e-4d34-b881-9437a890c7a9",
+    "created_at": "2026-10-16T05:45:53.589659Z",
+    "updated_at": "2026-10-16T05:45:53.589659Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": false,
+    "is_sensitive": false,
+    "code": "CALL_RECORDING",
+    "name": "Call recording",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "1d3a5da7-c944-490c-a24c-4b4fb7297a19",
+    "created_at": "2026-10-16T05:45:53.598633Z",
+    "updated_at": "2026-10-16T05:45:53.598633Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": false,
+    "is_sensitive": true,
+    "code": "DEFAULT_NOTICE",
+    "name": "Default Notice",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "7ee16f8b-649f-47d7-92e9-cd6caab7e05d",
+    "created_at": "2026-10-16T05:45:53.595680Z",
+    "updated_at": "2026-10-16T05:45:53.595680Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": true,
+    "is_sensitive": false,
+    "code": "KYC_AADHAAR_MASKED",
+    "name": "KYC - Aadhaar (masked copy only)",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "6f3546e6-d962-4bd6-bb14-846efd17cd7d",
+    "created_at": "2026-10-16T05:45:53.571152Z",
+    "updated_at": "2026-10-16T05:45:53.571152Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": true,
+    "is_sensitive": false,
+    "code": "KYC_DL",
+    "name": "KYC - Driving Licence",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "134c66a5-202a-4b86-b2ba-4682550a57e3",
+    "created_at": "2026-10-16T05:45:53.578135Z",
+    "updated_at": "2026-10-16T05:45:53.578135Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": true,
+    "is_sensitive": false,
+    "code": "KYC_PAN",
+    "name": "KYC - PAN",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "2e172779-4c49-4748-84bc-b6f2b81c5ede",
+    "created_at": "2026-10-16T05:45:53.574146Z",
+    "updated_at": "2026-10-16T05:45:53.574146Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": true,
+    "is_sensitive": false,
+    "code": "KYC_PASSPORT",
+    "name": "KYC - Passport",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "b1d7cece-40f2-4b3b-9767-9bed8e96cffb",
+    "created_at": "2026-10-16T05:45:53.581126Z",
+    "updated_at": "2026-10-16T05:45:53.581126Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": true,
+    "is_sensitive": false,
+    "code": "KYC_VOTER_ID",
+    "name": "KYC - Voter ID",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "3443eb5f-8214-4bc7-b686-6e6736742a20",
+    "created_at": "2026-10-16T05:45:53.584154Z",
+    "updated_at": "2026-10-16T05:45:53.584154Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": false,
+    "is_sensitive": false,
+    "code": "MEMBERSHIP_AGREEMENT_SIGNED",
+    "name": "Membership Agreement (signed)",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "5c2de483-5f1a-4ecd-a448-1d2a42cf6ca1",
+    "created_at": "2026-10-16T05:45:53.561848Z",
+    "updated_at": "2026-10-16T05:45:53.561848Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": false,
+    "is_sensitive": false,
+    "code": "MEMBERSHIP_APPLICATION",
+    "name": "Membership Application Form",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "b780c8c6-843f-40f6-8288-1adeb01c49e7",
+    "created_at": "2026-10-16T05:45:53.557633Z",
+    "updated_at": "2026-10-16T05:45:53.557633Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": false,
+    "is_sensitive": false,
+    "code": "OTHER",
+    "name": "Other",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "e98f0fde-6a33-41b9-aca8-e30e97503ab2",
+    "created_at": "2026-10-16T05:45:53.600628Z",
+    "updated_at": "2026-10-16T05:45:53.600628Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": false,
+    "is_sensitive": false,
+    "code": "PAYMENT_RECEIPT",
+    "name": "Payment Receipt",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "10dd7e14-cfc2-45d9-abcf-faac004d3a0b",
+    "created_at": "2026-10-16T05:45:53.587150Z",
+    "updated_at": "2026-10-16T05:45:53.587150Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": false,
+    "is_sensitive": false,
+    "code": "TERMS_CONDITIONS",
+    "name": "Terms & Conditions",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "09754c61-5315-42a5-bc0e-ac17fcd63e4e",
+    "created_at": "2026-10-16T05:45:53.566892Z",
+    "updated_at": "2026-10-16T05:45:53.566892Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "is_kyc": false,
+    "is_sensitive": false,
+    "code": "VOUCHER",
+    "name": "Voucher",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "83d77d8f-6508-4c9d-b2fa-01e48e620f15",
+    "created_at": "2026-10-16T05:45:53.592650Z",
+    "updated_at": "2026-10-16T05:45:53.592650Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   }
+  ],
+  "GET /api/v1/admin/master/reasons?include_inactive=false": [
+   {
+    "kind": "CALL_OUTCOME",
+    "code": "CALL_CALLBACK",
+    "name": "Call back requested",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "24c58118-ad57-4a81-b17b-5f2dfe19235c",
+    "created_at": "2026-10-16T05:45:53.625569Z",
+    "updated_at": "2026-10-16T05:45:53.625569Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "kind": "CALL_OUTCOME",
+    "code": "CALL_NO_ANSWER",
+    "name": "No answer",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "7e68927f-f21b-4cf6-994b-1b775183e514",
+    "created_at": "2026-10-16T05:45:53.623602Z",
+    "updated_at": "2026-10-16T05:45:53.623602Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "kind": "CALL_OUTCOME",
+    "code": "CALL_REACHED",
+    "name": "Reached",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "ccd5d131-b5b6-448a-bd5c-2fbd8438365b",
+    "created_at": "2026-10-16T05:45:53.620573Z",
+    "updated_at": "2026-10-16T05:45:53.620573Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "kind": "CANCEL",
+    "code": "MEMBER_REQUEST",
+    "name": "Member request",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "457d38f0-9d9c-4a24-aaee-4a384f9b4c6b",
+    "created_at": "2026-10-16T05:45:53.615626Z",
+    "updated_at": "2026-10-16T05:45:53.615626Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "kind": "DECLINE",
+    "code": "NO_AVAILABILITY",
+    "name": "No availability at property",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "6b64c483-8a66-41b3-97be-c3b32a30589e",
+    "created_at": "2026-10-16T05:45:53.607609Z",
+    "updated_at": "2026-10-16T05:45:53.607609Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "kind": "DECLINE",
+    "code": "OUTSIDE_ENTITLEMENT",
+    "name": "Outside entitlement",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "430157fb-b766-4f6f-9737-b4f4013d38d8",
+    "created_at": "2026-10-16T05:45:53.612596Z",
+    "updated_at": "2026-10-16T05:45:53.612596Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "kind": "CANCEL",
+    "code": "PROPERTY_ISSUE",
+    "name": "Property issue",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "554ecb2d-31d3-4c86-bf78-a21bf41c56f6",
+    "created_at": "2026-10-16T05:45:53.617618Z",
+    "updated_at": "2026-10-16T05:45:53.617618Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   }
+  ],
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/email-threads?": [
+   {
+    "id": "2ef6a05f-e536-4907-9005-dc32a57eec8e",
+    "subject": "Goa stay - early check-in?",
+    "reservation_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+    "emails": [
+     {
+      "id": "9d0a907c-8869-46c9-95c5-1db13cebab90",
+      "thread_id": "2ef6a05f-e536-4907-9005-dc32a57eec8e",
+      "direction": "INCOMING",
+      "sent_at": "2026-10-16T06:34:30.326010Z",
+      "sender": "asha.demo.lrkz@example.com",
+      "to": [
+       "reservations@example.com"
+      ],
+      "cc": [],
+      "subject": "Goa stay - early check-in?",
+      "body_text": "Could we check in early? (demo)",
+      "message_id": null,
+      "reservation_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+      "source": "MANUAL"
+     }
+    ]
+   }
+  ],
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/calls?": [
+   {
+    "id": "1e22d724-f104-47c2-bd46-e9ff6f0dd18d",
+    "direction": "OUTGOING",
+    "called_at": "2026-10-16T06:34:30.400683Z",
+    "staff_id": "a664156d-2743-4122-8770-06737f625fc9",
+    "contact_number": "9502209714",
+    "summary": "Welcome call (demo)",
+    "outcome_id": null,
+    "next_action": "Send voucher",
+    "next_action_date": "2026-10-18",
+    "next_action_done": false,
+    "reservation_id": null,
+    "recording_document_id": null
+   }
+  ],
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/timeline?": [
+   {
+    "type": "document",
+    "at": "2026-10-16T06:34:30.504908Z",
+    "title": "Document demo-note.pdf",
+    "id": "b7929fe6-d01e-4e79-8d96-4410b572929e"
+   },
+   {
+    "type": "call",
+    "at": "2026-10-16T06:34:30.400683Z",
+    "title": "Outgoing call: Welcome call (demo)",
+    "id": "1e22d724-f104-47c2-bd46-e9ff6f0dd18d"
+   },
+   {
+    "type": "email",
+    "at": "2026-10-16T06:34:30.326010Z",
+    "title": "⬅ Goa stay - early check-in?",
+    "id": "9d0a907c-8869-46c9-95c5-1db13cebab90",
+    "thread_id": "2ef6a05f-e536-4907-9005-dc32a57eec8e"
+   },
+   {
+    "type": "entitlement",
+    "at": "2026-10-16T06:34:29.848892Z",
+    "title": "HOLD -2.0 night(s) [2026]",
+    "id": "69756729-6925-4101-b892-89a0294d48ae"
+   },
+   {
+    "type": "reservation",
+    "at": "2026-10-16T06:34:29.838918Z",
+    "title": "Reservation R-2026-000002: new → REQUESTED",
+    "id": "c9a57cd3-5eb8-4c36-bffc-c9767ee9ba84"
+   },
+   {
+    "type": "reservation",
+    "at": "2026-10-16T06:34:29.553160Z",
+    "title": "Reservation R-2026-000001: APPROVED → CONFIRMED",
+    "id": "58d75c45-1696-41dd-bd36-59615f3493aa"
+   },
+   {
+    "type": "document",
+    "at": "2026-10-16T06:34:29.125630Z",
+    "title": "Document receipt-RC8-2026-000003.pdf",
+    "id": "e7a1d78e-ecf3-4619-ac39-144e57148d5e"
+   },
+   {
+    "type": "payment",
+    "at": "2026-10-16T06:34:29.094715Z",
+    "title": "Normal ASF 12600.00 INR (RC8-2026-000003)",
+    "id": "260ed4ce-2271-44df-8a32-5e6f872ab7c2"
+   },
+   {
+    "type": "reservation",
+    "at": "2026-10-16T06:34:28.633142Z",
+    "title": "Reservation R-2026-000001: REQUESTED → APPROVED",
+    "id": "58d75c45-1696-41dd-bd36-59615f3493aa"
+   },
+   {
+    "type": "entitlement",
+    "at": "2026-10-16T06:34:28.627891Z",
+    "title": "DEDUCTION -4.0 night(s) [2026]",
+    "id": "b49323c0-0118-4ff6-b1dd-0dfc70e287d5"
+   },
+   {
+    "type": "entitlement",
+    "at": "2026-10-16T06:34:28.623865Z",
+    "title": "HOLD_RELEASE 4.0 night(s) [2026]",
+    "id": "8568abd7-7b39-41c1-aa51-dea04e07c005"
+   },
+   {
+    "type": "entitlement",
+    "at": "2026-10-16T06:34:28.439929Z",
+    "title": "HOLD -4.0 night(s) [2026]",
+    "id": "8cef9f3b-e1d9-425e-8968-771bd370090b"
+   },
+   {
+    "type": "reservation",
+    "at": "2026-10-16T06:34:28.423683Z",
+    "title": "Reservation R-2026-000001: new → REQUESTED",
+    "id": "58d75c45-1696-41dd-bd36-59615f3493aa"
+   },
+   {
+    "type": "document",
+    "at": "2026-10-16T06:34:27.803455Z",
+    "title": "Document receipt-RC8-2026-000002.pdf",
+    "id": "c8e3d54a-ad9c-4abb-b0e9-a143135f9be2"
+   },
+   {
+    "type": "payment",
+    "at": "2026-10-16T06:34:27.768634Z",
+    "title": "Normal MEMBERSHIP_EMI 20000.00 INR (RC8-2026-000002)",
+    "id": "a9a5449e-f63e-4230-ac48-2e07ac2261d7"
+   },
+   {
+    "type": "status",
+    "at": "2026-10-16T06:34:27.196444Z",
+    "title": "Member status PENDING_APPROVAL → ACTIVE",
+    "id": "be335704-3c36-4de2-831e-02aaa5833b88"
+   },
+   {
+    "type": "document",
+    "at": "2026-10-16T06:34:26.702385Z",
+    "title": "Document signed-agreement.pdf",
+    "id": "98832ec0-1cc9-40e2-a63c-e6b33dbec496"
+   },
+   {
+    "type": "document",
+    "at": "2026-10-16T06:34:26.482858Z",
+    "title": "Document receipt-RC8-2026-000001.pdf",
+    "id": "d7b1652a-fa4c-40c8-a60e-b1151629c1fc"
+   },
+   {
+    "type": "payment",
+    "at": "2026-10-16T06:34:26.440316Z",
+    "title": "Normal DOWN_PAYMENT 55000.00 INR (RC8-2026-000001)",
+    "id": "03de48c5-5dcb-4b92-abd1-d574649480f8"
+   },
+   {
+    "type": "status",
+    "at": "2026-10-16T06:34:26.386214Z",
+    "title": "Member status new → PENDING_APPROVAL",
+    "id": "0bc5f33d-6da9-473e-9f70-3adb8524e554"
+   }
+  ],
+  "GET /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/history?": [
+   {
+    "table": "documents",
+    "record_id": "b7929fe6-d01e-4e79-8d96-4410b572929e",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:30.510085Z",
+    "changed_by": "a664156d-2743-4122-8770-06737f625fc9",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "b7929fe6-d01e-4e79-8d96-4410b572929e",
+     "sha256": "c896da11e829c50f6e927c40c93e487db858b9b0332ac9c4de348a914590ab5b",
+     "blob_path": "bcd03408-6441-44cb-a389-a65e40c34ae3/b7929fe6-d01e-4e79-8d96-4410b572929e/demo-note.pdf",
+     "file_name": "demo-note.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "size_bytes": 193,
+     "scan_status": "CLEAN",
+     "content_type": "application/pdf",
+     "is_generated": false,
+     "document_type_id": "e98f0fde-6a33-41b9-aca8-e30e97503ab2"
+    }
+   },
+   {
+    "table": "calls",
+    "record_id": "1e22d724-f104-47c2-bd46-e9ff6f0dd18d",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:30.430825Z",
+    "changed_by": "a664156d-2743-4122-8770-06737f625fc9",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "1e22d724-f104-47c2-bd46-e9ff6f0dd18d",
+     "summary": "Welcome call (demo)",
+     "staff_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "called_at": "2026-10-16T12:04:30.400683+05:30",
+     "direction": "OUTGOING",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "next_action": "Send voucher",
+     "contact_number": "9502209714",
+     "next_action_date": "2026-10-18",
+     "next_action_done": false
+    }
+   },
+   {
+    "table": "emails",
+    "record_id": "9d0a907c-8869-46c9-95c5-1db13cebab90",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:30.376272Z",
+    "changed_by": "a664156d-2743-4122-8770-06737f625fc9",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "9d0a907c-8869-46c9-95c5-1db13cebab90",
+     "sender": "asha.demo.lrkz@example.com",
+     "source": "MANUAL",
+     "sent_at": "2026-10-16T12:04:30.326010+05:30",
+     "subject": "Goa stay - early check-in?",
+     "body_text": "Could we check in early? (demo)",
+     "direction": "INCOMING",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "thread_id": "2ef6a05f-e536-4907-9005-dc32a57eec8e",
+     "reservation_id": "58d75c45-1696-41dd-bd36-59615f3493aa"
+    }
+   },
+   {
+    "table": "email_threads",
+    "record_id": "2ef6a05f-e536-4907-9005-dc32a57eec8e",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:30.363309Z",
+    "changed_by": "a664156d-2743-4122-8770-06737f625fc9",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "2ef6a05f-e536-4907-9005-dc32a57eec8e",
+     "subject": "Goa stay - early check-in?",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "reservation_id": "58d75c45-1696-41dd-bd36-59615f3493aa"
+    }
+   },
+   {
+    "table": "reservations",
+    "record_id": "c9a57cd3-5eb8-4c36-bffc-c9767ee9ba84",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:29.835926Z",
+    "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "c9a57cd3-5eb8-4c36-bffc-c9767ee9ba84",
+     "rooms": 1,
+     "adults": 2,
+     "nights": 2,
+     "status": "REQUESTED",
+     "check_in": "2026-11-04",
+     "check_out": "2026-11-06",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "child_ages": [],
+     "property_id": "f0253fdd-1f34-4344-a367-4c6b09a3f684",
+     "season_code": "WHITE",
+     "request_date": "2026-10-16",
+     "unit_type_id": "d991d72a-539c-47d1-85ea-1451463eab77",
+     "destination_id": "a15596d4-bf35-4f9e-af2d-e9ca8c26c5cd",
+     "occupancy_type": "SELF",
+     "reschedule_count": 0,
+     "season_overridden": false,
+     "entitlement_nights": "2.0",
+     "reservation_number": "R-2026-000002",
+     "resort_category_code": "PREMIUM",
+     "deduction_explanation": "2 night(s) x 1.000 (matrix rule; booked PREMIUM/WHITE/T0, purchased PREMIUM/RED/T0) = 2.0 entitlement night(s)",
+     "additional_paid_nights": "0.0"
+    }
+   },
+   {
+    "table": "reservations",
+    "record_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:29.554157Z",
+    "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+    "reason": null,
+    "old": {
+     "status": "APPROVED",
+     "confirmation_number": null
+    },
+    "new": {
+     "status": "CONFIRMED",
+     "confirmation_number": "CNF-DEMO-1"
+    }
+   },
+   {
+    "table": "payments",
+    "record_id": "260ed4ce-2271-44df-8a32-5e6f872ab7c2",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:29.143984Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": {
+     "receipt_document_id": null
+    },
+    "new": {
+     "receipt_document_id": "e7a1d78e-ecf3-4619-ac39-144e57148d5e"
+    }
+   },
+   {
+    "table": "documents",
+    "record_id": "e7a1d78e-ecf3-4619-ac39-144e57148d5e",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:29.128622Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "e7a1d78e-ecf3-4619-ac39-144e57148d5e",
+     "sha256": "cd5b0c9c253b0985e2514ce31ad2e81f1b026fa2d001e57078bcb24a44b4a332",
+     "blob_path": "bcd03408-6441-44cb-a389-a65e40c34ae3/e7a1d78e-ecf3-4619-ac39-144e57148d5e/receipt-RC8-2026-000003.pdf",
+     "file_name": "receipt-RC8-2026-000003.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "size_bytes": 1035,
+     "description": "Generated RECEIPT",
+     "scan_status": "CLEAN",
+     "content_type": "application/pdf",
+     "is_generated": true,
+     "document_type_id": "10dd7e14-cfc2-45d9-abcf-faac004d3a0b"
+    }
+   },
+   {
+    "table": "asf_charges",
+    "record_id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:29.101695Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": {
+     "status": "RAISED",
+     "amount_paid": "0.00"
+    },
+    "new": {
+     "status": "PAID",
+     "amount_paid": "12600.00"
+    }
+   },
+   {
+    "table": "payments",
+    "record_id": "260ed4ce-2271-44df-8a32-5e6f872ab7c2",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:29.098706Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "260ed4ce-2271-44df-8a32-5e6f872ab7c2",
+     "asf_year": 2026,
+     "currency": "INR",
+     "gst_rate": "5.0000",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "card_last4": "4242",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "entry_kind": "NORMAL",
+     "gst_amount": "600.00",
+     "base_amount": "12000.00",
+     "is_forfeited": false,
+     "payment_date": "2026-10-16",
+     "total_amount": "12600.00",
+     "asf_charge_id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+     "receipt_number": "RC8-2026-000003",
+     "reservation_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "transaction_ref": "DEMO-ASF-LRKZ",
+     "payment_method_id": "f371c95e-ef34-4178-aa61-a66b08ba0f83",
+     "payment_type_code": "ASF"
+    }
+   },
+   {
+    "table": "reservations",
+    "record_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:28.635138Z",
+    "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+    "reason": null,
+    "old": {
+     "status": "REQUESTED"
+    },
+    "new": {
+     "status": "APPROVED"
+    }
+   },
+   {
+    "table": "asf_charges",
+    "record_id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:28.455244Z",
+    "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+     "reason": "CURRENT",
+     "status": "RAISED",
+     "currency": "INR",
+     "gst_rate": "5.0000",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "raised_on": "2026-10-16",
+     "gst_amount": "600.00",
+     "amount_paid": "0",
+     "asf_rate_id": "73eac6ed-94c6-407f-8157-395e556f0197",
+     "base_amount": "12000.00",
+     "total_amount": "12600.00",
+     "membership_year": 2026,
+     "raised_by_reservation_id": "58d75c45-1696-41dd-bd36-59615f3493aa"
+    }
+   },
+   {
+    "table": "reservations",
+    "record_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:28.415190Z",
+    "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "rooms": 1,
+     "adults": 2,
+     "nights": 4,
+     "status": "REQUESTED",
+     "check_in": "2026-10-28",
+     "check_out": "2026-11-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "child_ages": [
+      6
+     ],
+     "property_id": "f0253fdd-1f34-4344-a367-4c6b09a3f684",
+     "season_code": "WHITE",
+     "request_date": "2026-10-16",
+     "unit_type_id": "d991d72a-539c-47d1-85ea-1451463eab77",
+     "destination_id": "a15596d4-bf35-4f9e-af2d-e9ca8c26c5cd",
+     "occupancy_type": "SELF",
+     "reschedule_count": 0,
+     "season_overridden": false,
+     "entitlement_nights": "4.0",
+     "reservation_number": "R-2026-000001",
+     "resort_category_code": "PREMIUM",
+     "deduction_explanation": "4 night(s) x 1.000 (matrix rule; booked PREMIUM/WHITE/T0, purchased PREMIUM/RED/T0) = 4.0 entitlement night(s)",
+     "additional_paid_nights": "0.0"
+    }
+   },
+   {
+    "table": "payments",
+    "record_id": "a9a5449e-f63e-4230-ac48-2e07ac2261d7",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:27.818050Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": {
+     "receipt_document_id": null
+    },
+    "new": {
+     "receipt_document_id": "c8e3d54a-ad9c-4abb-b0e9-a143135f9be2"
+    }
+   },
+   {
+    "table": "documents",
+    "record_id": "c8e3d54a-ad9c-4abb-b0e9-a143135f9be2",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.805412Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "c8e3d54a-ad9c-4abb-b0e9-a143135f9be2",
+     "sha256": "6f5612499374bba59423804c784924e5d60821b6730932d13e1a75c626b09f1a",
+     "blob_path": "bcd03408-6441-44cb-a389-a65e40c34ae3/c8e3d54a-ad9c-4abb-b0e9-a143135f9be2/receipt-RC8-2026-000002.pdf",
+     "file_name": "receipt-RC8-2026-000002.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "size_bytes": 984,
+     "description": "Generated RECEIPT",
+     "scan_status": "CLEAN",
+     "content_type": "application/pdf",
+     "is_generated": true,
+     "document_type_id": "10dd7e14-cfc2-45d9-abcf-faac004d3a0b"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "97ee8f0a-90c5-43c1-8c92-1d1b2c515961",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:27.786031Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": {
+     "status": "PENDING",
+     "amount_paid": "0.00"
+    },
+    "new": {
+     "status": "PAID",
+     "amount_paid": "20000.00"
+    }
+   },
+   {
+    "table": "payments",
+    "record_id": "a9a5449e-f63e-4230-ac48-2e07ac2261d7",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.771591Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "a9a5449e-f63e-4230-ac48-2e07ac2261d7",
+     "currency": "INR",
+     "gst_rate": "0.00",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "entry_kind": "NORMAL",
+     "gst_amount": "0.00",
+     "base_amount": "20000.00",
+     "is_forfeited": false,
+     "payment_date": "2026-10-16",
+     "total_amount": "20000.00",
+     "receipt_number": "RC8-2026-000002",
+     "transaction_ref": "DEMO-UPI-LRKZ",
+     "payment_method_id": "8051acfa-941f-41c1-beb4-c450c3279279",
+     "payment_type_code": "MEMBERSHIP_EMI"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "0d8575fa-797c-4b86-ba57-2dccebd63a3e",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.688568Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "0d8575fa-797c-4b86-ba57-2dccebd63a3e",
+     "number": 10,
+     "status": "PENDING",
+     "due_date": "2027-08-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "84f4bec2-a397-41a7-b02c-a34ff9381e48",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.688568Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "84f4bec2-a397-41a7-b02c-a34ff9381e48",
+     "number": 9,
+     "status": "PENDING",
+     "due_date": "2027-07-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "279e2215-d8f9-4ab7-934c-d231d676756d",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.688568Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "279e2215-d8f9-4ab7-934c-d231d676756d",
+     "number": 8,
+     "status": "PENDING",
+     "due_date": "2027-06-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "c5b38f96-42c8-4f5d-96f4-0d76822b9ebb",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.688568Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "c5b38f96-42c8-4f5d-96f4-0d76822b9ebb",
+     "number": 7,
+     "status": "PENDING",
+     "due_date": "2027-05-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "82d52ac8-0e82-42b0-a832-9af767fc62fb",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.688568Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "82d52ac8-0e82-42b0-a832-9af767fc62fb",
+     "number": 6,
+     "status": "PENDING",
+     "due_date": "2027-04-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "7f381162-93fd-4b71-9880-33f38d8d0d5f",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.688568Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "7f381162-93fd-4b71-9880-33f38d8d0d5f",
+     "number": 5,
+     "status": "PENDING",
+     "due_date": "2027-03-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "6edfb918-5393-42c7-9fec-5dc08fdabc72",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.688568Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "6edfb918-5393-42c7-9fec-5dc08fdabc72",
+     "number": 4,
+     "status": "PENDING",
+     "due_date": "2027-02-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "729861d4-9c58-409a-a1fc-cb750e9e33e5",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.688361Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "729861d4-9c58-409a-a1fc-cb750e9e33e5",
+     "number": 3,
+     "status": "PENDING",
+     "due_date": "2027-01-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "2737e035-f6a8-45f3-8902-0aa10c9c82e9",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.688361Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "2737e035-f6a8-45f3-8902-0aa10c9c82e9",
+     "number": 2,
+     "status": "PENDING",
+     "due_date": "2026-12-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "schedule_instalments",
+    "record_id": "97ee8f0a-90c5-43c1-8c92-1d1b2c515961",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.687287Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "97ee8f0a-90c5-43c1-8c92-1d1b2c515961",
+     "number": 1,
+     "status": "PENDING",
+     "due_date": "2026-11-01",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "amount_due": "20000.00",
+     "amount_paid": "0",
+     "schedule_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59"
+    }
+   },
+   {
+    "table": "payment_schedules",
+    "record_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:27.679310Z",
+    "changed_by": "43b7be6d-e621-462d-8322-a89824db02e0",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "7edc047c-657e-451a-8b6a-457d9b3ddb59",
+     "kind": "EMI",
+     "balance": "200000.00",
+     "emi_count": 10,
+     "is_active": true,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "emi_amount": "20000.00",
+     "start_year": 2026,
+     "start_month": 11
+    }
+   },
+   {
+    "table": "members",
+    "record_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:27.199686Z",
+    "changed_by": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+    "reason": null,
+    "old": {
+     "status": "PENDING_APPROVAL",
+     "comments": "Prefers sea-facing rooms",
+     "approved_at": null,
+     "approved_by": null
+    },
+    "new": {
+     "status": "ACTIVE",
+     "comments": "Prefers sea-facing rooms\nDemo approval",
+     "approved_at": "2026-10-16T06:34:27.193413+00:00",
+     "approved_by": "4f65e5d8-b897-43c3-8c3d-466c2b25b425"
+    }
+   },
+   {
+    "table": "members",
+    "record_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:26.775084Z",
+    "changed_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "reason": "Captured from welcome call",
+    "old": {
+     "comments": null
+    },
+    "new": {
+     "comments": "Prefers sea-facing rooms"
+    }
+   },
+   {
+    "table": "documents",
+    "record_id": "98832ec0-1cc9-40e2-a63c-e6b33dbec496",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:26.709366Z",
+    "changed_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "98832ec0-1cc9-40e2-a63c-e6b33dbec496",
+     "sha256": "c896da11e829c50f6e927c40c93e487db858b9b0332ac9c4de348a914590ab5b",
+     "blob_path": "bcd03408-6441-44cb-a389-a65e40c34ae3/98832ec0-1cc9-40e2-a63c-e6b33dbec496/signed-agreement.pdf",
+     "file_name": "signed-agreement.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "size_bytes": 193,
+     "description": "Signed agreement (demo)",
+     "scan_status": "CLEAN",
+     "content_type": "application/pdf",
+     "is_generated": false,
+     "document_type_id": "5c2de483-5f1a-4ecd-a448-1d2a42cf6ca1"
+    }
+   },
+   {
+    "table": "leads",
+    "record_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:26.511138Z",
+    "changed_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "reason": null,
+    "old": {
+     "status": "ATTENDED",
+     "member_id": null,
+     "converted_at": null
+    },
+    "new": {
+     "status": "CONVERTED",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "converted_at": "2026-10-16T06:34:26.507833+00:00"
+    }
+   },
+   {
+    "table": "payments",
+    "record_id": "03de48c5-5dcb-4b92-abd1-d574649480f8",
+    "operation": "UPDATE",
+    "changed_at": "2026-10-16T06:34:26.506837Z",
+    "changed_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "reason": null,
+    "old": {
+     "receipt_document_id": null
+    },
+    "new": {
+     "receipt_document_id": "d7b1652a-fa4c-40c8-a60e-b1151629c1fc"
+    }
+   },
+   {
+    "table": "documents",
+    "record_id": "d7b1652a-fa4c-40c8-a60e-b1151629c1fc",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:26.489731Z",
+    "changed_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "d7b1652a-fa4c-40c8-a60e-b1151629c1fc",
+     "sha256": "faff73a5ecc3c45aeaea04ffb86fc0302da8a4f11896c1b9f40eebab94421a86",
+     "blob_path": "bcd03408-6441-44cb-a389-a65e40c34ae3/d7b1652a-fa4c-40c8-a60e-b1151629c1fc/receipt-RC8-2026-000001.pdf",
+     "file_name": "receipt-RC8-2026-000001.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "size_bytes": 996,
+     "description": "Generated RECEIPT",
+     "scan_status": "CLEAN",
+     "content_type": "application/pdf",
+     "is_generated": true,
+     "document_type_id": "10dd7e14-cfc2-45d9-abcf-faac004d3a0b"
+    }
+   },
+   {
+    "table": "payments",
+    "record_id": "03de48c5-5dcb-4b92-abd1-d574649480f8",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:26.450851Z",
+    "changed_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "03de48c5-5dcb-4b92-abd1-d574649480f8",
+     "remarks": "Down payment recorded with the membership application",
+     "currency": "INR",
+     "gst_rate": "0.00",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "card_last4": "4242",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "entry_kind": "NORMAL",
+     "gst_amount": "0.00",
+     "base_amount": "55000.00",
+     "is_forfeited": false,
+     "payment_date": "2026-10-16",
+     "total_amount": "55000.00",
+     "receipt_number": "RC8-2026-000001",
+     "transaction_ref": "DEMO-CARD-LRKZ",
+     "payment_method_id": "f371c95e-ef34-4178-aa61-a66b08ba0f83",
+     "payment_type_code": "DOWN_PAYMENT"
+    }
+   },
+   {
+    "table": "member_applicants",
+    "record_id": "9f1bf91c-8f9b-4b6c-b15e-78b5310ca79d",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:26.329513Z",
+    "changed_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "9f1bf91c-8f9b-4b6c-b15e-78b5310ca79d",
+     "dob": "1988-04-12",
+     "email": "asha.demo.lrkz@example.com",
+     "mobile": "9502209714",
+     "position": 1,
+     "full_name": "Asha Demo LRKZ",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "name_norm": "asha demo lrkz"
+    }
+   },
+   {
+    "table": "members",
+    "record_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "operation": "INSERT",
+    "changed_at": "2026-10-16T06:34:26.323534Z",
+    "changed_by": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+    "reason": null,
+    "old": null,
+    "new": {
+     "id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "city": "Bengaluru",
+     "email": "asha.demo.lrkz@example.com",
+     "state": "Karnataka",
+     "status": "PENDING_APPROVAL",
+     "balance": "200000.00",
+     "country": "India",
+     "currency": "INR",
+     "opc_name": "Demo OPC",
+     "postcode": "560001",
+     "venue_id": "ede9be12-db32-48a9-adf7-6051b4eff76f",
+     "emi_count": 10,
+     "season_id": "d1f0b207-5238-4fef-a123-819dfa20ab63",
+     "admin_fees": "5000.00",
+     "company_id": "777b3eb7-efd2-4b31-8c4b-54fcfd92ce0b",
+     "emi_amount": "20000.00",
+     "total_price": "255000.00",
+     "balance_mode": "EMI",
+     "tenure_years": 10,
+     "unit_type_id": "d991d72a-539c-47d1-85ea-1451463eab77",
+     "address_line1": "12 Demo Street",
+     "custom_fields": {},
+     "purchase_date": "2026-10-16",
+     "credit_balance": "0",
+     "emi_start_year": 2026,
+     "membership_seq": "9001",
+     "purchase_price": "250000.00",
+     "source_lead_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "emi_start_month": 11,
+     "nights_per_year": "7",
+     "team_manager_id": "3203a9a3-8652-4ddf-ba07-de1e6593b61e",
+     "last_year_of_use": 2035,
+     "first_year_of_use": 2026,
+     "membership_number": "MSMC8-9001",
+     "resort_category_id": "30db43bc-9dc0-489f-a724-0cc2955e5042",
+     "down_payment_amount": "55000.00",
+     "agreement_signed_date": "2026-10-16",
+     "down_payment_method_id": "f371c95e-ef34-4178-aa61-a66b08ba0f83",
+     "relationship_manager_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "agreement_signed_company": true,
+     "agreement_signed_applicant1": true,
+     "agreement_signed_applicant2": false
+    }
+   }
+  ],
+  "GET /api/v1/activity-log?member_id=bcd03408-6441-44cb-a389-a65e40c34ae3&page_size=200": {
+   "items": [
+    {
+     "seq": 353,
+     "occurred_at": "2026-10-16T06:34:30.521238Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "UPLOAD",
+     "entity_type": "documents",
+     "entity_id": "b7929fe6-d01e-4e79-8d96-4410b572929e",
+     "entity_ref": "demo-note.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Uploaded document demo-note.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 352,
+     "occurred_at": "2026-10-16T06:34:30.521238Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "INSERT",
+     "entity_type": "documents",
+     "entity_id": "b7929fe6-d01e-4e79-8d96-4410b572929e",
+     "entity_ref": "demo-note.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created documents demo-note.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 351,
+     "occurred_at": "2026-10-16T06:34:30.432821Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "INSERT",
+     "entity_type": "calls",
+     "entity_id": "1e22d724-f104-47c2-bd46-e9ff6f0dd18d",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created calls",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 350,
+     "occurred_at": "2026-10-16T06:34:30.392230Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "INSERT",
+     "entity_type": "emails",
+     "entity_id": "9d0a907c-8869-46c9-95c5-1db13cebab90",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created emails",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 349,
+     "occurred_at": "2026-10-16T06:34:30.392230Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "INSERT",
+     "entity_type": "email_threads",
+     "entity_id": "2ef6a05f-e536-4907-9005-dc32a57eec8e",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created email_threads",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 346,
+     "occurred_at": "2026-10-16T06:34:29.868029Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "INSERT",
+     "entity_type": "reservations",
+     "entity_id": "c9a57cd3-5eb8-4c36-bffc-c9767ee9ba84",
+     "entity_ref": "R-2026-000002",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created reservations R-2026-000002",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 345,
+     "occurred_at": "2026-10-16T06:34:29.562136Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "UPDATE",
+     "entity_type": "reservations",
+     "entity_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "entity_ref": "R-2026-000001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated reservations R-2026-000001: confirmation_number, status",
+     "changes": {
+      "status": [
+       "APPROVED",
+       "CONFIRMED"
+      ],
+      "confirmation_number": [
+       null,
+       "CNF-DEMO-1"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 344,
+     "occurred_at": "2026-10-16T06:34:29.562136Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "STATUS_CHANGE",
+     "entity_type": "reservations",
+     "entity_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "entity_ref": "R-2026-000001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Reservation R-2026-000001: APPROVED -> CONFIRMED",
+     "changes": {
+      "status": [
+       "APPROVED",
+       "CONFIRMED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 341,
+     "occurred_at": "2026-10-16T06:34:29.153157Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "UPDATE",
+     "entity_type": "payments",
+     "entity_id": "260ed4ce-2271-44df-8a32-5e6f872ab7c2",
+     "entity_ref": "RC8-2026-000003",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated payments RC8-2026-000003: receipt_document_id",
+     "changes": {
+      "receipt_document_id": [
+       null,
+       "e7a1d78e-ecf3-4619-ac39-144e57148d5e"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 340,
+     "occurred_at": "2026-10-16T06:34:29.153157Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "PAYMENT",
+     "entity_type": "payments",
+     "entity_id": "260ed4ce-2271-44df-8a32-5e6f872ab7c2",
+     "entity_ref": "RC8-2026-000003",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Payment RC8-2026-000003 ASF 12600.00 INR recorded",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 339,
+     "occurred_at": "2026-10-16T06:34:29.153157Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "GENERATE",
+     "entity_type": "documents",
+     "entity_id": "e7a1d78e-ecf3-4619-ac39-144e57148d5e",
+     "entity_ref": "receipt-RC8-2026-000003.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Generated document receipt-RC8-2026-000003.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 338,
+     "occurred_at": "2026-10-16T06:34:29.153157Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "documents",
+     "entity_id": "e7a1d78e-ecf3-4619-ac39-144e57148d5e",
+     "entity_ref": "receipt-RC8-2026-000003.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created documents receipt-RC8-2026-000003.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 337,
+     "occurred_at": "2026-10-16T06:34:29.153157Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "UPDATE",
+     "entity_type": "asf_charges",
+     "entity_id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated asf_charges: amount_paid, status",
+     "changes": {
+      "status": [
+       "RAISED",
+       "PAID"
+      ],
+      "amount_paid": [
+       "0.00",
+       "12600.00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 336,
+     "occurred_at": "2026-10-16T06:34:29.153157Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "payments",
+     "entity_id": "260ed4ce-2271-44df-8a32-5e6f872ab7c2",
+     "entity_ref": "RC8-2026-000003",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created payments RC8-2026-000003",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 333,
+     "occurred_at": "2026-10-16T06:34:28.642824Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "UPDATE",
+     "entity_type": "reservations",
+     "entity_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "entity_ref": "R-2026-000001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated reservations R-2026-000001: status",
+     "changes": {
+      "status": [
+       "REQUESTED",
+       "APPROVED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 332,
+     "occurred_at": "2026-10-16T06:34:28.642824Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "STATUS_CHANGE",
+     "entity_type": "reservations",
+     "entity_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "entity_ref": "R-2026-000001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Reservation R-2026-000001: REQUESTED -> APPROVED",
+     "changes": {
+      "status": [
+       "REQUESTED",
+       "APPROVED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 331,
+     "occurred_at": "2026-10-16T06:34:28.642824Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "ENTITLEMENT_DEDUCTED",
+     "entity_type": "reservations",
+     "entity_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Entitlement deducted: [{'kind': 'CURRENT', 'year': 2026, 'nights': '4.0'}]",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 330,
+     "occurred_at": "2026-10-16T06:34:28.471718Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "ASF_RAISED",
+     "entity_type": "asf_charges",
+     "entity_id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "ASF for membership year 2026 raised: 12600.00 INR incl. GST (CURRENT)",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 329,
+     "occurred_at": "2026-10-16T06:34:28.471718Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "INSERT",
+     "entity_type": "asf_charges",
+     "entity_id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created asf_charges",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 328,
+     "occurred_at": "2026-10-16T06:34:28.471718Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "INSERT",
+     "entity_type": "reservations",
+     "entity_id": "58d75c45-1696-41dd-bd36-59615f3493aa",
+     "entity_ref": "R-2026-000001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created reservations R-2026-000001",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 325,
+     "occurred_at": "2026-10-16T06:34:27.828276Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "UPDATE",
+     "entity_type": "payments",
+     "entity_id": "a9a5449e-f63e-4230-ac48-2e07ac2261d7",
+     "entity_ref": "RC8-2026-000002",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated payments RC8-2026-000002: receipt_document_id",
+     "changes": {
+      "receipt_document_id": [
+       null,
+       "c8e3d54a-ad9c-4abb-b0e9-a143135f9be2"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 324,
+     "occurred_at": "2026-10-16T06:34:27.828276Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "PAYMENT",
+     "entity_type": "payments",
+     "entity_id": "a9a5449e-f63e-4230-ac48-2e07ac2261d7",
+     "entity_ref": "RC8-2026-000002",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Payment RC8-2026-000002 MEMBERSHIP_EMI 20000.00 INR recorded",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 323,
+     "occurred_at": "2026-10-16T06:34:27.828276Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "GENERATE",
+     "entity_type": "documents",
+     "entity_id": "c8e3d54a-ad9c-4abb-b0e9-a143135f9be2",
+     "entity_ref": "receipt-RC8-2026-000002.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Generated document receipt-RC8-2026-000002.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 322,
+     "occurred_at": "2026-10-16T06:34:27.828276Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "documents",
+     "entity_id": "c8e3d54a-ad9c-4abb-b0e9-a143135f9be2",
+     "entity_ref": "receipt-RC8-2026-000002.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created documents receipt-RC8-2026-000002.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 321,
+     "occurred_at": "2026-10-16T06:34:27.828276Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "UPDATE",
+     "entity_type": "schedule_instalments",
+     "entity_id": "97ee8f0a-90c5-43c1-8c92-1d1b2c515961",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated schedule_instalments: amount_paid, status",
+     "changes": {
+      "status": [
+       "PENDING",
+       "PAID"
+      ],
+      "amount_paid": [
+       "0.00",
+       "20000.00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 319,
+     "occurred_at": "2026-10-16T06:34:27.828276Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "payments",
+     "entity_id": "a9a5449e-f63e-4230-ac48-2e07ac2261d7",
+     "entity_ref": "RC8-2026-000002",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created payments RC8-2026-000002",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 318,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "SCHEDULE_GENERATED",
+     "entity_type": "payment_schedules",
+     "entity_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "EMI schedule 10 x 20000.00 generated",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 317,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "0d8575fa-797c-4b86-ba57-2dccebd63a3e",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 316,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "84f4bec2-a397-41a7-b02c-a34ff9381e48",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 315,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "279e2215-d8f9-4ab7-934c-d231d676756d",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 314,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "c5b38f96-42c8-4f5d-96f4-0d76822b9ebb",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 313,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "82d52ac8-0e82-42b0-a832-9af767fc62fb",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 312,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "7f381162-93fd-4b71-9880-33f38d8d0d5f",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 311,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "6edfb918-5393-42c7-9fec-5dc08fdabc72",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 310,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "729861d4-9c58-409a-a1fc-cb750e9e33e5",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 309,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "2737e035-f6a8-45f3-8902-0aa10c9c82e9",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 308,
+     "occurred_at": "2026-10-16T06:34:27.697971Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "schedule_instalments",
+     "entity_id": "97ee8f0a-90c5-43c1-8c92-1d1b2c515961",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created schedule_instalments",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 307,
+     "occurred_at": "2026-10-16T06:34:27.696970Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "payment_schedules",
+     "entity_id": "7edc047c-657e-451a-8b6a-457d9b3ddb59",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created payment_schedules",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 304,
+     "occurred_at": "2026-10-16T06:34:27.258423Z",
+     "user_id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+     "username": "demo.manager",
+     "action": "MEMBER_APPROVED",
+     "entity_type": "members",
+     "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "entity_ref": "MSMC8-9001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Member MSMC8-9001 approved",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 303,
+     "occurred_at": "2026-10-16T06:34:27.258423Z",
+     "user_id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+     "username": "demo.manager",
+     "action": "ENTITLEMENT_SEEDED",
+     "entity_type": "members",
+     "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "entity_ref": null,
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Entitlement seeded 2026-2035 at 7.0 nights/year",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 302,
+     "occurred_at": "2026-10-16T06:34:27.258423Z",
+     "user_id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+     "username": "demo.manager",
+     "action": "UPDATE",
+     "entity_type": "members",
+     "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "entity_ref": "MSMC8-9001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated members MSMC8-9001: approved_at, approved_by, comments, status",
+     "changes": {
+      "status": [
+       "PENDING_APPROVAL",
+       "ACTIVE"
+      ],
+      "comments": [
+       "Prefers sea-facing rooms",
+       "Prefers sea-facing rooms\nDemo approval"
+      ],
+      "approved_at": [
+       null,
+       "2026-10-16T06:34:27.193413+00:00"
+      ],
+      "approved_by": [
+       null,
+       "4f65e5d8-b897-43c3-8c3d-466c2b25b425"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 301,
+     "occurred_at": "2026-10-16T06:34:27.258423Z",
+     "user_id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+     "username": "demo.manager",
+     "action": "STATUS_CHANGE",
+     "entity_type": "members",
+     "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "entity_ref": "MSMC8-9001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Member MSMC8-9001: PENDING_APPROVAL -> ACTIVE (Approved)",
+     "changes": {
+      "status": [
+       "PENDING_APPROVAL",
+       "ACTIVE"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 298,
+     "occurred_at": "2026-10-16T06:34:26.790246Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "UPDATE",
+     "entity_type": "members",
+     "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "entity_ref": "MSMC8-9001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated members MSMC8-9001: comments (reason: Captured from welcome call)",
+     "changes": {
+      "comments": [
+       null,
+       "Prefers sea-facing rooms"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 297,
+     "occurred_at": "2026-10-16T06:34:26.728314Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "UPLOAD",
+     "entity_type": "documents",
+     "entity_id": "98832ec0-1cc9-40e2-a63c-e6b33dbec496",
+     "entity_ref": "signed-agreement.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Uploaded document signed-agreement.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 296,
+     "occurred_at": "2026-10-16T06:34:26.728314Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "INSERT",
+     "entity_type": "documents",
+     "entity_id": "98832ec0-1cc9-40e2-a63c-e6b33dbec496",
+     "entity_ref": "signed-agreement.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created documents signed-agreement.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 295,
+     "occurred_at": "2026-10-16T06:34:26.515129Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "UPDATE",
+     "entity_type": "leads",
+     "entity_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "entity_ref": "L-2026-000002",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated leads L-2026-000002: converted_at, member_id, status",
+     "changes": {
+      "status": [
+       "ATTENDED",
+       "CONVERTED"
+      ],
+      "member_id": [
+       null,
+       "bcd03408-6441-44cb-a389-a65e40c34ae3"
+      ],
+      "converted_at": [
+       null,
+       "2026-10-16T06:34:26.507833+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 294,
+     "occurred_at": "2026-10-16T06:34:26.515129Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "LEAD_CONVERTED",
+     "entity_type": "leads",
+     "entity_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "entity_ref": "L-2026-000002",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Lead L-2026-000002 converted to member MSMC8-9001",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 293,
+     "occurred_at": "2026-10-16T06:34:26.515129Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "UPDATE",
+     "entity_type": "payments",
+     "entity_id": "03de48c5-5dcb-4b92-abd1-d574649480f8",
+     "entity_ref": "RC8-2026-000001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Updated payments RC8-2026-000001: receipt_document_id",
+     "changes": {
+      "receipt_document_id": [
+       null,
+       "d7b1652a-fa4c-40c8-a60e-b1151629c1fc"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 292,
+     "occurred_at": "2026-10-16T06:34:26.515129Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "PAYMENT",
+     "entity_type": "payments",
+     "entity_id": "03de48c5-5dcb-4b92-abd1-d574649480f8",
+     "entity_ref": "RC8-2026-000001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Payment RC8-2026-000001 DOWN_PAYMENT 55000.00 INR recorded",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 291,
+     "occurred_at": "2026-10-16T06:34:26.515129Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "GENERATE",
+     "entity_type": "documents",
+     "entity_id": "d7b1652a-fa4c-40c8-a60e-b1151629c1fc",
+     "entity_ref": "receipt-RC8-2026-000001.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Generated document receipt-RC8-2026-000001.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 290,
+     "occurred_at": "2026-10-16T06:34:26.515129Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "INSERT",
+     "entity_type": "documents",
+     "entity_id": "d7b1652a-fa4c-40c8-a60e-b1151629c1fc",
+     "entity_ref": "receipt-RC8-2026-000001.pdf",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created documents receipt-RC8-2026-000001.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 289,
+     "occurred_at": "2026-10-16T06:34:26.515129Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "INSERT",
+     "entity_type": "payments",
+     "entity_id": "03de48c5-5dcb-4b92-abd1-d574649480f8",
+     "entity_ref": "RC8-2026-000001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created payments RC8-2026-000001",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 286,
+     "occurred_at": "2026-10-16T06:34:26.515129Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "INSERT",
+     "entity_type": "member_applicants",
+     "entity_id": "9f1bf91c-8f9b-4b6c-b15e-78b5310ca79d",
+     "entity_ref": "Asha Demo LRKZ",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created member_applicants Asha Demo LRKZ",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 285,
+     "occurred_at": "2026-10-16T06:34:26.515129Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "INSERT",
+     "entity_type": "members",
+     "entity_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "entity_ref": "MSMC8-9001",
+     "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+     "summary": "Created members MSMC8-9001",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 281,
+     "occurred_at": "2026-10-16T06:34:25.713910Z",
+     "user_id": "e4c1bb82-fa7c-4cd1-84d2-e83a23e2c600",
+     "username": "demo.marketing",
+     "action": "UPDATE",
+     "entity_type": "leads",
+     "entity_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "entity_ref": "L-2026-000002",
+     "member_id": null,
+     "summary": "Updated leads L-2026-000002: status",
+     "changes": {
+      "status": [
+       "PRESENTATION_SCHEDULED",
+       "ATTENDED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 280,
+     "occurred_at": "2026-10-16T06:34:25.713910Z",
+     "user_id": "e4c1bb82-fa7c-4cd1-84d2-e83a23e2c600",
+     "username": "demo.marketing",
+     "action": "STATUS_CHANGE",
+     "entity_type": "leads",
+     "entity_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "entity_ref": "L-2026-000002",
+     "member_id": null,
+     "summary": "Lead L-2026-000002: PRESENTATION_SCHEDULED -> ATTENDED",
+     "changes": {
+      "status": [
+       "PRESENTATION_SCHEDULED",
+       "ATTENDED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 279,
+     "occurred_at": "2026-10-16T06:34:25.679330Z",
+     "user_id": "e4c1bb82-fa7c-4cd1-84d2-e83a23e2c600",
+     "username": "demo.marketing",
+     "action": "UPDATE",
+     "entity_type": "leads",
+     "entity_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "entity_ref": "L-2026-000002",
+     "member_id": null,
+     "summary": "Updated leads L-2026-000002: presentation_at, status",
+     "changes": {
+      "status": [
+       "CONTACTED",
+       "PRESENTATION_SCHEDULED"
+      ],
+      "presentation_at": [
+       null,
+       "2026-10-16T00:00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 278,
+     "occurred_at": "2026-10-16T06:34:25.679330Z",
+     "user_id": "e4c1bb82-fa7c-4cd1-84d2-e83a23e2c600",
+     "username": "demo.marketing",
+     "action": "STATUS_CHANGE",
+     "entity_type": "leads",
+     "entity_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "entity_ref": "L-2026-000002",
+     "member_id": null,
+     "summary": "Lead L-2026-000002: CONTACTED -> PRESENTATION_SCHEDULED",
+     "changes": {
+      "status": [
+       "CONTACTED",
+       "PRESENTATION_SCHEDULED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 277,
+     "occurred_at": "2026-10-16T06:34:25.651011Z",
+     "user_id": "e4c1bb82-fa7c-4cd1-84d2-e83a23e2c600",
+     "username": "demo.marketing",
+     "action": "UPDATE",
+     "entity_type": "leads",
+     "entity_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "entity_ref": "L-2026-000002",
+     "member_id": null,
+     "summary": "Updated leads L-2026-000002: status",
+     "changes": {
+      "status": [
+       "NEW",
+       "CONTACTED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 276,
+     "occurred_at": "2026-10-16T06:34:25.651011Z",
+     "user_id": "e4c1bb82-fa7c-4cd1-84d2-e83a23e2c600",
+     "username": "demo.marketing",
+     "action": "STATUS_CHANGE",
+     "entity_type": "leads",
+     "entity_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "entity_ref": "L-2026-000002",
+     "member_id": null,
+     "summary": "Lead L-2026-000002: NEW -> CONTACTED",
+     "changes": {
+      "status": [
+       "NEW",
+       "CONTACTED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    },
+    {
+     "seq": 274,
+     "occurred_at": "2026-10-16T06:34:25.601561Z",
+     "user_id": "e4c1bb82-fa7c-4cd1-84d2-e83a23e2c600",
+     "username": "demo.marketing",
+     "action": "INSERT",
+     "entity_type": "leads",
+     "entity_id": "7f06fece-82b5-4153-9f8c-d00c9d90a8d4",
+     "entity_ref": "L-2026-000002",
+     "member_id": null,
+     "summary": "Created leads L-2026-000002",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "python-httpx/0.28.1"
+    }
+   ],
+   "total": 61,
+   "page": 1,
+   "page_size": 200
+  },
+  "GET /api/v1/admin/master/destinations?include_inactive=false": [
+   {
+    "country": "India",
+    "code": "GOA",
+    "name": "Goa",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "a15596d4-bf35-4f9e-af2d-e9ca8c26c5cd",
+    "created_at": "2026-10-16T05:45:53.845137Z",
+    "updated_at": "2026-10-16T05:45:53.845137Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "country": "India",
+    "code": "OOTY",
+    "name": "Ooty",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "e3003a9c-790f-4e2d-8c70-1d666da2bae8",
+    "created_at": "2026-10-16T05:45:53.850124Z",
+    "updated_at": "2026-10-16T05:45:53.850124Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   }
+  ],
+  "GET /api/v1/admin/master/properties?include_inactive=false": [
+   {
+    "destination_id": "a15596d4-bf35-4f9e-af2d-e9ca8c26c5cd",
+    "resort_category_id": "30db43bc-9dc0-489f-a724-0cc2955e5042",
+    "address": "",
+    "code": "GOA-DEMO-PREM",
+    "name": "Demo Beach Resort (Premium)",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "f0253fdd-1f34-4344-a367-4c6b09a3f684",
+    "created_at": "2026-10-16T05:45:53.860096Z",
+    "updated_at": "2026-10-16T05:45:53.860096Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   },
+   {
+    "destination_id": "e3003a9c-790f-4e2d-8c70-1d666da2bae8",
+    "resort_category_id": "8eac9b57-c0e8-4077-96c6-6de0e34ebaf1",
+    "address": "",
+    "code": "OOTY-DEMO-SUP",
+    "name": "Demo Hill Resort (Supreme)",
+    "is_active": true,
+    "sort_order": 0,
+    "id": "23004113-dc96-4bb3-9685-2308d116fb68",
+    "created_at": "2026-10-16T05:45:53.866079Z",
+    "updated_at": "2026-10-16T05:45:53.866079Z",
+    "created_by": null,
+    "updated_by": null,
+    "version": 1
+   }
+  ],
+  "POST /api/v1/members/bcd03408-6441-44cb-a389-a65e40c34ae3/reservations/quote?": {
+   "stay_nights": 3,
+   "season_code": "WHITE",
+   "season_derived": true,
+   "booked": [
+    "PREMIUM",
+    "WHITE",
+    "T0"
+   ],
+   "purchased": [
+    "PREMIUM",
+    "RED",
+    "T0"
+   ],
+   "multiplier": "1.000",
+   "entitlement_nights_required": "3.0",
+   "explanation": "3 night(s) x 1.000 (matrix rule; booked PREMIUM/WHITE/T0, purchased PREMIUM/RED/T0) = 3.0 entitlement night(s)",
+   "plan": [
+    {
+     "year": 2026,
+     "kind": "CURRENT",
+     "nights": "1.0"
+    },
+    {
+     "year": 2027,
+     "kind": "BORROWED",
+     "nights": "2.0"
+    }
+   ],
+   "entitlement_nights": "3.0",
+   "additional_paid_nights": "0.0",
+   "asf": [
+    {
+     "membership_year": 2027,
+     "base": "12000.00",
+     "gst_rate": "5.0000",
+     "gst": "600.00",
+     "total": "12600.00",
+     "currency": "INR",
+     "reason": "BORROWED",
+     "new": true
+    },
+    {
+     "membership_year": 2026,
+     "total": "12600.00",
+     "status": "PAID",
+     "new": false,
+     "currency": "INR"
+    }
+   ],
+   "window_warnings": [],
+   "occupancy_problems": [],
+   "gift_rent_problems": [],
+   "blocking": []
+  },
+  "GET /api/v1/reservations/c9a57cd3-5eb8-4c36-bffc-c9767ee9ba84?": {
+   "reservation": {
+    "id": "c9a57cd3-5eb8-4c36-bffc-c9767ee9ba84",
+    "reservation_number": "R-2026-000002",
+    "member_id": "bcd03408-6441-44cb-a389-a65e40c34ae3",
+    "request_date": "2026-10-16",
+    "destination_id": "a15596d4-bf35-4f9e-af2d-e9ca8c26c5cd",
+    "property_id": "f0253fdd-1f34-4344-a367-4c6b09a3f684",
+    "resort_category_code": "PREMIUM",
+    "season_code": "WHITE",
+    "season_overridden": false,
+    "unit_type_id": "d991d72a-539c-47d1-85ea-1451463eab77",
+    "rooms": 1,
+    "adults": 2,
+    "child_ages": [],
+    "occupancy_type": "SELF",
+    "guest_name": null,
+    "guest_contact": null,
+    "check_in": "2026-11-04",
+    "check_out": "2026-11-06",
+    "nights": 2,
+    "entitlement_nights": "2.0",
+    "additional_paid_nights": "0.0",
+    "deduction_explanation": "2 night(s) x 1.000 (matrix rule; booked PREMIUM/WHITE/T0, purchased PREMIUM/RED/T0) = 2.0 entitlement night(s)",
+    "status": "REQUESTED",
+    "confirmation_number": null,
+    "reschedule_count": 0,
+    "remarks": null,
+    "warnings_overridden": null,
+    "version": 1,
+    "status_history": [
+     {
+      "from_status": null,
+      "to_status": "REQUESTED",
+      "changed_at": "2026-10-16T06:34:29.838918Z",
+      "changed_by": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+      "reason_id": null,
+      "reason_text": null,
+      "override": false
+     }
+    ],
+    "date_versions": [
+     {
+      "version_no": 1,
+      "check_in": "2026-11-04",
+      "check_out": "2026-11-06",
+      "entitlement_nights": "2.0",
+      "created_at": "2026-10-16T06:34:29.837923Z",
+      "reason": "Original"
+     }
+    ]
+   },
+   "unpaid_asf_years": [],
+   "asf_charges": [
+    {
+     "id": "a977669c-4356-433c-af05-2dc12bf59c7a",
+     "membership_year": 2026,
+     "total": "12600.00",
+     "base": "12000.00",
+     "gst": "600.00",
+     "status": "PAID",
+     "currency": "INR"
+    }
+   ],
+   "deduction": {
+    "state": "HELD",
+    "plan": {
+     "lines": [
+      {
+       "kind": "CURRENT",
+       "year": 2026,
+       "nights": "2.0"
+      }
+     ]
+    },
+    "revision": 1
+   },
+   "payments": []
+  },
+  "GET /api/v1/activity-log?page=1&page_size=50": {
+   "items": [
+    {
+     "seq": 1218,
+     "occurred_at": "2026-10-19T08:24:21.233710Z",
+     "user_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "username": "demo.admin",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "entity_ref": "demo.admin",
+     "member_id": null,
+     "summary": "Updated users demo.admin: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-19T08:21:51.275443+00:00",
+       "2026-10-19T08:24:20.883174+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1217,
+     "occurred_at": "2026-10-19T08:24:21.233710Z",
+     "user_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "username": "demo.admin",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "entity_ref": "demo.admin",
+     "member_id": null,
+     "summary": "demo.admin signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1216,
+     "occurred_at": "2026-10-19T08:21:51.646277Z",
+     "user_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "username": "demo.admin",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "entity_ref": "demo.admin",
+     "member_id": null,
+     "summary": "Updated users demo.admin: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-19T08:03:22.287712+00:00",
+       "2026-10-19T08:21:51.275443+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1215,
+     "occurred_at": "2026-10-19T08:21:51.646277Z",
+     "user_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "username": "demo.admin",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "entity_ref": "demo.admin",
+     "member_id": null,
+     "summary": "demo.admin signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1214,
+     "occurred_at": "2026-10-19T08:03:22.637581Z",
+     "user_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "username": "demo.admin",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "entity_ref": "demo.admin",
+     "member_id": null,
+     "summary": "Updated users demo.admin: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-16T09:22:41.261149+00:00",
+       "2026-10-19T08:03:22.287712+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1213,
+     "occurred_at": "2026-10-19T08:03:22.637581Z",
+     "user_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "username": "demo.admin",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "entity_ref": "demo.admin",
+     "member_id": null,
+     "summary": "demo.admin signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1212,
+     "occurred_at": "2026-10-16T09:22:41.588570Z",
+     "user_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "username": "demo.admin",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "entity_ref": "demo.admin",
+     "member_id": null,
+     "summary": "Updated users demo.admin: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-16T07:53:25.855358+00:00",
+       "2026-10-16T09:22:41.261149+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "curl/7.59.0"
+    },
+    {
+     "seq": 1211,
+     "occurred_at": "2026-10-16T09:22:41.588570Z",
+     "user_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "username": "demo.admin",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "bea30114-4e4a-4bbf-b62d-0a69d20655ec",
+     "entity_ref": "demo.admin",
+     "member_id": null,
+     "summary": "demo.admin signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "curl/7.59.0"
+    },
+    {
+     "seq": 1210,
+     "occurred_at": "2026-10-16T08:00:59.287835Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "entity_ref": "demo.sales",
+     "member_id": null,
+     "summary": "Updated users demo.sales: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-16T08:00:15.099505+00:00",
+       "2026-10-16T08:00:58.965055+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Mobile Safari/537.36"
+    },
+    {
+     "seq": 1209,
+     "occurred_at": "2026-10-16T08:00:59.287835Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "entity_ref": "demo.sales",
+     "member_id": null,
+     "summary": "demo.sales signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Mobile Safari/537.36"
+    },
+    {
+     "seq": 1208,
+     "occurred_at": "2026-10-16T08:00:15.427794Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "entity_ref": "demo.sales",
+     "member_id": null,
+     "summary": "Updated users demo.sales: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-16T07:59:36.199043+00:00",
+       "2026-10-16T08:00:15.099505+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1207,
+     "occurred_at": "2026-10-16T08:00:15.427794Z",
+     "user_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "username": "demo.sales",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "b9f4cb7c-12b4-4f59-b8ea-cf31ee097753",
+     "entity_ref": "demo.sales",
+     "member_id": null,
+     "summary": "demo.sales signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1206,
+     "occurred_at": "2026-10-16T08:00:09.975701Z",
+     "user_id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+     "username": "demo.manager",
+     "action": "UPDATE",
+     "entity_type": "members",
+     "entity_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "entity_ref": "MSMC8-9013",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Updated members MSMC8-9013: comments (reason: Welcome call)",
+     "changes": {
+      "comments": [
+       null,
+       "Prefers sea-facing rooms"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1205,
+     "occurred_at": "2026-10-16T08:00:08.520404Z",
+     "user_id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+     "username": "demo.manager",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+     "entity_ref": "demo.manager",
+     "member_id": null,
+     "summary": "Updated users demo.manager: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-16T07:59:47.005291+00:00",
+       "2026-10-16T08:00:08.196386+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1204,
+     "occurred_at": "2026-10-16T08:00:08.520404Z",
+     "user_id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+     "username": "demo.manager",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "4f65e5d8-b897-43c3-8c3d-466c2b25b425",
+     "entity_ref": "demo.manager",
+     "member_id": null,
+     "summary": "demo.manager signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1203,
+     "occurred_at": "2026-10-16T08:00:07.373944Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "UPLOAD",
+     "entity_type": "documents",
+     "entity_id": "c1a7d968-60df-4146-9b50-477b68c0ddb9",
+     "entity_ref": "demo-note.pdf",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Uploaded document demo-note.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1202,
+     "occurred_at": "2026-10-16T08:00:07.372949Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "INSERT",
+     "entity_type": "documents",
+     "entity_id": "c1a7d968-60df-4146-9b50-477b68c0ddb9",
+     "entity_ref": "demo-note.pdf",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created documents demo-note.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1201,
+     "occurred_at": "2026-10-16T08:00:06.958557Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "INSERT",
+     "entity_type": "calls",
+     "entity_id": "63a2de81-b06c-43c9-9a50-1fa8b8207465",
+     "entity_ref": null,
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created calls",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1200,
+     "occurred_at": "2026-10-16T08:00:06.187871Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "INSERT",
+     "entity_type": "emails",
+     "entity_id": "ac144fbe-d922-4790-904b-6b11a2044ba3",
+     "entity_ref": null,
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created emails",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1199,
+     "occurred_at": "2026-10-16T08:00:06.187871Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "INSERT",
+     "entity_type": "email_threads",
+     "entity_id": "072437aa-2653-4b81-a3d6-a6da5fdeb908",
+     "entity_ref": null,
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created email_threads",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1198,
+     "occurred_at": "2026-10-16T08:00:04.436604Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "entity_ref": "demo.service",
+     "member_id": null,
+     "summary": "Updated users demo.service: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-16T07:44:40.704942+00:00",
+       "2026-10-16T08:00:04.110619+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1197,
+     "occurred_at": "2026-10-16T08:00:04.436604Z",
+     "user_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "username": "demo.service",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "a664156d-2743-4122-8770-06737f625fc9",
+     "entity_ref": "demo.service",
+     "member_id": null,
+     "summary": "demo.service signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1196,
+     "occurred_at": "2026-10-16T08:00:03.844048Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "INSERT",
+     "entity_type": "reservations",
+     "entity_id": "78dd5530-635b-437a-a6c0-e6198d1fe823",
+     "entity_ref": "R-2026-000019",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created reservations R-2026-000019",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1195,
+     "occurred_at": "2026-10-16T08:00:01.074083Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "UPDATE",
+     "entity_type": "reservations",
+     "entity_id": "ff5311a4-4303-4d16-a4bd-ba1360d4e9c1",
+     "entity_ref": "R-2026-000018",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Updated reservations R-2026-000018: confirmation_number, status",
+     "changes": {
+      "status": [
+       "APPROVED",
+       "CONFIRMED"
+      ],
+      "confirmation_number": [
+       null,
+       "CNF-LKWR"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1194,
+     "occurred_at": "2026-10-16T08:00:01.074083Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "STATUS_CHANGE",
+     "entity_type": "reservations",
+     "entity_id": "ff5311a4-4303-4d16-a4bd-ba1360d4e9c1",
+     "entity_ref": "R-2026-000018",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Reservation R-2026-000018: APPROVED -> CONFIRMED",
+     "changes": {
+      "status": [
+       "APPROVED",
+       "CONFIRMED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1193,
+     "occurred_at": "2026-10-16T07:59:59.940466Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "entity_ref": "demo.reservations",
+     "member_id": null,
+     "summary": "Updated users demo.reservations: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-16T07:59:52.998153+00:00",
+       "2026-10-16T07:59:59.542610+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1192,
+     "occurred_at": "2026-10-16T07:59:59.939465Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "entity_ref": "demo.reservations",
+     "member_id": null,
+     "summary": "demo.reservations signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1191,
+     "occurred_at": "2026-10-16T07:59:59.060065Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "UPDATE",
+     "entity_type": "payments",
+     "entity_id": "1a07fee5-10e0-457d-9ae3-dcb4460520c8",
+     "entity_ref": "RC8-2026-000035",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Updated payments RC8-2026-000035: receipt_document_id",
+     "changes": {
+      "receipt_document_id": [
+       null,
+       "9ceb074a-ba62-4dae-a366-f0a0afbfdd1c"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1190,
+     "occurred_at": "2026-10-16T07:59:59.060065Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "PAYMENT",
+     "entity_type": "payments",
+     "entity_id": "1a07fee5-10e0-457d-9ae3-dcb4460520c8",
+     "entity_ref": "RC8-2026-000035",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Payment RC8-2026-000035 ASF 12600.00 INR recorded",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1189,
+     "occurred_at": "2026-10-16T07:59:59.060065Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "GENERATE",
+     "entity_type": "documents",
+     "entity_id": "9ceb074a-ba62-4dae-a366-f0a0afbfdd1c",
+     "entity_ref": "receipt-RC8-2026-000035.pdf",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Generated document receipt-RC8-2026-000035.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1188,
+     "occurred_at": "2026-10-16T07:59:59.060065Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "documents",
+     "entity_id": "9ceb074a-ba62-4dae-a366-f0a0afbfdd1c",
+     "entity_ref": "receipt-RC8-2026-000035.pdf",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created documents receipt-RC8-2026-000035.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1187,
+     "occurred_at": "2026-10-16T07:59:59.060065Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "UPDATE",
+     "entity_type": "asf_charges",
+     "entity_id": "48aac308-ad55-40e7-bb50-648388455616",
+     "entity_ref": null,
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Updated asf_charges: amount_paid, status",
+     "changes": {
+      "status": [
+       "RAISED",
+       "PAID"
+      ],
+      "amount_paid": [
+       "0.00",
+       "12600.00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1186,
+     "occurred_at": "2026-10-16T07:59:59.060065Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "payments",
+     "entity_id": "1a07fee5-10e0-457d-9ae3-dcb4460520c8",
+     "entity_ref": "RC8-2026-000035",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created payments RC8-2026-000035",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1185,
+     "occurred_at": "2026-10-16T07:59:57.225598Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "entity_ref": "demo.finance",
+     "member_id": null,
+     "summary": "Updated users demo.finance: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-16T07:59:49.594292+00:00",
+       "2026-10-16T07:59:56.892316+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1184,
+     "occurred_at": "2026-10-16T07:59:57.225598Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "entity_ref": "demo.finance",
+     "member_id": null,
+     "summary": "demo.finance signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1183,
+     "occurred_at": "2026-10-16T07:59:56.129784Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "UPDATE",
+     "entity_type": "reservations",
+     "entity_id": "ff5311a4-4303-4d16-a4bd-ba1360d4e9c1",
+     "entity_ref": "R-2026-000018",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Updated reservations R-2026-000018: status",
+     "changes": {
+      "status": [
+       "REQUESTED",
+       "APPROVED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1182,
+     "occurred_at": "2026-10-16T07:59:56.129784Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "STATUS_CHANGE",
+     "entity_type": "reservations",
+     "entity_id": "ff5311a4-4303-4d16-a4bd-ba1360d4e9c1",
+     "entity_ref": "R-2026-000018",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Reservation R-2026-000018: REQUESTED -> APPROVED",
+     "changes": {
+      "status": [
+       "REQUESTED",
+       "APPROVED"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1181,
+     "occurred_at": "2026-10-16T07:59:56.129784Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "ENTITLEMENT_DEDUCTED",
+     "entity_type": "reservations",
+     "entity_id": "ff5311a4-4303-4d16-a4bd-ba1360d4e9c1",
+     "entity_ref": null,
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Entitlement deducted: [{'kind': 'CURRENT', 'year': 2026, 'nights': '4.0'}]",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1180,
+     "occurred_at": "2026-10-16T07:59:55.181092Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "ASF_RAISED",
+     "entity_type": "asf_charges",
+     "entity_id": "48aac308-ad55-40e7-bb50-648388455616",
+     "entity_ref": null,
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "ASF for membership year 2026 raised: 12600.00 INR incl. GST (CURRENT)",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1179,
+     "occurred_at": "2026-10-16T07:59:55.181092Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "INSERT",
+     "entity_type": "asf_charges",
+     "entity_id": "48aac308-ad55-40e7-bb50-648388455616",
+     "entity_ref": null,
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created asf_charges",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1178,
+     "occurred_at": "2026-10-16T07:59:55.181092Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "INSERT",
+     "entity_type": "reservations",
+     "entity_id": "ff5311a4-4303-4d16-a4bd-ba1360d4e9c1",
+     "entity_ref": "R-2026-000018",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created reservations R-2026-000018",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1177,
+     "occurred_at": "2026-10-16T07:59:53.321035Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "UPDATE",
+     "entity_type": "users",
+     "entity_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "entity_ref": "demo.reservations",
+     "member_id": null,
+     "summary": "Updated users demo.reservations: last_login_at",
+     "changes": {
+      "last_login_at": [
+       "2026-10-16T07:44:35.174176+00:00",
+       "2026-10-16T07:59:52.998153+00:00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1176,
+     "occurred_at": "2026-10-16T07:59:53.321035Z",
+     "user_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "username": "demo.reservations",
+     "action": "LOGIN",
+     "entity_type": "users",
+     "entity_id": "9190f60c-6c32-4864-b099-2b11ba7ca4ee",
+     "entity_ref": "demo.reservations",
+     "member_id": null,
+     "summary": "demo.reservations signed in",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1175,
+     "occurred_at": "2026-10-16T07:59:52.256438Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "UPDATE",
+     "entity_type": "payments",
+     "entity_id": "2261bf76-391f-4fbd-93a3-c8f4deeebefa",
+     "entity_ref": "RC8-2026-000034",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Updated payments RC8-2026-000034: receipt_document_id",
+     "changes": {
+      "receipt_document_id": [
+       null,
+       "78414af0-918a-48f5-870f-56284abe28c5"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1174,
+     "occurred_at": "2026-10-16T07:59:52.255443Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "PAYMENT",
+     "entity_type": "payments",
+     "entity_id": "2261bf76-391f-4fbd-93a3-c8f4deeebefa",
+     "entity_ref": "RC8-2026-000034",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Payment RC8-2026-000034 MEMBERSHIP_EMI 20000.00 INR recorded",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1173,
+     "occurred_at": "2026-10-16T07:59:52.255443Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "GENERATE",
+     "entity_type": "documents",
+     "entity_id": "78414af0-918a-48f5-870f-56284abe28c5",
+     "entity_ref": "receipt-RC8-2026-000034.pdf",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Generated document receipt-RC8-2026-000034.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1172,
+     "occurred_at": "2026-10-16T07:59:52.255443Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "documents",
+     "entity_id": "78414af0-918a-48f5-870f-56284abe28c5",
+     "entity_ref": "receipt-RC8-2026-000034.pdf",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created documents receipt-RC8-2026-000034.pdf",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1171,
+     "occurred_at": "2026-10-16T07:59:52.255443Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "UPDATE",
+     "entity_type": "schedule_instalments",
+     "entity_id": "1a77b295-8982-42ac-8db9-73ce57a8d5ef",
+     "entity_ref": null,
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Updated schedule_instalments: amount_paid, status",
+     "changes": {
+      "status": [
+       "PENDING",
+       "PAID"
+      ],
+      "amount_paid": [
+       "0.00",
+       "20000.00"
+      ]
+     },
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1170,
+     "occurred_at": "2026-10-16T07:59:52.255443Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "payment_allocations",
+     "entity_id": "e96225c5-2567-428e-b6f5-274f960ec413",
+     "entity_ref": null,
+     "member_id": null,
+     "summary": "Created payment_allocations",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    },
+    {
+     "seq": 1169,
+     "occurred_at": "2026-10-16T07:59:52.255443Z",
+     "user_id": "43b7be6d-e621-462d-8322-a89824db02e0",
+     "username": "demo.finance",
+     "action": "INSERT",
+     "entity_type": "payments",
+     "entity_id": "2261bf76-391f-4fbd-93a3-c8f4deeebefa",
+     "entity_ref": "RC8-2026-000034",
+     "member_id": "556c6f25-a937-4b91-93e6-f026546a2e98",
+     "summary": "Created payments RC8-2026-000034",
+     "changes": null,
+     "ip": "::ffff:127.0.0.1",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.33 Safari/537.36"
+    }
+   ],
+   "total": 1218,
+   "page": 1,
+   "page_size": 50
+  },
+  "GET /api/v1/finance/dashboard?": {
+   "overdue_emis": [],
+   "reservations_waiting_asf": [],
+   "default_notices": []
+  }
+ }
+}

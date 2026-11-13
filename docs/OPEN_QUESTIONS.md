@@ -27,3 +27,11 @@ None of these block delivery. The current default is in brackets and is configur
 18. **New: multi-room bookings.** Should each room consume entitlement nights? *[Yes. D-15]*
 19. **New: cancelling an approved but unconfirmed booking.** Should it credit back 100%? *[Yes; tiers apply to confirmed bookings only. D-13]*
 20. **New: ASF part-payments.** Should ASF be payable in instalments? *[No: one payment per membership year. D-14]*
+
+## Brand (added 19-10-2026, docs/BRAND_PROMPT.md)
+21. **Vector, reversed and re-trimmed logos.** Please supply SVG (or PDF/AI/EPS) versions of both logos, plus **white/reversed** versions for dark backgrounds. The supplied files work in the app and print at about 480–500 dpi at 45 mm, but they can't sit on dark surfaces. The K8 PNG also carries about 420px of empty transparent space below the artwork; a tightly trimmed file would help. *[PNG files used as supplied; K8 padding framed in CSS]*
+22. **Official app icons.** Are the provisional icons acceptable (the orange "8" for Club8, the K8 monogram for K8), or do you have official icons? The K8 icon's small text is unreadable at favicon size. *[Provisional icons in use]*
+23. **K8 legal entity.** Is Klub Eight Asia Ventures a separate legal entity from Multiple Sales and Marketing LLP? Please provide its registered name, address and GST details for receipts and notices. *[Shown as "Klub Eight Asia Ventures" with a "pending confirmation" flag. K8 receipts are blocked in production until it is confirmed]*
+24. **Default brand for the CRM shell.** Club8 (current default), K8, or a neutral "Club8 & K8 CRM" identity showing both? *[Club8; switchable with `NEXT_PUBLIC_DEFAULT_BRAND`]*
+25. **Brand fonts.** Do you have brand typefaces? The app keeps Inter for readability either way; brand fonts could be used on the login page and PDF headings only. *[Inter]*
+26. **Brand approach.** One app theme (the default brand), each record showing its own brand as a small chip, and documents fully branded by the record's company: please confirm. *[As described; DESIGN_DECISIONS "Brand"]*

@@ -238,6 +238,7 @@ class MemberListItem(ORM):
     id: uuid.UUID
     membership_number: str
     status: str
+    company_id: uuid.UUID | None = None  # brand chip in lists
     email: str
     city: str
     purchase_date: date

@@ -39,13 +39,75 @@ export function formatDate(value: string | null | undefined): string {
   return `${get("day")}-${get("month")}-${get("year")}`;
 }
 
-export function formatDateTime(value: string | null | undefined): string {
+/** 12-hour time with am/pm in IST, e.g. "4:05 pm". */
+export function formatTime(value: string | null | undefined): string {
   if (!value) return "—";
   const dt = new Date(value);
-  const time = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false,
-  }).format(dt);
-  return `${formatDate(value)} ${time}`;
+  if (Number.isNaN(dt.getTime())) return value;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true,
+  }).formatToParts(dt);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("hour")}:${get("minute")} ${get("dayPeriod").toLowerCase()}`;
+}
+
+export function formatDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  return `${formatDate(value)} ${formatTime(value)}`;
+}
+
+/** Whole days from today (IST) to an ISO date: negative = in the past. */
+export function daysFromToday(isoDate: string | null | undefined): number | null {
+  if (!isoDate) return null;
+  const d = isoDate.slice(0, 10);
+  const ms = Date.parse(`${d}T00:00:00Z`) - Date.parse(`${todayIso()}T00:00:00Z`);
+  return Number.isNaN(ms) ? null : Math.round(ms / 86_400_000);
+}
+
+/** "today", "in 3 days", "3 days overdue" / "3 days ago". */
+export function formatRelativeDays(isoDate: string | null | undefined, pastLabel: "ago" | "overdue" = "ago"): string {
+  const n = daysFromToday(isoDate);
+  if (n === null) return "";
+  if (n === 0) return "today";
+  if (n === 1) return "tomorrow";
+  if (n > 0) return `in ${n} days`;
+  const k = -n;
+  return pastLabel === "overdue" ? `${k} ${k === 1 ? "day" : "days"} overdue` : k === 1 ? "yesterday" : `${k} days ago`;
+}
+
+/** Phone numbers in lists: "+91 98XXX XX308". Non-Indian numbers keep only the last 3 digits visible. */
+export function formatPhoneMasked(value: string | null | undefined): string {
+  if (!value) return "—";
+  const digits = value.replace(/\D/g, "");
+  const local = digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits.length === 11 && digits.startsWith("0") ? digits.slice(1) : digits;
+  if (local.length === 10) return `+91 ${local.slice(0, 2)}XXX XX${local.slice(-3)}`;
+  if (digits.length < 4) return "XXXX";
+  return `${"X".repeat(Math.max(0, digits.length - 3))}${digits.slice(-3)}`;
+}
+
+/** Full phone number for detail views: "+91 98450 12345". */
+export function formatPhone(value: string | null | undefined): string {
+  if (!value) return "—";
+  const digits = value.replace(/\D/g, "");
+  const local = digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits;
+  return local.length === 10 ? `+91 ${local.slice(0, 5)} ${local.slice(5)}` : value;
+}
+
+/** Nights always with one decimal ("7.0", "3.5") because half nights exist. */
+export function formatNights(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "—";
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(1) : String(value);
+}
+
+/** Human label for an UPPER_SNAKE code: "MEMBERSHIP_EMI" -> "Membership EMI". */
+export function humanize(code: string | null | undefined): string {
+  if (!code) return "—";
+  const ACRONYMS = new Set(["EMI", "ASF", "GST", "PAN", "DL", "ID", "UPI", "NEFT", "RTGS", "KYC", "OPC", "PDF"]);
+  return code
+    .split("_")
+    .map((w, i) => (ACRONYMS.has(w) ? w : i === 0 ? w.charAt(0) + w.slice(1).toLowerCase() : w.toLowerCase()))
+    .join(" ");
 }
 
 export function todayIso(): string {

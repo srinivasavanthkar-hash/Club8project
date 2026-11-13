@@ -167,6 +167,10 @@ resource "azurerm_container_app" "web" {
       image  = local.image_web
       cpu    = 0.5
       memory = "1Gi"
+      env {
+        name  = "CRM_ENV" # environment ribbon (DEV / STAGING); nothing is shown in prod
+        value = var.env
+      }
       liveness_probe {
         transport = "HTTP"
         port      = 3000
