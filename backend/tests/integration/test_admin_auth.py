@@ -62,7 +62,13 @@ async def test_user_and_role_management(api):
     )
     assert u["must_change_password"] is True and len(u["temporary_password"]) >= 20
     assert u["temporary_password"] != "Chosen-By-Admin-1"
-    u = ok(await api.put(f"/api/v1/admin/users/{u['id']}/roles", json={"roles": ["SALES", "FINANCE"]}))
+    assert (await api.put(f"/api/v1/admin/users/{u['id']}/roles", json={"roles": ["FINANCE"]})).status_code == 422
+    u = ok(
+        await api.put(
+            f"/api/v1/admin/users/{u['id']}/roles",
+            json={"roles": ["SALES", "FINANCE"], "reason": "Moved to finance desk"},
+        )
+    )
     assert u["roles"] == ["FINANCE", "SALES"]
     roles = ok(await api.get("/api/v1/admin/roles"))
     mkt = next(r for r in roles if r["code"] == "MARKETING")

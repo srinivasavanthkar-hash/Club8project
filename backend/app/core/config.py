@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     # Data protection flags
     aadhaar_full_storage_enabled: bool = False  # off until legal basis confirmed (OPEN_QUESTIONS #13)
 
+    # True only for a throwaway stack built for the Playwright suites (scripts/run_e2e.py, CI). Specs that write data
+    # refuse to run unless the API reports it, so they can never write to the demo (or any real) database.
+    e2e_target: bool = False
+
     # Designated super-admin (username). Configuration only, never editable in the UI. May reset another ADMIN's
     # password directly, but only when no second admin is available to approve (docs/DECISIONS.md D-PW-3).
     super_admin_username: str | None = None

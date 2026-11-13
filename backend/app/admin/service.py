@@ -269,22 +269,61 @@ async def create_user(
     return u, await issue_temporary_password(session, u, why="new user", end_sessions=False)
 
 
-async def set_user_roles(session: AsyncSession, user_id: uuid.UUID, role_codes: list[str]) -> User:
+async def set_user_roles(session: AsyncSession, user_id: uuid.UUID, role_codes: list[str], reason: str) -> User:
+    """Replace a user's roles. Every change needs a reason and is logged with the old and new roles."""
     u = await session.get(User, user_id)
     if u is None:
         raise NotFound("User not found")
+    codes = sorted(set(role_codes))
+    if not codes:
+        raise RuleViolation("Choose at least one role.", code="NoRole")
+    roles = list((await session.execute(select(Role).where(Role.code.in_(codes)))).scalars())
+    if len(roles) != len(codes):
+        raise RuleViolation("Unknown role code", code="UnknownRole")
     before = sorted(r.code for r in u.roles)
-    u.roles = list((await session.execute(select(Role).where(Role.code.in_(role_codes)))).scalars())
+    if before == codes:
+        return u
+    u.roles = roles
     audit.record(
         session,
         "PERMISSION_CHANGE",
-        f"Roles for {u.username} changed",
+        f"Roles for {u.username} changed from {', '.join(before) or 'none'} to {', '.join(codes)} (reason: {reason})",
         entity_type="users",
         entity_id=u.id,
         entity_ref=u.username,
-        changes={"roles": [before, sorted(role_codes)]},
+        changes={"roles": [before, codes]},
     )
     return u
+
+
+REQUIRE_2FA_KEY = "security.require_2fa_roles"
+
+
+async def set_required_2fa_roles(session: AsyncSession, role_codes: list[str], reason: str) -> list[str]:
+    """Roles that must use two-step verification (users enrol at their next sign-in). Logged with a reason."""
+    codes = sorted(set(role_codes))
+    known = set((await session.execute(select(Role.code).where(Role.code.in_(codes)))).scalars())
+    if known != set(codes):
+        raise RuleViolation("Unknown role code", code="UnknownRole")
+    before = sorted(await get_setting(session, REQUIRE_2FA_KEY))
+    row = (
+        await session.execute(select(m.SystemSetting).where(m.SystemSetting.key == REQUIRE_2FA_KEY))
+    ).scalar_one_or_none()
+    if row is None:
+        session.add(m.SystemSetting(key=REQUIRE_2FA_KEY, value=codes, description="See docs/BUSINESS_RULES.md"))
+    else:
+        row.value = codes
+    audit.record(
+        session,
+        "SECURITY_POLICY_CHANGED",
+        f"Two-step verification required for: {', '.join(codes) or 'no roles'} "
+        f"(was: {', '.join(before) or 'no roles'}; "
+        f"reason: {reason})",
+        entity_type="system_settings",
+        entity_ref=REQUIRE_2FA_KEY,
+        changes={"require_2fa_roles": [before, codes]},
+    )
+    return codes
 
 
 async def set_role_permissions(session: AsyncSession, role_code: str, perm_codes: list[str]) -> Role:

@@ -45,6 +45,7 @@ async def authenticated_user(request: Request, session: SessionDep) -> User:
         raise Unauthorized("Your session has ended. Sign in again.", code="SessionRevoked")
     with_user(user.id, user.username)
     request.state.user = user
+    request.state.mfa = bool(data.get("mfa"))  # this session passed two-step verification
     return user
 
 

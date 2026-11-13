@@ -94,9 +94,17 @@ def create_app() -> FastAPI:
         api.include_router(r)
     app.include_router(api)
 
+    if settings.env == "prod" and settings.e2e_target:
+        raise RuntimeError("CRM_E2E_TARGET must never be set in production")
+
     @app.get("/healthz", include_in_schema=False)
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/api/v1/meta", include_in_schema=False)
+    async def meta() -> dict[str, bool]:
+        """Lets the Playwright suites confirm they are pointed at a throwaway e2e stack before writing anything."""
+        return {"e2e_target": settings.e2e_target}
 
     @app.get("/readyz", include_in_schema=False)
     async def readyz() -> JSONResponse:

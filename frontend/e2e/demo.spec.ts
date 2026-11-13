@@ -3,6 +3,7 @@
  * Pre-requisite: demo master data + users (scripts/seed-demo.sh --no-scenario).
  */
 import { expect, type Page, test } from "@playwright/test";
+import { requireIsolatedStack } from "./support/stack";
 
 const PASSWORD = process.env.CRM_DEMO_PASSWORD ?? "Demo-Passw0rd!";
 const tag = Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -27,6 +28,8 @@ function stay(): [string, string, string, string] {
 }
 
 /** Fails with the visible validation / server messages instead of a bare timeout. */
+test.beforeAll(requireIsolatedStack); // creates leads, members and payments: never against the demo database
+
 async function expectNavigated(page: Page, heading: RegExp) {
   try {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible({ timeout: 10_000 });

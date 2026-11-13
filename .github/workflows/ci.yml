@@ -63,6 +63,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Start the full stack (docker compose)
         run: docker compose up -d --build --wait postgres redis azurite && docker compose up -d --build api web worker
+        env: { CRM_E2E_TARGET: "true" } # throwaway stack: the data-writing specs may run
       - name: Seed demo master data + users (fictitious)
         run: bash scripts/seed-demo.sh --no-scenario
       - name: Section 14 demo scenario through the API

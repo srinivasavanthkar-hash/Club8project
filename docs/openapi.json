@@ -817,6 +817,66 @@
     }
    }
   },
+  "/api/v1/admin/security-policy": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Get Security Policy",
+    "operationId": "get_security_policy_api_v1_admin_security_policy_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SecurityPolicyOut"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Set Security Policy",
+    "operationId": "set_security_policy_api_v1_admin_security_policy_put",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SecurityPolicyIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SecurityPolicyOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/v1/admin/users/{user_id}/active": {
    "put": {
     "tags": [
@@ -9932,16 +9992,24 @@
    },
    "RolesIn": {
     "properties": {
+     "reason": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 5,
+      "title": "Reason"
+     },
      "roles": {
       "items": {
        "type": "string"
       },
       "type": "array",
+      "minItems": 1,
       "title": "Roles"
      }
     },
     "type": "object",
     "required": [
+     "reason",
      "roles"
     ],
     "title": "RolesIn"
@@ -10093,6 +10161,57 @@
      "instalments"
     ],
     "title": "ScheduleOut"
+   },
+   "SecurityPolicyIn": {
+    "properties": {
+     "reason": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 5,
+      "title": "Reason"
+     },
+     "require_2fa_roles": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Require 2Fa Roles"
+     }
+    },
+    "type": "object",
+    "required": [
+     "reason",
+     "require_2fa_roles"
+    ],
+    "title": "SecurityPolicyIn"
+   },
+   "SecurityPolicyOut": {
+    "properties": {
+     "require_2fa_roles": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Require 2Fa Roles"
+     },
+     "recommended_2fa_roles": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Recommended 2Fa Roles",
+      "default": [
+       "ADMIN",
+       "MANAGEMENT",
+       "FINANCE"
+      ]
+     }
+    },
+    "type": "object",
+    "required": [
+     "require_2fa_roles"
+    ],
+    "title": "SecurityPolicyOut"
    },
    "StatusChangeIn": {
     "properties": {

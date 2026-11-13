@@ -251,15 +251,42 @@ async def reject_reset_request(
         raise
 
 
-class RolesIn(BaseModel):
-    roles: list[str]
+class RolesIn(ReasonIn):
+    roles: list[str] = Field(min_length=1)
 
 
 @router.put("/users/{user_id}/roles", response_model=UserOut)
 async def set_roles(
     user_id: uuid.UUID, body: RolesIn, session: SessionDep, _: User = Depends(require_permission("admin.roles"))
 ) -> UserOut:
-    return _user_out(await service.set_user_roles(session, user_id, body.roles))
+    return _user_out(await service.set_user_roles(session, user_id, body.roles, body.reason))
+
+
+class SecurityPolicyOut(BaseModel):
+    require_2fa_roles: list[str]
+    recommended_2fa_roles: list[str] = ["ADMIN", "MANAGEMENT", "FINANCE"]
+
+
+class SecurityPolicyIn(ReasonIn):
+    require_2fa_roles: list[str]
+
+
+@router.get("/security-policy", response_model=SecurityPolicyOut)
+async def get_security_policy(
+    session: SessionDep, _: User = Depends(require_permission("admin.users"))
+) -> SecurityPolicyOut:
+    from app.core.settings_store import get_setting
+
+    return SecurityPolicyOut(require_2fa_roles=sorted(await get_setting(session, service.REQUIRE_2FA_KEY)))
+
+
+@router.put("/security-policy", response_model=SecurityPolicyOut)
+async def set_security_policy(
+    body: SecurityPolicyIn, session: SessionDep, _: User = Depends(require_permission("admin.users"))
+) -> SecurityPolicyOut:
+    return SecurityPolicyOut(
+        require_2fa_roles=await service.set_required_2fa_roles(session, body.require_2fa_roles, body.reason)
+    )
 
 
 class ActiveIn(BaseModel):

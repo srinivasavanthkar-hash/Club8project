@@ -24,6 +24,10 @@ from app.core.security import hash_password
 from app.seed import seed_reference
 
 DEMO_PASSWORD = os.environ.get("CRM_DEMO_PASSWORD", "Demo-Passw0rd!")
+# demo.admin signs in with two-step verification. FICTITIOUS authenticator key (base32), for demos and tests only:
+# add it to any authenticator app ("Enter a set-up key") to get the codes. Never used outside DEMO data.
+DEMO_ADMIN_TOTP_SECRET = os.environ.get("CRM_DEMO_TOTP_SECRET", "DEMOADMINTWOFACTORKEY234")
+DEMO_TOTP_USERS = {"demo.admin": DEMO_ADMIN_TOTP_SECRET}
 DEMO_USERS = [
     ("demo.admin", "Demo Admin", ["ADMIN"]),
     ("demo.manager", "Demo Manager", ["MANAGEMENT"]),
@@ -189,6 +193,14 @@ async def seed_demo(session: AsyncSession) -> None:
                     email=f"{username}@example.com",
                 )
             )
+    await session.flush()
+    from app.auth.service import _fernet
+
+    for username, secret in DEMO_TOTP_USERS.items():
+        u = (await session.execute(select(User).where(User.username == username))).scalar_one()
+        if not u.totp_enabled:
+            u.totp_secret_enc = _fernet().encrypt(secret.encode()).decode()
+            u.totp_enabled = True
     await session.flush()
 
 

@@ -1,10 +1,11 @@
 /**
  * Client demo tour: the Section 14 flow driven through the UI, saving a screenshot at each step to
  * docs/demo-tour/ for the illustrated walkthrough. Not a regression test (demo.spec.ts is). Runs only when TOUR=1:
- *   TOUR=1 npx playwright test tour --project=desktop --workers=1
+ *   TOUR=1 python scripts/run_e2e.py tour   (fresh throwaway database; see support/stack.ts)
  * Needs the demo master data and users (fictitious data only).
  */
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { requireIsolatedStack, signIn } from "./support/stack";
 import path from "node:path";
 
 const PASSWORD = process.env.CRM_DEMO_PASSWORD ?? "Demo-Passw0rd!";
@@ -18,6 +19,7 @@ const PDF = Buffer.from(
 );
 
 test.skip(!process.env.TOUR, "set TOUR=1 to capture the demo tour screenshots");
+test.beforeAll(requireIsolatedStack); // creates members and users: never against the demo database
 test.use({ viewport: { width: 1440, height: 900 } });
 
 function istToday(offsetDays = 0): string {
@@ -49,11 +51,7 @@ async function shot(page: Page, name: string, at?: Locator, fullPage = false, of
 }
 
 async function login(page: Page, user: string) {
-  await page.context().clearCookies();
-  await page.goto("/login");
-  await page.getByLabel("Username", { exact: true }).fill(user);
-  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await signIn(page, user, PASSWORD); // completes the 2FA step for demo.admin
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 }
 

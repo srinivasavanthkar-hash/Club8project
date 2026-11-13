@@ -37,6 +37,15 @@ Gaps found during the review and fixed in Phase 1:
 Not in this repository: `docs/BUILD_PROMPT.md` (the prompt asks for its Section 3.1 to be updated; the file was never
 added here). The equivalent content is in USER_GUIDE.md and DECISIONS.md.
 
+## Phase 1 follow-ups (13-11-2026)
+| Item | Done | Notes |
+|---|---|---|
+| Test data leaking into the demo | ✓ | Demo database rebuilt clean (8 demo users + Section 14 scenario). Data-writing Playwright specs refuse to run unless the API reports `e2e_target`; `scripts/run_e2e.py` runs them on a fresh `crm_e2e` database (D-PW-12) |
+| 2FA before the forced change | ✓ | `mfa` token claim; change password refuses sessions without 2FA (`MfaRequired`); tests for the order and for a pre-2FA session (D-PW-9). `demo.admin` has 2FA on (D-PW-13) |
+| Mandatory 2FA per role | ✓ | `security.require_2fa_roles` + admin card; off by default; OPEN_QUESTIONS 30 (D-PW-10) |
+| Roles multi-select with reason | ✓ | D-PW-11 |
+| Walkthrough | ✓ | Screenshots 27–35 retaken as demo.admin on the isolated stack; 36 (2FA step) and 37 (roles + 2FA policy) added |
+
 ## Phase 2 (after Phase 1 is merged)
 * `EmailSender` interface; Mailpit in docker-compose (local); Azure Communication Services Email for dev/prod
   (Terraform, Key Vault, managed identity, SPF/DKIM/DMARC); sending as a worker job with retry.

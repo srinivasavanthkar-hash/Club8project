@@ -53,11 +53,13 @@ def _audit_user(session: AsyncSession, action: str, summary: str, user: User) ->
     audit.record(session, action, summary, entity_type="users", entity_id=user.id, entity_ref=user.username)
 
 
-async def _issue(session: AsyncSession, user: User) -> Tokens:
+async def _issue(session: AsyncSession, user: User, *, mfa: bool) -> Tokens:
+    """`mfa` records whether this session passed two-step verification (the TOTP code at sign-in, or enrolling
+    2FA in this session). Password changes require it for users who have 2FA on."""
     s = get_settings()
-    tv = {"tv": user.token_version}
-    access, _ = create_token(user.id, "access", timedelta(minutes=s.access_token_minutes), tv)
-    refresh, jti = create_token(user.id, "refresh", timedelta(days=s.refresh_token_days), tv)
+    claims = {"tv": user.token_version, "mfa": mfa}
+    access, _ = create_token(user.id, "access", timedelta(minutes=s.access_token_minutes), claims)
+    refresh, jti = create_token(user.id, "refresh", timedelta(days=s.refresh_token_days), claims)
     session.add(RefreshToken(user_id=user.id, jti=jti, expires_at=now_utc() + timedelta(days=s.refresh_token_days)))
     return Tokens(access, refresh, user)
 
@@ -121,7 +123,26 @@ async def login(session: AsyncSession, username: str, password: str, totp_code: 
     _audit_user(session, "LOGIN", f"{user.username} signed in", user)
     if user.temp_password_expires_at is not None:
         _audit_user(session, "TEMP_PASSWORD_USED", f"{user.username} signed in with a temporary password", user)
-    return await _issue(session, user)
+    await _apply_mandatory_2fa(session, user)
+    # mfa: this session passed the TOTP step (only users with 2FA on can have done so)
+    return await _issue(session, user, mfa=user.totp_enabled)
+
+
+async def _apply_mandatory_2fa(session: AsyncSession, user: User) -> None:
+    """Roles listed in `security.require_2fa_roles` must use 2FA: a user in such a role without 2FA must enrol at
+    this sign-in, before anything else (same forced step as after an admin "Reset 2FA")."""
+    if user.totp_enabled or user.must_enroll_totp:
+        return
+    required = {str(r) for r in await get_setting(session, "security.require_2fa_roles")}
+    hits = sorted(required & {r.code for r in user.roles})
+    if hits:
+        user.must_enroll_totp = True
+        _audit_user(
+            session,
+            "TOTP_ENROLMENT_REQUIRED",
+            f"{user.username} must set up 2FA: required for role {', '.join(hits)}",
+            user,
+        )
 
 
 async def refresh(session: AsyncSession, token: str) -> Tokens:
@@ -150,7 +171,7 @@ async def refresh(session: AsyncSession, token: str) -> Tokens:
         raise Unauthorized("User inactive", code="UserInactive")
     if data.get("tv", 0) != user.token_version:
         raise Unauthorized("Your session has ended. Sign in again.", code="SessionRevoked")
-    return await _issue(session, user)
+    return await _issue(session, user, mfa=bool(data.get("mfa")))
 
 
 async def logout(session: AsyncSession, user: User, refresh_token: str | None) -> None:
@@ -188,11 +209,19 @@ async def revoke_all_sessions(session: AsyncSession, user: User, why: str) -> in
 
 
 async def change_password(
-    session: AsyncSession, user: User, current: str, new: str, sign_out_other_devices: bool
+    session: AsyncSession, user: User, current: str, new: str, sign_out_other_devices: bool, *, mfa: bool
 ) -> Tokens | None:
     """Returns fresh tokens for this device when the other sessions were ended, else None (cookies unchanged).
-    Failures are committed by the caller (failed-attempt counter, lockout and audit entry)."""
+    Failures are committed by the caller (failed-attempt counter, lockout and audit entry).
+
+    `mfa`: whether this session passed 2FA. A user with 2FA on can only change the password from such a session
+    (sign in -> 2FA code -> change password), e.g. never from a session that predates turning 2FA on."""
     s = get_settings()
+    if user.totp_enabled and not mfa:
+        _audit_user(session, "PASSWORD_CHANGE_FAILED", f"Password change without 2FA refused for {user.username}", user)
+        raise Forbidden(
+            "Sign in again with your two-step verification code to change your password.", code="MfaRequired"
+        )
     if not await hit_account("change-password", str(user.id), s.rate_limit_change_password):
         _audit_user(session, "RATE_LIMITED", f"Change-password rate limit reached for {user.username}", user)
         raise TooManyRequests("Too many attempts. Wait a minute and try again.", code="RateLimited")
@@ -245,7 +274,7 @@ async def change_password(
     if not end_others:
         return None
     await revoke_all_sessions(session, user, "password changed")
-    return await _issue(session, user)  # this device stays signed in with the new token version
+    return await _issue(session, user, mfa=mfa)  # this device stays signed in with the new token version
 
 
 async def begin_totp(session: AsyncSession, user: User) -> dict[str, str]:
@@ -261,7 +290,8 @@ async def begin_totp(session: AsyncSession, user: User) -> dict[str, str]:
     return {"otpauth_uri": totp_uri(secret, user.username), "secret": secret}
 
 
-async def confirm_totp(session: AsyncSession, user: User, code: str) -> None:
+async def confirm_totp(session: AsyncSession, user: User, code: str) -> Tokens:
+    """Enrolment proves possession of the authenticator, so this device continues as a 2FA-verified session."""
     if user.totp_enabled:
         raise Conflict("Two-step verification is already on.", code="TotpAlreadyEnabled")
     if not user.totp_secret_enc:
@@ -272,3 +302,4 @@ async def confirm_totp(session: AsyncSession, user: User, code: str) -> None:
     user.totp_enabled = True
     user.must_enroll_totp = False
     _audit_user(session, "TOTP_ENABLED", f"2FA enabled for {user.username}", user)
+    return await _issue(session, user, mfa=True)

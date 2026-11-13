@@ -39,6 +39,7 @@ describe("LoginForm", () => {
     await userEvent.type(screen.getByLabelText("Password"), "pw");
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
     await userEvent.type(await screen.findByLabelText("Two-factor code"), "123456");
+    expect(screen.queryByRole("alert")).toBeNull(); // the 2FA step is expected, not shown as an error
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
     await vi.waitFor(() => expect(replace).toHaveBeenCalledWith("/members"));
     expect(calls).toBe(2);

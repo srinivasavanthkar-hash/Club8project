@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const API = process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000";
 
 const nextConfig: NextConfig = {
+  // scripts/run_e2e.py builds a separate copy (.next-e2e, pointed at the throwaway e2e API) so the demo build is untouched
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,

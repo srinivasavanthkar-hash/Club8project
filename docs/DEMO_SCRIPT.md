@@ -39,8 +39,11 @@ Open http://localhost:3000. All demo users share the password `Demo-Passw0rd!` (
 | 9f | `demo.admin` + a 2nd admin | Reset another ADMIN → the 2nd admin approves in "Administrator resets waiting for approval" | Two-person rule; all steps in the activity log |
 | 9g | `demo.admin` | **Reset 2FA…** on a user with 2FA | The user must set up 2FA again (QR code) at next sign-in; password unchanged |
 
-Automated with screenshots: `cd frontend && TOUR=1 npx playwright test passwords --project=desktop --workers=1`
-(uses throwaway users; the shared demo passwords never change).
+Automated with screenshots: `TOUR=1 python scripts/run_e2e.py passwords --project=desktop` (fresh throwaway
+database; the specs that write data refuse to run against the demo).
+
+`demo.admin` signs in with two-step verification. Add the FICTITIOUS demo key `DEMOADMINTWOFACTORKEY234` to an
+authenticator app ("Enter a set-up key") to get the codes.
 
 ## Automated run against a running stack
 ```bash
@@ -52,5 +55,5 @@ cd frontend && E2E_BASE_URL=http://localhost:3000 npx playwright test
 `docs/demo-tour/index.html` is the same flow with screenshots, written for the client (open it in a browser). To retake
 the screenshots after UI changes, run against a freshly seeded stack:
 ```bash
-cd frontend && TOUR=1 npx playwright test tour --project=desktop --workers=1   # writes docs/demo-tour/*.png
+TOUR=1 python scripts/run_e2e.py tour --project=desktop   # fresh throwaway database; writes docs/demo-tour/*.png
 ```

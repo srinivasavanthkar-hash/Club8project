@@ -4,6 +4,7 @@
  * Needs the demo master data and the Section 14 scenario (fictitious data only).
  */
 import { expect, type Page, test } from "@playwright/test";
+import { signIn } from "./support/stack";
 import path from "node:path";
 
 const DIR = process.env.UI_AUDIT_DIR;
@@ -15,11 +16,7 @@ test.skip(!DIR, "set UI_AUDIT_DIR to capture audit screenshots");
 test.describe.configure({ mode: "serial" });
 
 async function login(page: Page, user = "demo.admin") {
-  await page.context().clearCookies();
-  await page.goto("/login");
-  await page.getByLabel("Username", { exact: true }).fill(user);
-  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await signIn(page, user, PASSWORD); // completes the 2FA step for demo.admin
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 }
 

@@ -135,7 +135,12 @@ async def change_password(
     """Also the forced landing step after a temporary password (must_change_password)."""
     try:
         tokens = await service.change_password(
-            session, user, body.current_password, body.new_password, body.sign_out_other_devices
+            session,
+            user,
+            body.current_password,
+            body.new_password,
+            body.sign_out_other_devices,
+            mfa=bool(getattr(request.state, "mfa", False)),
         )
     except DomainError:
         await session.commit()  # persist the failed-attempt counter, lockout and audit entry
@@ -180,8 +185,8 @@ async def totp_setup(user: AccountUser, session: SessionDep) -> dict[str, str]:
 
 
 @router.post("/totp/confirm", response_model=MeOut)
-async def totp_confirm(body: TotpConfirm, user: AccountUser, session: SessionDep) -> MeOut:
-    await service.confirm_totp(session, user, body.code)
+async def totp_confirm(body: TotpConfirm, response: Response, user: AccountUser, session: SessionDep) -> MeOut:
+    _set_cookies(response, await service.confirm_totp(session, user, body.code))  # now a 2FA-verified session
     return _me(user)
 
 

@@ -26,6 +26,7 @@ docker compose up -d --build                # postgres, redis, azurite, api, wor
 bash scripts/seed-demo.sh                   # migrate + DEMO master data/users + run the Section 14 demo scenario
 # open http://localhost:3000 — users demo.admin / demo.manager / demo.sales / demo.finance /
 # demo.reservations / demo.service / demo.marketing, password Demo-Passw0rd!
+# demo.admin also asks for a 2FA code: add the FICTITIOUS demo key DEMOADMINTWOFACTORKEY234 to an authenticator app
 ```
 `docker compose --profile scan up -d clamav` and `CRM_VIRUS_SCAN_PROVIDER=clamav` enable local virus scanning.
 
@@ -46,7 +47,9 @@ pytest --cov=app                 # unit + integration (real PostgreSQL via testc
 cd ../frontend
 npm run lint && npm run typecheck && npm test   # lint includes the design-token check
 npm run check:contrast           # WCAG AA contrast of the colour tokens
-npx playwright test              # Section 14 demo (needs the full stack) + axe a11y + visual regression (recorded data)
+cd .. && python scripts/run_e2e.py   # Playwright on a THROWAWAY stack (fresh crm_e2e database, :8001/:3001):
+                                     # Section 14 demo, passwords, axe a11y, visual regression. Specs that write data
+                                     # refuse to run against any stack that isn't flagged CRM_E2E_TARGET (the demo).
 ```
 Status at hand-over: 110 backend tests passing (65 unit/property tests + 45 integration tests on PostgreSQL 16,
 including the full Section 14 demo); 90% coverage on the service + domain layer (CI gate: 80%); ruff and mypy clean;

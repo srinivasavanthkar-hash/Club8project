@@ -37,7 +37,8 @@ export function LoginForm() {
       const next = params.get("next");
       router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
     } catch (e) {
-      if (e instanceof ApiError && e.code === "TotpRequired") setNeedTotp(true);
+      // The 2FA step is expected, not an error: the heading and hint explain it.
+      if (e instanceof ApiError && e.code === "TotpRequired") return setNeedTotp(true);
       setError(e instanceof ApiError ? e.problem.detail : "Sign-in failed");
     }
   });

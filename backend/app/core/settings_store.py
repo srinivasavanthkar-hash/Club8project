@@ -38,6 +38,9 @@ DEFAULTS: dict[str, Any] = {
     "password.breach_check": True,
     "password.temp_expiry_hours": 24,
     "password.admin_reset_approval_hours": 24,
+    # Roles that must use two-step verification; users in them enrol at their next sign-in. Off by default
+    # (OPEN_QUESTIONS 30); recommended: ["ADMIN", "MANAGEMENT", "FINANCE"].
+    "security.require_2fa_roles": [],
 }
 
 

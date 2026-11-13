@@ -3,6 +3,7 @@
  * Opt-in: BRAND_AUDIT_DIR=after npx playwright test brand-audit --project=desktop. Fictitious demo data only.
  */
 import { expect, test } from "@playwright/test";
+import { signIn } from "./support/stack";
 import path from "node:path";
 
 const DIR = process.env.BRAND_AUDIT_DIR;
@@ -25,9 +26,7 @@ test("capture brand screens", async ({ page }) => {
   await page.setViewportSize(SIZES.desktop);
   await page.goto("/login");
   await shoot("login");
-  await page.getByLabel("Username", { exact: true }).fill("demo.admin");
-  await page.getByLabel("Password", { exact: true }).fill(process.env.CRM_DEMO_PASSWORD ?? "Demo-Passw0rd!");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await signIn(page, "demo.admin"); // completes the 2FA step (demo authenticator key)
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   await shoot("dashboard");
   const members = await (await page.request.get("/api/v1/members?q=MSMC8-9001")).json();

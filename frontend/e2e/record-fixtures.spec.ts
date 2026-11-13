@@ -1,5 +1,6 @@
 /** Records API responses for the visual / accessibility suites (see e2e/support/fixtures.ts). Opt-in only. */
 import { expect, test } from "@playwright/test";
+import { signIn } from "./support/stack";
 import fs from "node:fs";
 import { FIXTURE_FILE, keyOf, type Recording } from "./support/fixtures";
 
@@ -16,9 +17,7 @@ test("record API fixtures from the demo stack", async ({ page }) => {
     try { rec.responses[`${method} ${keyOf(url)}`] = await res.json(); } catch { /* not JSON */ }
   });
   await page.goto("/login");
-  await page.getByLabel("Username", { exact: true }).fill("demo.admin");
-  await page.getByLabel("Password", { exact: true }).fill(process.env.CRM_DEMO_PASSWORD ?? "Demo-Passw0rd!");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await signIn(page, "demo.admin"); // completes the 2FA step (demo authenticator key)
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   const members = await (await page.request.get("/api/v1/members?q=MSMC8-9001")).json();
   const member = members.items[0].id as string;

@@ -481,3 +481,116 @@ async def _max_seq() -> int:
 
     async with sessionmaker()() as s:
         return int((await s.execute(text("SELECT coalesce(max(seq), 0) FROM activity_log"))).scalar_one())
+
+
+async def test_demo_admin_signs_in_with_2fa(api):
+    from app.seed_demo import DEMO_PASSWORD
+
+    r = await login_raw(api, "demo.admin", DEMO_PASSWORD)
+    assert r.status_code == 401 and r.json()["code"] == "TotpRequired"
+    assert (await api.login("demo.admin"))["totp_enabled"]  # the test client completes the 2FA step
+
+
+async def test_temporary_password_with_2fa_order_and_no_change_without_2fa(api):
+    """sign in -> 2FA code -> change-password screen; no session exists (so no change) before the code."""
+    u = await make_user(["SALES"])
+    await api.login(u["username"], PW)
+    secret = await enable_totp(api)
+    temp = (await admin_reset(api, u["id"]))["temporary_password"]
+
+    r = await login_raw(api, u["username"], temp)
+    assert r.status_code == 401 and r.json()["code"] == "TotpRequired"
+    assert "crm_access" not in api.c.cookies  # nothing issued before the 2FA step
+    r = await api.post(
+        "/api/v1/auth/change-password", json={"current_password": temp, "new_password": "Granite-Bay-Echo-19"}
+    )
+    assert r.status_code == 401
+    me = ok(await login_raw(api, u["username"], temp, secret))
+    assert me["must_change_password"]
+    ok(
+        await api.post(
+            "/api/v1/auth/change-password", json={"current_password": temp, "new_password": "Granite-Bay-Echo-19"}
+        )
+    )
+
+
+async def test_change_password_refused_from_a_session_that_has_not_passed_2fa(api):
+    u = await make_user(["SALES"])
+    async with device() as older:
+        await older.login(u["username"], PW)  # signed in before 2FA was turned on: no 2FA on this session
+        await api.login(u["username"], PW)
+        await enable_totp(api)  # enrolling verifies this device
+        r = await older.post(
+            "/api/v1/auth/change-password", json={"current_password": PW, "new_password": "Cobalt-Fern-Ridge-64"}
+        )
+        assert r.status_code == 403 and r.json()["code"] == "MfaRequired"
+        assert (await older.c.post("/api/v1/auth/refresh")).status_code == 200  # refresh keeps the claim (still no 2FA)
+        r = await older.post(
+            "/api/v1/auth/change-password", json={"current_password": PW, "new_password": "Cobalt-Fern-Ridge-64"}
+        )
+        assert r.status_code == 403 and r.json()["code"] == "MfaRequired"
+    ok(
+        await api.post(
+            "/api/v1/auth/change-password", json={"current_password": PW, "new_password": "Cobalt-Fern-Ridge-64"}
+        )
+    )
+    assert "PASSWORD_CHANGE_FAILED" in await actions_for(u["id"])
+
+
+async def test_mandatory_2fa_for_chosen_roles(api):
+    u = await make_user(["FINANCE"])
+    other = await make_user(["MARKETING"])
+    await api.login("demo.admin")
+    assert ok(await api.get("/api/v1/admin/security-policy"))["require_2fa_roles"] == []  # off by default
+    assert (await api.put("/api/v1/admin/security-policy", json={"require_2fa_roles": ["FINANCE"]})).status_code == 422
+    r = await api.put("/api/v1/admin/security-policy", json={"require_2fa_roles": ["NOPE"], "reason": "Policy test"})
+    assert r.status_code == 422
+    try:
+        out = ok(
+            await api.put(
+                "/api/v1/admin/security-policy", json={"require_2fa_roles": ["FINANCE"], "reason": "Board decision"}
+            )
+        )
+        assert out["require_2fa_roles"] == ["FINANCE"]
+        me = ok(await login_raw(api, u["username"], PW))
+        assert me["must_enroll_totp"]
+        r = await api.get("/api/v1/finance/dashboard")
+        assert r.status_code == 403 and r.json()["code"] == "TotpEnrolmentRequired"
+        await enable_totp(api)
+        assert (await api.get("/api/v1/finance/dashboard")).status_code == 200
+        assert not ok(await login_raw(api, other["username"], PW))["must_enroll_totp"]  # other roles unaffected
+    finally:
+        await api.login("demo.admin")
+        ok(await api.put("/api/v1/admin/security-policy", json={"require_2fa_roles": [], "reason": "Restore default"}))
+    assert "TOTP_ENROLMENT_REQUIRED" in await actions_for(u["id"])
+
+
+async def test_role_change_needs_a_reason_and_valid_roles(api):
+    u = await make_user(["SALES"])
+    await api.login("demo.admin")
+    url = f"/api/v1/admin/users/{u['id']}/roles"
+    assert (await api.put(url, {"roles": ["FINANCE"]})).status_code == 422
+    assert (await api.put(url, {"roles": [], "reason": "Remove everything"})).status_code == 422
+    r = await api.put(url, {"roles": ["NOT_A_ROLE"], "reason": "Typo check here"})
+    assert r.status_code == 422 and r.json()["code"] == "UnknownRole"
+    assert ok(await api.put(url, {"roles": ["FINANCE", "SALES"], "reason": "Covers the finance desk"}))["roles"] == [
+        "FINANCE",
+        "SALES",
+    ]
+    from app.core.db import sessionmaker
+
+    async with sessionmaker()() as s:
+        summary = (
+            (
+                await s.execute(
+                    text(
+                        "SELECT summary FROM activity_log WHERE action = 'PERMISSION_CHANGE' AND entity_id = :i "
+                        "ORDER BY seq DESC"
+                    ),
+                    {"i": u["id"]},
+                )
+            )
+            .scalars()
+            .first()
+        )
+    assert "Covers the finance desk" in summary and "SALES to FINANCE, SALES" in summary

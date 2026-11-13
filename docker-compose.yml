@@ -50,6 +50,9 @@ services:
       # defaults (10/min per IP, 5/min per account; app/core/config.py).
       CRM_RATE_LIMIT_LOGIN: "300/minute"
       CRM_RATE_LIMIT_LOGIN_ACCOUNT: "60/minute"
+      # Only a throwaway CI stack sets this (ci.yml): the Playwright specs that write data refuse to run otherwise,
+      # so they can never write to a demo database started from this file.
+      CRM_E2E_TARGET: "${CRM_E2E_TARGET:-false}"
       # Designated super-admin for the ADMIN-reset fallback (docs/DECISIONS.md D-PW-3). Empty = no fallback.
       CRM_SUPER_ADMIN_USERNAME: ""
     depends_on:

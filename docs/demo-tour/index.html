@@ -149,7 +149,7 @@
         <p>All names, phone numbers, PANs and payments in the demo are fictitious. Prices, ASF and GST rates are labelled DEMO values and are set by the business in <span class="ui">Admin → Master data &amp; rates</span>.</p>
       </div>
       <div class="setup">
-        <p>Each person sees only the menus and buttons their role allows, and the server enforces the same rules. To show this, sign in as different users during the demo. The project team will give you the shared demo password separately.</p>
+        <p>Each person sees only the menus and buttons their role allows, and the server enforces the same rules. To show this, sign in as different users during the demo. The project team will give you the shared demo password separately. <span class="id">demo.admin</span> also uses two-step verification, so you'll need the demo authenticator key, which comes with the password.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Demo user</th><th>Role</th><th>Does in this walkthrough</th></tr></thead>
@@ -482,12 +482,15 @@
             <li>Temporary passwords expire after 24 hours and are passed on in person or by phone, never by WhatsApp or email.</li>
             <li>A password reset never switches off two-step verification. A lost phone is a separate <span class="ui">Reset 2FA</span>, and the user sets it up again at next sign-in.</li>
             <li>Admins can't reset their own account this way, and resetting an administrator needs a second administrator.</li>
+            <li>With two-step verification on, the code is asked for straight after the password, before the change-password screen. A password can't be changed from a session that hasn't passed it.</li>
+            <li>Roles are ticked from the existing list, and every change needs a reason. Two-step verification can be made compulsory for chosen roles. It's off today, and Administrator, Management and Finance are recommended.</li>
           </ul>
         </div>
       </div>
       <div class="note ok"><strong>Coming next (Phase 2)</strong><p>"Forgot password?" by email, and a "send reset link" option for admins, once email sending is set up. Until then, staff ask an administrator.</p></div>
       <div class="shots two">
         <figure><a href="27-login-show-password.png" target="_blank" rel="noopener"><img src="27-login-show-password.png" alt="Sign-in page with the password shown by the eye button" loading="lazy" width="1440" height="900"></a><figcaption>Show / hide password on every password field.</figcaption></figure>
+        <figure><a href="36-login-2fa-step.png" target="_blank" rel="noopener"><img src="36-login-2fa-step.png" alt="Sign-in asking demo.admin for the two-step verification code" loading="lazy" width="1440" height="900"></a><figcaption>With two-step verification on, the code comes before anything else.</figcaption></figure>
         <figure><a href="28-new-user-temporary-password.png" target="_blank" rel="noopener"><img src="28-new-user-temporary-password.png" alt="New user created, temporary password shown once with a Copy button" loading="lazy" width="1440" height="900"></a><figcaption>New user: a generated temporary password, shown once.</figcaption></figure>
         <figure><a href="29-forced-change-password.png" target="_blank" rel="noopener"><img src="29-forced-change-password.png" alt="Forced change-password screen with strength meter and checklist" loading="lazy" width="1440" height="900"></a><figcaption>First sign-in: choose your own password, with the rules and a strength meter.</figcaption></figure>
         <figure><a href="30-change-password-breached.png" target="_blank" rel="noopener"><img src="30-change-password-breached.png" alt="A breached password refused with a clear message" loading="lazy" width="1440" height="900"></a><figcaption>Passwords from data breaches are refused.</figcaption></figure>
@@ -496,6 +499,7 @@
         <figure><a href="33-change-password.png" target="_blank" rel="noopener"><img src="33-change-password.png" alt="Change password from the user menu" loading="lazy" width="1440" height="900"></a><figcaption>Change password, signing out other devices.</figcaption></figure>
         <figure><a href="34-admin-reset-approval.png" target="_blank" rel="noopener"><img src="34-admin-reset-approval.png" alt="Administrator reset waiting for a second admin's approval" loading="lazy" width="1440" height="900"></a><figcaption>Resetting an administrator needs a second administrator.</figcaption></figure>
         <figure><a href="35-setup-2fa.png" target="_blank" rel="noopener"><img src="35-setup-2fa.png" alt="Two-step verification set-up with QR code" loading="lazy" width="1440" height="900"></a><figcaption>Setting up two-step verification again after a Reset 2FA.</figcaption></figure>
+        <figure><a href="37-roles-and-2fa-policy.png" target="_blank" rel="noopener"><img src="37-roles-and-2fa-policy.png" alt="Roles shown as chips with Edit roles, and the two-step verification policy by role" loading="lazy" width="1440" height="900"></a><figcaption>Roles are picked from a list (with a reason), and 2FA can be required per role.</figcaption></figure>
       </div>
     </section>
 
@@ -526,6 +530,6 @@
       <div class="note ok"><strong>Two brands, one system</strong><p>Club8 Holidays and K8 share one CRM. Each member record carries its brand, and receipts, notices and vouchers print with that brand's logo, colours and legal entity.</p></div>
     </section>
 
-    <footer>Screenshots were taken on 10-11-2026 (chapter 11: 13-11-2026) from the demo environment using fictitious data. Click any screenshot to open it at full size.</footer>
+    <footer>Screenshots were taken on 10-11-2026 (chapter 11: 13-11-2026, on a separate test database) from the demo environment using fictitious data. Click any screenshot to open it at full size.</footer>
   </main>
 </div>

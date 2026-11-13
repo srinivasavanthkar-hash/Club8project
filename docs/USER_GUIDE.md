@@ -18,7 +18,8 @@ your name, the time, and the old and new values.
 * **Forgot your password, or locked out?** Ask an administrator. They give you a **temporary password** (in person
   or by phone). It works for 24 hours. When you sign in with it (and your 2FA code, if you use 2FA), you must choose
   your own password before you can do anything else.
-* **Two-step verification (2FA):** user menu → **Set up two-step verification**. Scan the QR code with an
+* **Two-step verification (2FA):** when it's on, sign-in asks for the 6-digit code *before* anything else, including
+  the change-password screen after a temporary password. To turn it on: user menu → **Set up two-step verification**. Scan the QR code with an
   authenticator app (Microsoft Authenticator, Google Authenticator), then enter the 6-digit code. From then on each
   sign-in asks for a code. New phone or lost phone? Ask an administrator to **Reset 2FA**; you will set it up again
   at your next sign-in.
@@ -58,6 +59,11 @@ your name, the time, and the old and new values.
   Exports are logged.
 * **Terminate** a membership only after an unpaid default notice has expired (*Finance* tab).
 * **Admin → Users & roles**: create users, assign roles, tick permissions per role.
+  * **Roles** are ticked from the list of existing roles (**Edit roles…** on a user, or in **New user**). Changing a
+    user's roles needs a reason, which goes in the activity log.
+  * **Two-step verification policy:** tick the roles that must use 2FA and give a reason. People in those roles who
+    don't have 2FA yet must set it up at their next sign-in. Off by default (Administrator, Management and Finance
+    are marked "Recommended").
   * **New user:** enter username, name and roles. You never type a password: the system creates a temporary one and
     shows it **once** (Show and Copy buttons). Pass it on in person or by phone, never by WhatsApp, SMS or email.
   * **Reset password…** (permission `user.reset_password`, ADMIN only): give a reason; a temporary password is shown

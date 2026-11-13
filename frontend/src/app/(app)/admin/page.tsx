@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info, Plus, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { type AdminUser, type OneTime, OneTimePasswordDialog, PendingAdminResets, UserRecoveryActions } from "@/components/admin/AccountRecovery";
+import { EditRolesAction, RoleChecklist, TwoFactorPolicyCard } from "@/components/admin/Roles";
 import { PageHeader } from "@/components/crm/Display";
 import { TableSkeleton } from "@/components/crm/States";
 import { StatusBadge } from "@/components/crm/StatusBadge";
@@ -178,24 +179,22 @@ function FragmentGroup({ module, colSpan, children }: { module: string; colSpan:
 function UsersRoles() {
   const qc = useQueryClient();
   const can = useCan();
-  const toast = useToast();
   const users = useQuery({ queryKey: ["users"], queryFn: () => api.get<AdminUser[]>("/admin/users"), enabled: can("admin.users") });
   const roles = useQuery({ queryKey: ["roles"], queryFn: () => api.get<Role[]>("/admin/roles"), enabled: can("admin.roles") });
   const perms = useQuery({ queryKey: ["perms"], queryFn: () => api.get<{ code: string; description: string }[]>("/admin/permissions"), enabled: can("admin.roles") });
-  const [nu, setNu] = useState({ username: "", full_name: "", roles: "SALES" });
+  const [nu, setNu] = useState<{ username: string; full_name: string; roles: string[] }>({ username: "", full_name: "", roles: ["SALES"] });
   const [creating, setCreating] = useState(false);
   const [oneTime, setOneTime] = useState<OneTime | null>(null);
   const createUser = useMutation({
     // no password field: the system generates a temporary one, shown once below
-    mutationFn: () => api.post<AdminUser & { temporary_password: string; temporary_password_expires_at: string }>("/admin/users", { ...nu, roles: nu.roles.split(",").map((s) => s.trim()) }),
+    mutationFn: () => api.post<AdminUser & { temporary_password: string; temporary_password_expires_at: string }>("/admin/users", nu),
     onSuccess: (u) => {
       qc.invalidateQueries({ queryKey: ["users"] });
       setCreating(false);
-      setNu({ username: "", full_name: "", roles: "SALES" });
+      setNu({ username: "", full_name: "", roles: ["SALES"] });
       setOneTime({ username: u.username, password: u.temporary_password, expiresAt: u.temporary_password_expires_at, context: "new" });
     },
   });
-  const setRoles = useMutation({ mutationFn: ({ id, r }: { id: string; r: string[] }) => api.put(`/admin/users/${id}/roles`, { roles: r }), onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); toast.success("Roles updated"); } });
   return (
     <div className="flex flex-col gap-5">
       <PendingAdminResets onTemporary={setOneTime} />
@@ -203,7 +202,7 @@ function UsersRoles() {
         <Card title="Users" actions={<Button onClick={() => setCreating(true)}><UserPlus aria-hidden />New user</Button>}>
           {!users.data ? <TableSkeleton rows={4} cols={4} /> : (
             <Table caption="Users" density="compact">
-              <THead><tr><Th>Username</Th><Th>Name</Th><Th>Status</Th><Th>Sign-in</Th><Th>Roles (comma separated)</Th><Th><span className="sr-only">Account actions</span></Th></tr></THead>
+              <THead><tr><Th>Username</Th><Th>Name</Th><Th>Status</Th><Th>Sign-in</Th><Th>Roles</Th><Th><span className="sr-only">Account actions</span></Th></tr></THead>
               <tbody>{users.data.map((u) => (
                 <Tr key={u.id} tone={u.is_active ? undefined : "muted"}>
                   <Td><span className="font-mono">{u.username}</span></Td>
@@ -217,17 +216,23 @@ function UsersRoles() {
                     </div>
                   </Td>
                   <Td>
-                    <Input aria-label={`Roles for ${u.username}`} className="h-8 max-w-72 font-mono text-sm" defaultValue={u.roles.join(", ")}
-                      onBlur={(e) => e.target.value !== u.roles.join(", ") && setRoles.mutate({ id: u.id, r: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />
+                    <div className="flex flex-wrap gap-1">
+                      {u.roles.map((r) => <span key={r} className="rounded-full bg-surface-sunken px-2 py-px text-xs font-medium text-fg-muted">{roles.data?.find((x) => x.code === r)?.name ?? humanize(r)}</span>)}
+                    </div>
                   </Td>
-                  <Td align="right"><UserRecoveryActions user={u} onTemporary={setOneTime} /></Td>
+                  <Td align="right">
+                    <div className="flex flex-wrap justify-end gap-1">
+                      {can("admin.roles") && <EditRolesAction user={u} />}
+                      <UserRecoveryActions user={u} onTemporary={setOneTime} />
+                    </div>
+                  </Td>
                 </Tr>
               ))}</tbody>
             </Table>
           )}
-          <div className="mt-2"><ErrorText error={setRoles.error} /></div>
         </Card>
       )}
+      {can("admin.users") && <TwoFactorPolicyCard />}
       {can("admin.roles") && (
         <Card title="Role permissions" description="Changes apply immediately to everyone with the role. FastAPI enforces every permission.">
           {roles.data && perms.data ? <PermissionMatrix roles={roles.data} perms={perms.data} /> : <TableSkeleton rows={6} cols={6} />}
@@ -237,12 +242,12 @@ function UsersRoles() {
         open={creating}
         onClose={() => setCreating(false)}
         title="New user"
-        footer={<><Button variant="outline" onClick={() => setCreating(false)}>Cancel</Button><Button onClick={() => createUser.mutate()} disabled={createUser.isPending}>Create user</Button></>}
+        footer={<><Button variant="outline" onClick={() => setCreating(false)}>Cancel</Button><Button onClick={() => createUser.mutate()} disabled={createUser.isPending || nu.roles.length === 0}>Create user</Button></>}
       >
         <div className="grid gap-4">
           <Field label="Username" htmlFor="nuu" required><Input id="nuu" className="font-mono" autoComplete="off" value={nu.username} onChange={(e) => setNu({ ...nu, username: e.target.value })} /></Field>
           <Field label="Full name" htmlFor="nuf" required><Input id="nuf" value={nu.full_name} onChange={(e) => setNu({ ...nu, full_name: e.target.value })} /></Field>
-          <Field label="Roles (comma separated)" htmlFor="nur" hint={roles.data ? `Available: ${roles.data.map((r) => r.code).join(", ")}` : undefined}><Input id="nur" className="font-mono" value={nu.roles} onChange={(e) => setNu({ ...nu, roles: e.target.value })} /></Field>
+          {roles.data && <RoleChecklist roles={roles.data} value={nu.roles} onChange={(r) => setNu({ ...nu, roles: r })} hint="At least one role." />}
           <Alert kind="info">The system creates a temporary password and shows it to you once. The new user must change it at first sign-in; it expires after 24 hours.</Alert>
           <ErrorText error={createUser.error} />
         </div>
