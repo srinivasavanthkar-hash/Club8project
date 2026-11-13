@@ -46,6 +46,12 @@ services:
       CRM_VIRUS_SCAN_PROVIDER: none
       CRM_COOKIE_SECURE: "false"
       CRM_JWT_SIGNING_KEY: local-dev-only-signing-key-change-me-please-0123456789
+      # Local / CI only: the Playwright suites sign in many times a minute from one IP. Azure uses the strict
+      # defaults (10/min per IP, 5/min per account; app/core/config.py).
+      CRM_RATE_LIMIT_LOGIN: "300/minute"
+      CRM_RATE_LIMIT_LOGIN_ACCOUNT: "60/minute"
+      # Designated super-admin for the ADMIN-reset fallback (docs/DECISIONS.md D-PW-3). Empty = no fallback.
+      CRM_SUPER_ADMIN_USERNAME: ""
     depends_on:
       postgres: {condition: service_healthy}
 

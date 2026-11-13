@@ -5,6 +5,7 @@ Scheduled by app.jobs.scheduler (APScheduler, one leader) in the worker containe
   * expire_saved_nights       - daily 01:00 IST (only produces entries on/after 1 Jan)
   * expire_memberships        - daily 01:30 IST (ACTIVE -> EXPIRED after last year of use)
   * refresh_scan_results      - every 2 minutes (Defender malware verdicts from blob index tags)
+  * expire_account_recovery   - every 15 minutes (unused temporary passwords, ADMIN reset requests)
 """
 
 from __future__ import annotations
@@ -112,3 +113,19 @@ def expire_saved_nights() -> None:
 @dramatiq.actor(max_retries=3, time_limit=600_000)
 def expire_memberships() -> None:
     log.info("memberships expired: %s", _run(_expire_memberships))
+
+
+async def _expire_account_recovery() -> tuple[int, int]:
+    from app.auth.recovery import expire_reset_requests, expire_temporary_passwords
+
+    async with sessionmaker()() as s:
+        temps = await expire_temporary_passwords(s)
+        requests = await expire_reset_requests(s)
+        await s.commit()
+    return temps, requests
+
+
+@dramatiq.actor(max_retries=3, time_limit=300_000)
+def expire_account_recovery() -> None:
+    temps, requests = _run(_expire_account_recovery)
+    log.info("temporary passwords expired: %s; admin reset requests expired: %s", temps, requests)

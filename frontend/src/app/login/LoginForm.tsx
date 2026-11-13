@@ -6,8 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Alert, Button, Field, Input } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
+import type { Me } from "@/lib/types";
 
 const schema = z.object({
   username: z.string().trim().min(1, "Username is required"),
@@ -27,8 +29,11 @@ export function LoginForm() {
   const onSubmit = handleSubmit(async (v) => {
     setError(null);
     try {
-      await api.post("/auth/login", { ...v, totp_code: v.totp_code || undefined });
+      const me = await api.post<Me>("/auth/login", { ...v, totp_code: v.totp_code || undefined });
       qc.clear();
+      // sign in -> 2FA code (if on) -> forced steps before anything else
+      if (me.must_change_password) return router.replace("/change-password");
+      if (me.must_enroll_totp) return router.replace("/setup-2fa");
       const next = params.get("next");
       router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
     } catch (e) {
@@ -45,12 +50,15 @@ export function LoginForm() {
           {needTotp ? "Enter the 6-digit code from your authenticator app." : "Use your Club8 CRM staff account."}
         </p>
       </div>
+      {params.get("reason") === "session-ended" && !error && (
+        <Alert kind="info" className="mb-4">Your session ended because your password or two-step verification was changed. Sign in again.</Alert>
+      )}
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <Field label="Username" htmlFor="username" error={formState.errors.username?.message}>
           <Input id="username" autoComplete="username" autoFocus {...register("username")} />
         </Field>
         <Field label="Password" htmlFor="password" error={formState.errors.password?.message}>
-          <Input id="password" type="password" autoComplete="current-password" {...register("password")} />
+          <PasswordInput id="password" autoComplete="current-password" {...register("password")} />
         </Field>
         {needTotp && (
           <Field label="Two-factor code" htmlFor="totp" hint="The code changes every 30 seconds.">
@@ -66,6 +74,9 @@ export function LoginForm() {
         <Button type="submit" className="mt-1 h-10 w-full" disabled={formState.isSubmitting}>
           {formState.isSubmitting ? "Signing in…" : "Sign in"}
         </Button>
+        {!needTotp && (
+          <p className="text-center text-sm text-fg-muted">Forgot your password? Ask an administrator to reset it.</p>
+        )}
         {needTotp && (
           <Alert kind="info" className="text-sm">
             <span className="inline-flex items-center gap-1"><ShieldCheck aria-hidden className="size-4" />Two-step verification is on for this account.</span>

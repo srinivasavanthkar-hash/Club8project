@@ -28,37 +28,40 @@ async def test_totp_two_factor(api):
     from app.core.db import sessionmaker
 
     async with sessionmaker()() as s:
-        await create_user(s, "totp.admin", "Totp Admin", "Totp-Passw0rd-1", ["ADMIN"])
+        await create_user(s, "totp.admin", "Totp Admin", ["ADMIN"], password="Quiet-Lantern-River-42")
         await s.commit()
-    await api.login("totp.admin", "Totp-Passw0rd-1")
+    await api.login("totp.admin", "Quiet-Lantern-River-42")
     uri = ok(await api.post("/api/v1/auth/totp/setup"))["otpauth_uri"]
     secret = pyotp.parse_uri(uri).secret
     assert (await api.post("/api/v1/auth/totp/confirm", json={"code": "000000"})).status_code == 401
-    assert (await api.post("/api/v1/auth/totp/confirm", json={"code": pyotp.TOTP(secret).now()})).status_code == 204
+    assert (await api.post("/api/v1/auth/totp/confirm", json={"code": pyotp.TOTP(secret).now()})).status_code == 200
     api.c.cookies.clear()
-    r = await api.c.post("/api/v1/auth/login", json={"username": "totp.admin", "password": "Totp-Passw0rd-1"})
+    r = await api.c.post("/api/v1/auth/login", json={"username": "totp.admin", "password": "Quiet-Lantern-River-42"})
     assert r.status_code == 401 and r.json()["code"] == "TotpRequired"
     r = await api.c.post(
         "/api/v1/auth/login",
-        json={"username": "totp.admin", "password": "Totp-Passw0rd-1", "totp_code": pyotp.TOTP(secret).now()},
+        json={"username": "totp.admin", "password": "Quiet-Lantern-River-42", "totp_code": pyotp.TOTP(secret).now()},
     )
     assert r.status_code == 200
 
 
 async def test_user_and_role_management(api):
     await api.login("demo.admin")
-    r = await api.post(
-        "/api/v1/admin/users",
-        json={"username": "weak.user", "full_name": "Weak", "password": "alllowercase12", "roles": ["SALES"]},
-    )
-    assert r.status_code == 422
     u = ok(
         await api.post(
             "/api/v1/admin/users",
-            json={"username": "new.sales", "full_name": "New Sales", "password": "Str0ng-Password", "roles": ["SALES"]},
+            # a password sent by the client is ignored: the system always generates the temporary one
+            json={
+                "username": "new.sales",
+                "full_name": "New Sales",
+                "password": "Chosen-By-Admin-1",
+                "roles": ["SALES"],
+            },
         ),
         201,
     )
+    assert u["must_change_password"] is True and len(u["temporary_password"]) >= 20
+    assert u["temporary_password"] != "Chosen-By-Admin-1"
     u = ok(await api.put(f"/api/v1/admin/users/{u['id']}/roles", json={"roles": ["SALES", "FINANCE"]}))
     assert u["roles"] == ["FINANCE", "SALES"]
     roles = ok(await api.get("/api/v1/admin/roles"))

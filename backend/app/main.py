@@ -13,6 +13,7 @@ from app.auth.router import router as auth_router
 from app.core.config import get_settings
 from app.core.db import get_engine
 from app.core.errors import install_handlers
+from app.core.logscrub import install as install_log_scrubber
 from app.core.middleware import CsrfMiddleware, RequestContextMiddleware, SecurityHeadersMiddleware
 from app.core.ratelimit import limiter
 from app.correspondence.router import router as correspondence_router
@@ -26,8 +27,23 @@ from app.reservations.router import router as reservations_router
 from app.search.router import router as search_router
 
 
+async def _record_rate_limit(path: str) -> None:
+    """Per-IP limit hit on an auth route: log it in its own short transaction (the request never reached its
+    handler, so there is no request session). The IP comes from the request context."""
+    from app.audit import service as audit
+    from app.core.db import sessionmaker
+
+    try:
+        async with sessionmaker()() as s:
+            audit.record(s, "RATE_LIMITED", f"Per-IP rate limit reached on {path}")
+            await s.commit()
+    except Exception:
+        logging.getLogger("crm.auth").warning("Could not record a rate-limit event")
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
+    install_log_scrubber()  # before anything logs: passwords and tokens never reach a handler or telemetry
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
     install_session_hooks()
     app = FastAPI(
@@ -41,6 +57,8 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(RateLimitExceeded)
     async def _rl(request, exc):  # type: ignore[no-untyped-def]
+        if request.url.path.startswith("/api/v1/auth/"):  # sign-in / password limits are security events
+            await _record_rate_limit(request.url.path)
         return JSONResponse(
             {
                 "type": "https://club8-crm/errors/RateLimited",

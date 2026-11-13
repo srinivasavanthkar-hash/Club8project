@@ -7,6 +7,24 @@ menus and actions your role allows; the server enforces the same rules.
 Dates are shown as DD-MM-YYYY (India time) and amounts as ₹2,55,000.00. Every change you make is recorded with
 your name, the time, and the old and new values.
 
+## Your password and two-step verification (everyone)
+* **Show / hide:** every password field has an eye button to check what you typed. It hides again when you submit
+  or leave the page. A "Caps Lock is on" note appears under the field when Caps Lock is on.
+* **Change password:** user menu (your initials, top right) → **Change password**. Enter your current password and
+  a new one twice. Use a long passphrase: a few unrelated words. The rules are shown on the screen: at least 12
+  characters; not your username or name, and not "club8" or "k8"; not one of your last 5 passwords; not a password
+  known from data breaches. The strength meter is a guide only. **Sign out of all other devices** is ticked by
+  default; leave it ticked if you think someone else may know your password.
+* **Forgot your password, or locked out?** Ask an administrator. They give you a **temporary password** (in person
+  or by phone). It works for 24 hours. When you sign in with it (and your 2FA code, if you use 2FA), you must choose
+  your own password before you can do anything else.
+* **Two-step verification (2FA):** user menu → **Set up two-step verification**. Scan the QR code with an
+  authenticator app (Microsoft Authenticator, Google Authenticator), then enter the 6-digit code. From then on each
+  sign-in asks for a code. New phone or lost phone? Ask an administrator to **Reset 2FA**; you will set it up again
+  at your next sign-in.
+* **"Your session ended"** on the sign-in page means your password or 2FA was changed (by you on another device or
+  by an administrator). Sign in again.
+
 ## Marketing (OPCs / street marketing)
 1. **Leads → New lead.** Enter the prospect's name, mobile (tick "WhatsApp same as mobile" if it is), email,
    city, venue and your name as OPC. Add a first note.
@@ -40,6 +58,18 @@ your name, the time, and the old and new values.
   Exports are logged.
 * **Terminate** a membership only after an unpaid default notice has expired (*Finance* tab).
 * **Admin → Users & roles**: create users, assign roles, tick permissions per role.
+  * **New user:** enter username, name and roles. You never type a password: the system creates a temporary one and
+    shows it **once** (Show and Copy buttons). Pass it on in person or by phone, never by WhatsApp, SMS or email.
+  * **Reset password…** (permission `user.reset_password`, ADMIN only): give a reason; a temporary password is shown
+    once, the user is signed out on every device and must choose a new password at sign-in. 2FA is not changed. You
+    cannot reset your own password here (use Change password).
+  * **Resetting another administrator** creates a request that a **different** administrator must approve within
+    24 hours (Admin → "Administrator resets waiting for approval" → Approve, with a reason). The approver receives the
+    temporary password. If no second administrator exists, only the designated super-admin can reset directly.
+  * **Reset 2FA…** (permission `user.reset_2fa`): for a lost authenticator phone. The user is signed out everywhere
+    and must set up 2FA again at next sign-in. The password is not changed.
+  * The **Sign-in** column shows 2FA status, "Must change password" and "Locked". Every action is in the activity
+    log with your reason.
 * **Admin → Master data & rates**: add rates as **new effective-dated rows** (the previous row is closed
   automatically). ASF increases above 5% need an override reason and the special permission.
 

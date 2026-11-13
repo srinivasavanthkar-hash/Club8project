@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 import uuid
 from datetime import date, timedelta
 from decimal import Decimal
@@ -14,8 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.admin import models as m
 from app.audit import service as audit
 from app.auth.models import Permission, Role, User
+from app.auth.policy import policy_problems, remember
+from app.auth.recovery import TemporaryPassword, issue_temporary_password
 from app.core.errors import Conflict, NotFound, OverrideRequired, RuleViolation
-from app.core.security import hash_password, password_policy_problems
+from app.core.security import hash_password
 from app.core.settings_store import get_setting
 from app.finance.domain import asf_rate_cap_check
 
@@ -220,27 +223,34 @@ async def create_user(
     session: AsyncSession,
     username: str,
     full_name: str,
-    password: str,
     role_codes: list[str],
     email: str | None = None,
     mobile: str | None = None,
-) -> User:
-    problems = password_policy_problems(password)
-    if problems:
-        raise RuleViolation("Password needs " + ", ".join(problems), code="WeakPassword")
+    *,
+    password: str | None = None,
+) -> tuple[User, TemporaryPassword | None]:
+    """Admins never type a password for anyone: without `password` (always, from the API) the system generates a
+    temporary one, shown once to the admin, valid for 24 h and to be changed at first sign-in.
+
+    `password` is for internal provisioning only (tests, scripted set-up). It is checked against the policy and does
+    not force a change."""
     if (await session.execute(select(User).where(User.username == username.lower()))).scalar_one_or_none():
         raise Conflict("Username already exists", code="UsernameTaken")
     roles = list((await session.execute(select(Role).where(Role.code.in_(role_codes)))).scalars())
     if len(roles) != len(set(role_codes)):
         raise RuleViolation("Unknown role code", code="UnknownRole")
+    if password is not None:
+        problems = await policy_problems(session, password, username=username.lower(), full_name=full_name)
+        if problems:
+            raise RuleViolation(" ".join(p.message for p in problems), code="PasswordPolicy")
     u = User(
         username=username.lower(),
         full_name=full_name,
-        password_hash=hash_password(password),
+        password_hash=hash_password(password or secrets.token_urlsafe(32)),  # replaced below when generated
         email=email,
         mobile=mobile,
         roles=roles,
-        must_change_password=True,
+        must_change_password=password is None,
     )
     session.add(u)
     await session.flush()
@@ -252,7 +262,11 @@ async def create_user(
         entity_id=u.id,
         entity_ref=u.username,
     )
-    return u
+    if password is not None:
+        u.password_changed_at = u.created_at
+        await remember(session, u.id, u.password_hash, int(await get_setting(session, "password.history_count")))
+        return u, None
+    return u, await issue_temporary_password(session, u, why="new user", end_sessions=False)
 
 
 async def set_user_roles(session: AsyncSession, user_id: uuid.UUID, role_codes: list[str]) -> User:

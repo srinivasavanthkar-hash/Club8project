@@ -34,6 +34,12 @@ function csrfToken(): string {
 
 type Opts = { headers?: Record<string, string>; signal?: AbortSignal };
 
+const NO_REFRESH = new Set(["/auth/login", "/auth/refresh", "/auth/change-password"]);
+export const FORCED_STEPS: Record<string, string> = {
+  PasswordChangeRequired: "/change-password",
+  TotpEnrolmentRequired: "/setup-2fa",
+};
+
 async function request<T>(method: string, path: string, body?: unknown, opts: Opts = {}): Promise<T> {
   const isForm = typeof FormData !== "undefined" && body instanceof FormData;
   const headers: Record<string, string> = { Accept: "application/json", ...opts.headers };
@@ -47,10 +53,16 @@ async function request<T>(method: string, path: string, body?: unknown, opts: Op
     cache: "no-store",
     signal: opts.signal,
   });
-  if (res.status === 401 && path !== "/auth/login" && path !== "/auth/refresh") {
-    const refreshed = await fetch("/api/v1/auth/refresh", { method: "POST", credentials: "same-origin" });
-    if (refreshed.ok) return request<T>(method, path, body, opts);
-    if (typeof window !== "undefined") window.location.href = `/login?next=${encodeURIComponent(location.pathname)}`;
+  if (res.status === 401 && !NO_REFRESH.has(path)) {
+    // A session ended on purpose (password changed or reset elsewhere, 2FA reset) cannot be refreshed: say why.
+    const ended = (await res.clone().json().catch(() => null))?.code === "SessionRevoked";
+    if (!ended) {
+      const refreshed = await fetch("/api/v1/auth/refresh", { method: "POST", credentials: "same-origin" });
+      if (refreshed.ok) return request<T>(method, path, body, opts);
+    }
+    if (typeof window !== "undefined") {
+      window.location.href = `/login?next=${encodeURIComponent(location.pathname)}${ended ? "&reason=session-ended" : ""}`;
+    }
   }
   if (res.status === 204) return undefined as T;
   const ct = res.headers.get("content-type") ?? "";
@@ -60,6 +72,11 @@ async function request<T>(method: string, path: string, body?: unknown, opts: Op
       typeof data === "object" && data
         ? (data as Problem)
         : { title: res.statusText, status: res.status, detail: String(data), code: "HttpError" };
+    // Forced account steps: the server refuses everything else, so take the user to the step itself.
+    const step = FORCED_STEPS[p.code];
+    if (res.status === 403 && step && typeof window !== "undefined" && location.pathname !== step) {
+      window.location.href = step;
+    }
     throw new ApiError(p);
   }
   return data as T;

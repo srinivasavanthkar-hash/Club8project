@@ -128,6 +128,7 @@
     <a href="#audit"><span>8</span>Audit trail</a>
     <a href="#screens"><span>9</span>Lists &amp; admin</a>
     <a href="#phone"><span>10</span>On the phone</a>
+    <a href="#access"><span>11</span>Passwords &amp; access</a>
     <a href="#rules"><span>·</span>Rules at a glance</a>
   </nav>
 
@@ -455,6 +456,49 @@
       </div>
     </section>
 
+    <section class="ch" id="access">
+      <div class="ch-head">
+        <div class="n">Chapter 11</div>
+        <h2>Passwords and account access</h2>
+        <div class="who">Sign in as <span class="id">demo.admin</span>, plus a second browser for the staff member</div>
+        <p>Staff look after their own passwords, and administrators can get anyone back in without ever knowing their password. Every step is in the activity log, and nothing in it ever contains a password.</p>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>What to click</h3>
+          <ol class="steps">
+            <li>On the sign-in page, type a password and click the eye button to check it. It hides again when you sign in.</li>
+            <li>As admin: <span class="ui">Admin → New user</span>. There is no password field. The system shows a temporary password once, with Copy.</li>
+            <li>In a second browser, sign in with it. Only the <span class="ui">Choose a new password</span> screen is available until the password is changed.</li>
+            <li>As admin, click <span class="ui">Reset password…</span> on a user and give a reason. Their open session ends straight away.</li>
+            <li>From the user menu: <span class="ui">Change password</span>. <span class="ui">Sign out of all other devices</span> is ticked by default.</li>
+            <li>Reset another administrator: a second administrator must approve it.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>What to point out</h3>
+          <ul class="points">
+            <li>Passwords need 12+ characters, and a passphrase is fine. Passwords seen in data breaches, ones containing your name, "club8" or "k8", and your last 5 passwords are refused.</li>
+            <li>Temporary passwords expire after 24 hours and are passed on in person or by phone, never by WhatsApp or email.</li>
+            <li>A password reset never switches off two-step verification. A lost phone is a separate <span class="ui">Reset 2FA</span>, and the user sets it up again at next sign-in.</li>
+            <li>Admins can't reset their own account this way, and resetting an administrator needs a second administrator.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note ok"><strong>Coming next (Phase 2)</strong><p>"Forgot password?" by email, and a "send reset link" option for admins, once email sending is set up. Until then, staff ask an administrator.</p></div>
+      <div class="shots two">
+        <figure><a href="27-login-show-password.png" target="_blank" rel="noopener"><img src="27-login-show-password.png" alt="Sign-in page with the password shown by the eye button" loading="lazy" width="1440" height="900"></a><figcaption>Show / hide password on every password field.</figcaption></figure>
+        <figure><a href="28-new-user-temporary-password.png" target="_blank" rel="noopener"><img src="28-new-user-temporary-password.png" alt="New user created, temporary password shown once with a Copy button" loading="lazy" width="1440" height="900"></a><figcaption>New user: a generated temporary password, shown once.</figcaption></figure>
+        <figure><a href="29-forced-change-password.png" target="_blank" rel="noopener"><img src="29-forced-change-password.png" alt="Forced change-password screen with strength meter and checklist" loading="lazy" width="1440" height="900"></a><figcaption>First sign-in: choose your own password, with the rules and a strength meter.</figcaption></figure>
+        <figure><a href="30-change-password-breached.png" target="_blank" rel="noopener"><img src="30-change-password-breached.png" alt="A breached password refused with a clear message" loading="lazy" width="1440" height="900"></a><figcaption>Passwords from data breaches are refused.</figcaption></figure>
+        <figure><a href="31-admin-reset-dialog.png" target="_blank" rel="noopener"><img src="31-admin-reset-dialog.png" alt="Admin reset password dialog with a required reason" loading="lazy" width="1440" height="900"></a><figcaption>Admin reset needs a reason.</figcaption></figure>
+        <figure><a href="32-session-ended.png" target="_blank" rel="noopener"><img src="32-session-ended.png" alt="Sign-in page explaining the session ended" loading="lazy" width="1440" height="900"></a><figcaption>The user's other session ends at once, with an explanation.</figcaption></figure>
+        <figure><a href="33-change-password.png" target="_blank" rel="noopener"><img src="33-change-password.png" alt="Change password from the user menu" loading="lazy" width="1440" height="900"></a><figcaption>Change password, signing out other devices.</figcaption></figure>
+        <figure><a href="34-admin-reset-approval.png" target="_blank" rel="noopener"><img src="34-admin-reset-approval.png" alt="Administrator reset waiting for a second admin's approval" loading="lazy" width="1440" height="900"></a><figcaption>Resetting an administrator needs a second administrator.</figcaption></figure>
+        <figure><a href="35-setup-2fa.png" target="_blank" rel="noopener"><img src="35-setup-2fa.png" alt="Two-step verification set-up with QR code" loading="lazy" width="1440" height="900"></a><figcaption>Setting up two-step verification again after a Reset 2FA.</figcaption></figure>
+      </div>
+    </section>
+
     <section class="ch" id="rules">
       <div class="ch-head">
         <div class="n">Reference</div>
@@ -482,6 +526,6 @@
       <div class="note ok"><strong>Two brands, one system</strong><p>Club8 Holidays and K8 share one CRM. Each member record carries its brand, and receipts, notices and vouchers print with that brand's logo, colours and legal entity.</p></div>
     </section>
 
-    <footer>Screenshots were taken on 10-11-2026 from the demo environment using fictitious data. Click any screenshot to open it at full size.</footer>
+    <footer>Screenshots were taken on 10-11-2026 (chapter 11: 13-11-2026) from the demo environment using fictitious data. Click any screenshot to open it at full size.</footer>
   </main>
 </div>

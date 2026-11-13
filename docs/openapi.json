@@ -102,12 +102,77 @@
     }
    }
   },
+  "/api/v1/auth/change-password": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Change Password",
+    "description": "Also the forced landing step after a temporary password (must_change_password).",
+    "operationId": "change_password_api_v1_auth_change_password_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ChangePasswordIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MeOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/auth/password-policy": {
+   "get": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Password Policy",
+    "description": "The configured policy (master data), shown up front on the change-password screen.",
+    "operationId": "password_policy_api_v1_auth_password_policy_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PasswordPolicyOut"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/v1/auth/totp/setup": {
    "post": {
     "tags": [
      "auth"
     ],
     "summary": "Totp Setup",
+    "description": "Starts enrolment (also the forced step after an admin \"Reset 2FA\"). Refused while 2FA is on.",
     "operationId": "totp_setup_api_v1_auth_totp_setup_post",
     "responses": {
      "200": {
@@ -145,8 +210,15 @@
      "required": true
     },
     "responses": {
-     "204": {
-      "description": "Successful Response"
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MeOut"
+        }
+       }
+      }
      },
      "422": {
       "description": "Validation Error",
@@ -417,7 +489,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/UserOut"
+         "$ref": "#/components/schemas/UserCreatedOut"
         }
        }
       }
@@ -454,6 +526,237 @@
          },
          "type": "array",
          "title": "Response List Staff Api V1 Admin Staff Get"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/admin/users/{user_id}/reset-password": {
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Reset Password",
+    "description": "Non-admin target: a temporary password now. ADMIN target: a request a different admin must approve.",
+    "operationId": "reset_password_api_v1_admin_users__user_id__reset_password_post",
+    "parameters": [
+     {
+      "name": "user_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "User Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReasonIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResetOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/admin/users/{user_id}/reset-2fa": {
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Reset 2Fa",
+    "operationId": "reset_2fa_api_v1_admin_users__user_id__reset_2fa_post",
+    "parameters": [
+     {
+      "name": "user_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "User Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReasonIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/admin/reset-requests": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "List Reset Requests",
+    "operationId": "list_reset_requests_api_v1_admin_reset_requests_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/ResetRequestOut"
+         },
+         "type": "array",
+         "title": "Response List Reset Requests Api V1 Admin Reset Requests Get"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/admin/reset-requests/{request_id}/approve": {
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Approve Reset Request",
+    "operationId": "approve_reset_request_api_v1_admin_reset_requests__request_id__approve_post",
+    "parameters": [
+     {
+      "name": "request_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Request Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReasonIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResetOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/admin/reset-requests/{request_id}/reject": {
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Reject Reset Request",
+    "operationId": "reject_reset_request_api_v1_admin_reset_requests__request_id__reject_post",
+    "parameters": [
+     {
+      "name": "request_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Request Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReasonIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
         }
        }
       }
@@ -5679,6 +5982,33 @@
     ],
     "title": "CallIn"
    },
+   "ChangePasswordIn": {
+    "properties": {
+     "current_password": {
+      "type": "string",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Current Password"
+     },
+     "new_password": {
+      "type": "string",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "New Password"
+     },
+     "sign_out_other_devices": {
+      "type": "boolean",
+      "title": "Sign Out Other Devices",
+      "default": true
+     }
+    },
+    "type": "object",
+    "required": [
+     "current_password",
+     "new_password"
+    ],
+    "title": "ChangePasswordIn"
+   },
    "CorrectionIn": {
     "properties": {
      "kind": {
@@ -6916,6 +7246,42 @@
      "totp_enabled": {
       "type": "boolean",
       "title": "Totp Enabled"
+     },
+     "must_change_password": {
+      "type": "boolean",
+      "title": "Must Change Password"
+     },
+     "must_enroll_totp": {
+      "type": "boolean",
+      "title": "Must Enroll Totp"
+     },
+     "password_is_temporary": {
+      "type": "boolean",
+      "title": "Password Is Temporary"
+     },
+     "temp_password_expires_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Temp Password Expires At"
+     },
+     "password_changed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Password Changed At"
      }
     },
     "type": "object",
@@ -6925,7 +7291,12 @@
      "full_name",
      "roles",
      "permissions",
-     "totp_enabled"
+     "totp_enabled",
+     "must_change_password",
+     "must_enroll_totp",
+     "password_is_temporary",
+     "temp_password_expires_at",
+     "password_changed_at"
     ],
     "title": "MeOut"
    },
@@ -8262,6 +8633,42 @@
     ],
     "title": "Page[dict[str, Any]]"
    },
+   "PasswordPolicyOut": {
+    "properties": {
+     "min_length": {
+      "type": "integer",
+      "title": "Min Length"
+     },
+     "max_length": {
+      "type": "integer",
+      "title": "Max Length"
+     },
+     "history_count": {
+      "type": "integer",
+      "title": "History Count"
+     },
+     "forbidden_words": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Forbidden Words"
+     },
+     "breach_check": {
+      "type": "boolean",
+      "title": "Breach Check"
+     }
+    },
+    "type": "object",
+    "required": [
+     "min_length",
+     "max_length",
+     "history_count",
+     "forbidden_words",
+     "breach_check"
+    ],
+    "title": "PasswordPolicyOut"
+   },
    "PaymentIn": {
     "properties": {
      "payment_type_code": {
@@ -8900,6 +9307,21 @@
     ],
     "title": "Quote"
    },
+   "ReasonIn": {
+    "properties": {
+     "reason": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 5,
+      "title": "Reason"
+     }
+    },
+    "type": "object",
+    "required": [
+     "reason"
+    ],
+    "title": "ReasonIn"
+   },
    "RescheduleIn": {
     "properties": {
      "check_in": {
@@ -9387,6 +9809,127 @@
     ],
     "title": "ReservationOut"
    },
+   "ResetOut": {
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "RESET",
+       "PENDING_APPROVAL"
+      ],
+      "title": "Status"
+     },
+     "temporary_password": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Temporary Password"
+     },
+     "expires_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Expires At"
+     },
+     "request_id": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "uuid"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Request Id"
+     },
+     "approval_expires_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Approval Expires At"
+     },
+     "super_admin_fallback": {
+      "type": "boolean",
+      "title": "Super Admin Fallback",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "status"
+    ],
+    "title": "ResetOut"
+   },
+   "ResetRequestOut": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     },
+     "target_username": {
+      "type": "string",
+      "title": "Target Username"
+     },
+     "target_full_name": {
+      "type": "string",
+      "title": "Target Full Name"
+     },
+     "requested_by": {
+      "type": "string",
+      "title": "Requested By"
+     },
+     "requested_by_id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Requested By Id"
+     },
+     "reason": {
+      "type": "string",
+      "title": "Reason"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     },
+     "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Expires At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "target_username",
+     "target_full_name",
+     "requested_by",
+     "requested_by_id",
+     "reason",
+     "created_at",
+     "expires_at"
+    ],
+    "title": "ResetRequestOut"
+   },
    "RolesIn": {
     "properties": {
      "roles": {
@@ -9672,6 +10215,74 @@
     ],
     "title": "TotpConfirm"
    },
+   "UserCreatedOut": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     },
+     "username": {
+      "type": "string",
+      "title": "Username"
+     },
+     "full_name": {
+      "type": "string",
+      "title": "Full Name"
+     },
+     "is_active": {
+      "type": "boolean",
+      "title": "Is Active"
+     },
+     "roles": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Roles"
+     },
+     "totp_enabled": {
+      "type": "boolean",
+      "title": "Totp Enabled",
+      "default": false
+     },
+     "must_change_password": {
+      "type": "boolean",
+      "title": "Must Change Password",
+      "default": false
+     },
+     "must_enroll_totp": {
+      "type": "boolean",
+      "title": "Must Enroll Totp",
+      "default": false
+     },
+     "locked": {
+      "type": "boolean",
+      "title": "Locked",
+      "default": false
+     },
+     "temporary_password": {
+      "type": "string",
+      "title": "Temporary Password"
+     },
+     "temporary_password_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Temporary Password Expires At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "username",
+     "full_name",
+     "is_active",
+     "roles",
+     "temporary_password",
+     "temporary_password_expires_at"
+    ],
+    "title": "UserCreatedOut"
+   },
    "UserIn": {
     "properties": {
      "username": {
@@ -9686,12 +10297,6 @@
       "maxLength": 150,
       "minLength": 1,
       "title": "Full Name"
-     },
-     "password": {
-      "type": "string",
-      "maxLength": 200,
-      "minLength": 12,
-      "title": "Password"
      },
      "roles": {
       "items": {
@@ -9727,7 +10332,6 @@
     "required": [
      "username",
      "full_name",
-     "password",
      "roles"
     ],
     "title": "UserIn"
@@ -9757,6 +10361,26 @@
       },
       "type": "array",
       "title": "Roles"
+     },
+     "totp_enabled": {
+      "type": "boolean",
+      "title": "Totp Enabled",
+      "default": false
+     },
+     "must_change_password": {
+      "type": "boolean",
+      "title": "Must Change Password",
+      "default": false
+     },
+     "must_enroll_totp": {
+      "type": "boolean",
+      "title": "Must Enroll Totp",
+      "default": false
+     },
+     "locked": {
+      "type": "boolean",
+      "title": "Locked",
+      "default": false
      }
     },
     "type": "object",

@@ -5,6 +5,12 @@ export type Me = {
   roles: string[];
   permissions: string[];
   totp_enabled: boolean;
+  /** Forced steps: the API refuses everything else until they are done. */
+  must_change_password: boolean;
+  must_enroll_totp: boolean;
+  password_is_temporary: boolean;
+  temp_password_expires_at: string | null;
+  password_changed_at: string | null;
 };
 
 export type MasterRow = { id: string; code: string; name: string; is_active?: boolean; [k: string]: unknown };

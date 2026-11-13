@@ -44,6 +44,22 @@ describe("LoginForm", () => {
     expect(calls).toBe(2);
   });
 
+  it("goes to the forced change-password step after a temporary password (after the 2FA step)", async () => {
+    server.use(http.post("*/api/v1/auth/login", () => HttpResponse.json({ id: "u1", must_change_password: true, must_enroll_totp: false })));
+    renderLogin();
+    await userEvent.type(screen.getByLabelText("Username"), "demo.team");
+    await userEvent.type(screen.getByLabelText("Password"), "Temp-orary-pass-word");
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await vi.waitFor(() => expect(replace).toHaveBeenCalledWith("/change-password"));
+  });
+
+  it("uses the shared password field with a show/hide toggle", () => {
+    renderLogin();
+    expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "current-password");
+    expect(screen.getByLabelText("Username")).toHaveAttribute("autocomplete", "username");
+    expect(screen.getByRole("button", { name: "Show password" })).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("validates required fields client-side", async () => {
     renderLogin();
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));

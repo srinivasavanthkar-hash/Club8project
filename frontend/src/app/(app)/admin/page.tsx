@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info, Plus, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { type AdminUser, type OneTime, OneTimePasswordDialog, PendingAdminResets, UserRecoveryActions } from "@/components/admin/AccountRecovery";
 import { PageHeader } from "@/components/crm/Display";
 import { TableSkeleton } from "@/components/crm/States";
 import { StatusBadge } from "@/components/crm/StatusBadge";
@@ -178,32 +179,48 @@ function UsersRoles() {
   const qc = useQueryClient();
   const can = useCan();
   const toast = useToast();
-  const users = useQuery({ queryKey: ["users"], queryFn: () => api.get<{ id: string; username: string; full_name: string; is_active: boolean; roles: string[] }[]>("/admin/users"), enabled: can("admin.users") });
+  const users = useQuery({ queryKey: ["users"], queryFn: () => api.get<AdminUser[]>("/admin/users"), enabled: can("admin.users") });
   const roles = useQuery({ queryKey: ["roles"], queryFn: () => api.get<Role[]>("/admin/roles"), enabled: can("admin.roles") });
   const perms = useQuery({ queryKey: ["perms"], queryFn: () => api.get<{ code: string; description: string }[]>("/admin/permissions"), enabled: can("admin.roles") });
-  const [nu, setNu] = useState({ username: "", full_name: "", password: "", roles: "SALES" });
+  const [nu, setNu] = useState({ username: "", full_name: "", roles: "SALES" });
   const [creating, setCreating] = useState(false);
+  const [oneTime, setOneTime] = useState<OneTime | null>(null);
   const createUser = useMutation({
-    mutationFn: () => api.post("/admin/users", { ...nu, roles: nu.roles.split(",").map((s) => s.trim()) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); setCreating(false); toast.success("User created"); },
+    // no password field: the system generates a temporary one, shown once below
+    mutationFn: () => api.post<AdminUser & { temporary_password: string; temporary_password_expires_at: string }>("/admin/users", { ...nu, roles: nu.roles.split(",").map((s) => s.trim()) }),
+    onSuccess: (u) => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      setCreating(false);
+      setNu({ username: "", full_name: "", roles: "SALES" });
+      setOneTime({ username: u.username, password: u.temporary_password, expiresAt: u.temporary_password_expires_at, context: "new" });
+    },
   });
   const setRoles = useMutation({ mutationFn: ({ id, r }: { id: string; r: string[] }) => api.put(`/admin/users/${id}/roles`, { roles: r }), onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); toast.success("Roles updated"); } });
   return (
     <div className="flex flex-col gap-5">
+      <PendingAdminResets onTemporary={setOneTime} />
       {can("admin.users") && (
         <Card title="Users" actions={<Button onClick={() => setCreating(true)}><UserPlus aria-hidden />New user</Button>}>
           {!users.data ? <TableSkeleton rows={4} cols={4} /> : (
             <Table caption="Users" density="compact">
-              <THead><tr><Th>Username</Th><Th>Name</Th><Th>Status</Th><Th>Roles (comma separated)</Th></tr></THead>
+              <THead><tr><Th>Username</Th><Th>Name</Th><Th>Status</Th><Th>Sign-in</Th><Th>Roles (comma separated)</Th><Th><span className="sr-only">Account actions</span></Th></tr></THead>
               <tbody>{users.data.map((u) => (
                 <Tr key={u.id} tone={u.is_active ? undefined : "muted"}>
                   <Td><span className="font-mono">{u.username}</span></Td>
                   <Td>{u.full_name}</Td>
                   <Td><StatusBadge status={u.is_active ? "ACTIVE" : "INACTIVE"} size="sm" /></Td>
                   <Td>
+                    <div className="flex flex-wrap gap-1">
+                      <span className={cn("rounded-full px-2 py-px text-xs font-medium", u.totp_enabled ? "bg-success-subtle text-success" : "bg-surface-sunken text-fg-muted")}>{u.totp_enabled ? "2FA on" : u.must_enroll_totp ? "2FA set-up due" : "2FA off"}</span>
+                      {u.must_change_password && <span className="rounded-full bg-warning-subtle px-2 py-px text-xs font-medium text-warning">Must change password</span>}
+                      {u.locked && <span className="rounded-full bg-danger-subtle px-2 py-px text-xs font-medium text-danger">Locked</span>}
+                    </div>
+                  </Td>
+                  <Td>
                     <Input aria-label={`Roles for ${u.username}`} className="h-8 max-w-72 font-mono text-sm" defaultValue={u.roles.join(", ")}
                       onBlur={(e) => e.target.value !== u.roles.join(", ") && setRoles.mutate({ id: u.id, r: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />
                   </Td>
+                  <Td align="right"><UserRecoveryActions user={u} onTemporary={setOneTime} /></Td>
                 </Tr>
               ))}</tbody>
             </Table>
@@ -225,11 +242,12 @@ function UsersRoles() {
         <div className="grid gap-4">
           <Field label="Username" htmlFor="nuu" required><Input id="nuu" className="font-mono" autoComplete="off" value={nu.username} onChange={(e) => setNu({ ...nu, username: e.target.value })} /></Field>
           <Field label="Full name" htmlFor="nuf" required><Input id="nuf" value={nu.full_name} onChange={(e) => setNu({ ...nu, full_name: e.target.value })} /></Field>
-          <Field label="Initial password (12+ chars, mixed case, digit)" htmlFor="nup" required><Input id="nup" type="password" autoComplete="new-password" value={nu.password} onChange={(e) => setNu({ ...nu, password: e.target.value })} /></Field>
           <Field label="Roles (comma separated)" htmlFor="nur" hint={roles.data ? `Available: ${roles.data.map((r) => r.code).join(", ")}` : undefined}><Input id="nur" className="font-mono" value={nu.roles} onChange={(e) => setNu({ ...nu, roles: e.target.value })} /></Field>
+          <Alert kind="info">The system creates a temporary password and shows it to you once. The new user must change it at first sign-in; it expires after 24 hours.</Alert>
           <ErrorText error={createUser.error} />
         </div>
       </Drawer>
+      <OneTimePasswordDialog value={oneTime} onClose={() => setOneTime(null)} />
     </div>
   );
 }

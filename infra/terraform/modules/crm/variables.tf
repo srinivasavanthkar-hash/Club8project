@@ -67,6 +67,12 @@ variable "custom_domain" {
   default     = null
 }
 
+variable "super_admin_username" {
+  description = "Designated super-admin who may reset another ADMIN's password when no second admin can approve (docs/DECISIONS.md D-PW-3). Configuration only, never editable in the app. Empty = no fallback."
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

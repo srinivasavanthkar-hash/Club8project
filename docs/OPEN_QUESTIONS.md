@@ -35,3 +35,9 @@ None of these block delivery. The current default is in brackets and is configur
 24. **Default brand for the CRM shell.** Club8 (current default), K8, or a neutral "Club8 & K8 CRM" identity showing both? *[Club8; switchable with `NEXT_PUBLIC_DEFAULT_BRAND`]*
 25. **Brand fonts.** Do you have brand typefaces? The app keeps Inter for readability either way; brand fonts could be used on the login page and PDF headings only. *[Inter]*
 26. **Brand approach.** One app theme (the default brand), each record showing its own brand as a small chip, and documents fully branded by the record's company: please confirm. *[As described; DESIGN_DECISIONS "Brand"]*
+
+## Passwords and account access (added 13-11-2026, docs/PASSWORD_PROMPT.md)
+27. **Who is the designated super-admin?** When fewer than two other active administrators exist, nobody can approve the reset of an administrator's password, so one named person may reset it directly (logged and flagged). Who should that be? It is set in configuration (`CRM_SUPER_ADMIN_USERNAME`), never in the app. *[Not set: no fallback until it is]*
+28. **Staff email addresses.** Do all staff have a company email address? If many don't (e.g. field OPCs), should self-service reset also support a one-time code by SMS to the registered mobile? *[Email only (Phase 2); admin temporary password for everyone else]*
+29. **Sending domain.** Which domain should system emails come from, and who can add the SPF/DKIM/DMARC DNS records for it? *[Needed for Phase 2]*
+30. **Mandatory 2FA.** Should two-step verification be mandatory for ADMIN, MANAGEMENT and FINANCE rather than optional? *[Recommended given the financial and KYC data; optional today]*

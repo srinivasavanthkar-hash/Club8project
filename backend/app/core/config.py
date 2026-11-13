@@ -51,7 +51,23 @@ class Settings(BaseSettings):
     # Data protection flags
     aadhaar_full_storage_enabled: bool = False  # off until legal basis confirmed (OPEN_QUESTIONS #13)
 
+    # Designated super-admin (username). Configuration only, never editable in the UI. May reset another ADMIN's
+    # password directly, but only when no second admin is available to approve (docs/DECISIONS.md D-PW-3).
+    super_admin_username: str | None = None
+
+    # Breached-password check (Have I Been Pwned range API, k-anonymity: only the first 5 hex characters of the
+    # SHA-1 hash leave the server). If the API is unreachable the bundled offline list is used; the user is never
+    # blocked because the API is down.
+    password_breach_api_enabled: bool = True
+    password_breach_api_url: str = "https://api.pwnedpasswords.com/range/"  # noqa: S105 - a URL, not a secret
+    password_breach_api_timeout_seconds: float = 2.0
+
     rate_limit_login: str = "10/minute"
+    # per account (username), on top of the per-IP limit above
+    rate_limit_login_account: str = "5/minute"
+    rate_limit_change_password: str = "5/minute"  # noqa: S105 - a rate (per account), not a secret
+    # per IP: generous, because an office shares one NAT address; the per-account limit above is the strict one
+    rate_limit_change_password_ip: str = "30/minute"  # noqa: S105 - a rate, not a secret
     # per client IP; offices share one NAT address, so this is deliberately generous (login is strict)
     rate_limit_default: str = "1200/minute"
     max_upload_mb: int = Field(default=15, description="Default; overridable in system_settings table")

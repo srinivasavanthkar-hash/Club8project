@@ -28,6 +28,20 @@ Open http://localhost:3000. All demo users share the password `Demo-Passw0rd!` (
 | 7 | | Upload a PDF ("Other") → **Preview** | Inline viewer opens (short-lived signed URL) |
 | 8 | `demo.manager` | *Profile → Edit* → change comments, reason "Welcome call" → Save. Then the *History* tab (or **Activity log** filtered by member) | Every step above: lead created, status changes, conversion, upload, approval, payments, schedule, ASF raised, entitlement deducted, reservation status changes, email, call, upload, and the edit with **old → new values**. **Verify integrity** shows the hash chain intact |
 
+## Passwords and account access (Phase 1)
+| Step | Sign in as | Clicks | What to show |
+|---|---|---|---|
+| 9a | (anyone) | Sign-in page: type a password, click the eye | Show/hide; Caps Lock hint; hides again after Sign in |
+| 9b | `demo.admin` | **Admin → New user** (username, name, roles) → **Create user** | No password field. Temporary password shown once, with Copy; expires in 24 h |
+| 9c | the new user (2nd browser) | Sign in with the temporary password | Only **Choose a new password** is reachable. Checklist + strength meter. `password1234` is refused as breached |
+| 9d | `demo.admin` | User row → **Reset password…** → reason | Temporary password once; the user's open session ends at once ("Your session ended") |
+| 9e | the user | User menu → **Change password** | "Sign out of all other devices" ticked by default |
+| 9f | `demo.admin` + a 2nd admin | Reset another ADMIN → the 2nd admin approves in "Administrator resets waiting for approval" | Two-person rule; all steps in the activity log |
+| 9g | `demo.admin` | **Reset 2FA…** on a user with 2FA | The user must set up 2FA again (QR code) at next sign-in; password unchanged |
+
+Automated with screenshots: `cd frontend && TOUR=1 npx playwright test passwords --project=desktop --workers=1`
+(uses throwaway users; the shared demo passwords never change).
+
 ## Automated run against a running stack
 ```bash
 docker compose run --rm api python -m app.demo_cli --base-url http://web:3000

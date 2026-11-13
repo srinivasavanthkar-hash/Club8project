@@ -29,6 +29,15 @@ DEFAULTS: dict[str, Any] = {
     "documents.max_upload_mb": 15,
     "documents.allowed_types": ["application/pdf", "image/jpeg", "image/png"],
     "kyc.aadhaar_full_storage": False,
+    # Password policy (docs/PASSWORD_PROMPT.md Section 5, NIST SP 800-63B): length and screening, no composition
+    # rules, no periodic expiry.
+    "password.min_length": 12,
+    "password.max_length": 128,
+    "password.history_count": 5,
+    "password.forbidden_words": ["club8", "k8"],
+    "password.breach_check": True,
+    "password.temp_expiry_hours": 24,
+    "password.admin_reset_approval_hours": 24,
 }
 
 

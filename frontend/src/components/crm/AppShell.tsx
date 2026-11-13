@@ -1,8 +1,8 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  CalendarCheck, ChevronsLeft, ChevronsRight, Download, IdCard, LayoutDashboard, LogOut, Menu, ScrollText, Settings,
-  UserPlus, Wallet, X,
+  CalendarCheck, ChevronsLeft, ChevronsRight, Download, IdCard, KeyRound, LayoutDashboard, LogOut, Menu, ScrollText, Settings,
+  ShieldCheck, UserPlus, Wallet, X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -163,6 +163,15 @@ function UserMenu() {
             </div>
           </div>
           <div className="my-1 border-t border-border" />
+          <Link role="menuitem" href="/change-password" onClick={() => setOpen(false)} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-base text-fg hover:bg-surface-sunken">
+            <KeyRound aria-hidden className="size-4 text-fg-subtle" />Change password
+          </Link>
+          {me && !me.totp_enabled && (
+            <Link role="menuitem" href="/setup-2fa" onClick={() => setOpen(false)} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-base text-fg hover:bg-surface-sunken">
+              <ShieldCheck aria-hidden className="size-4 text-fg-subtle" />Set up two-step verification
+            </Link>
+          )}
+          <div className="my-1 border-t border-border" />
           <button role="menuitem" type="button" onClick={logout} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-base text-fg hover:bg-surface-sunken">
             <LogOut aria-hidden className="size-4 text-fg-subtle" />Sign out
           </button>
@@ -202,6 +211,13 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 
 export function AppShell({ children, env = "" }: { children: React.ReactNode; env?: string }) {
   const [drawer, setDrawer] = React.useState(false);
+  const { data: me } = useMe();
+  const router = useRouter();
+  // Forced account steps come first (the API refuses everything else anyway).
+  React.useEffect(() => {
+    if (me?.must_change_password) router.replace("/change-password");
+    else if (me?.must_enroll_totp) router.replace("/setup-2fa");
+  }, [me?.must_change_password, me?.must_enroll_totp, router]);
   const [collapsed, setCollapsed] = React.useState(false);
   React.useEffect(() => {
     try { setCollapsed(localStorage.getItem("ui:sidebar") === "collapsed"); } catch { /* storage unavailable */ }

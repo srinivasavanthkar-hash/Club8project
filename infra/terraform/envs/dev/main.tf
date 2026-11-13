@@ -25,18 +25,23 @@ provider "azurerm" {
 
 variable "alert_email" { type = string }
 variable "acr_name" { type = string }
+variable "super_admin_username" {
+  type    = string
+  default = ""
+}
 
 module "crm" {
-  source           = "../../modules/crm"
-  env              = "dev"
-  location         = "centralindia"
-  acr_name         = var.acr_name
-  alert_email      = var.alert_email
-  postgres_sku     = "GP_Standard_D2ds_v5"
-  postgres_ha      = false
-  redis_sku        = "Standard"
-  api_min_replicas = 1
-  web_min_replicas = 1
+  source               = "../../modules/crm"
+  env                  = "dev"
+  location             = "centralindia"
+  acr_name             = var.acr_name
+  super_admin_username = var.super_admin_username
+  alert_email          = var.alert_email
+  postgres_sku         = "GP_Standard_D2ds_v5"
+  postgres_ha          = false
+  redis_sku            = "Standard"
+  api_min_replicas     = 1
+  web_min_replicas     = 1
 }
 
 output "front_door_host" { value = module.crm.front_door_host }

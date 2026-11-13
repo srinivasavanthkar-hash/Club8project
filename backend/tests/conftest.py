@@ -14,6 +14,11 @@ os.environ.setdefault("CRM_VIRUS_SCAN_PROVIDER", "none")
 os.environ.setdefault("CRM_COOKIE_SECURE", "false")
 os.environ.setdefault("CRM_RATE_LIMIT_LOGIN", "10000/minute")
 os.environ.setdefault("CRM_RATE_LIMIT_DEFAULT", "100000/minute")
+os.environ.setdefault("CRM_RATE_LIMIT_LOGIN_ACCOUNT", "10000/minute")
+os.environ.setdefault("CRM_RATE_LIMIT_CHANGE_PASSWORD", "10000/minute")
+os.environ.setdefault("CRM_RATE_LIMIT_CHANGE_PASSWORD_IP", "10000/minute")
+# Never call the live breached-password API from tests: the offline list answers (tests that cover the API mock it).
+os.environ.setdefault("CRM_PASSWORD_BREACH_API_ENABLED", "false")
 
 from hypothesis import HealthCheck, settings
 

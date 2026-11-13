@@ -1,15 +1,18 @@
 import uuid
-from typing import Any
+from datetime import datetime
+from typing import Any, Literal
 
 from fastapi import APIRouter, Body, Depends, Header, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 
 from app.admin import service
+from app.auth import recovery
 from app.auth.models import Permission, Role, User
 from app.core.db import TransactionalRoute
 from app.core.deps import CurrentUser, SessionDep, has_permission, require_permission
-from app.core.errors import Forbidden, NotFound
+from app.core.errors import DomainError, Forbidden, NotFound
+from app.core.timeutil import now_utc
 
 router = APIRouter(route_class=TransactionalRoute, prefix="/admin", tags=["admin"])
 
@@ -68,9 +71,9 @@ async def update_master(
 
 # ---------------------------------------------------------------- users & roles
 class UserIn(BaseModel):
+    # No password field: the system generates a temporary one (admins never type passwords for anyone).
     username: str = Field(min_length=3, max_length=80, pattern=r"^[a-zA-Z0-9._-]+$")
     full_name: str = Field(min_length=1, max_length=150)
-    password: str = Field(min_length=12, max_length=200)
     roles: list[str]
     email: str | None = None
     mobile: str | None = None
@@ -82,6 +85,10 @@ class UserOut(BaseModel):
     full_name: str
     is_active: bool
     roles: list[str]
+    totp_enabled: bool = False
+    must_change_password: bool = False
+    must_enroll_totp: bool = False
+    locked: bool = False
 
 
 def _user_out(u: User) -> UserOut:
@@ -91,7 +98,67 @@ def _user_out(u: User) -> UserOut:
         full_name=u.full_name,
         is_active=u.is_active,
         roles=sorted(r.code for r in u.roles),
+        totp_enabled=u.totp_enabled,
+        must_change_password=u.must_change_password,
+        must_enroll_totp=u.must_enroll_totp,
+        locked=bool(u.locked_until and u.locked_until > now_utc()),
     )
+
+
+class TemporaryPasswordOut(BaseModel):
+    """Returned exactly once. Responses carry Cache-Control: no-store (SecurityHeadersMiddleware)."""
+
+    temporary_password: str
+    expires_at: datetime
+
+
+class UserCreatedOut(UserOut):
+    temporary_password: str
+    temporary_password_expires_at: datetime
+
+
+class ReasonIn(BaseModel):
+    reason: str = Field(min_length=5, max_length=500)
+
+    @field_validator("reason")
+    @classmethod
+    def _strip(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 5:
+            raise ValueError("Give a reason of at least 5 characters")
+        return v
+
+
+class ResetOut(BaseModel):
+    status: Literal["RESET", "PENDING_APPROVAL"]
+    temporary_password: str | None = None
+    expires_at: datetime | None = None
+    request_id: uuid.UUID | None = None
+    approval_expires_at: datetime | None = None
+    super_admin_fallback: bool = False
+
+
+def _reset_out(o: recovery.ResetOutcome) -> ResetOut:
+    if o.request is not None:
+        return ResetOut(status="PENDING_APPROVAL", request_id=o.request.id, approval_expires_at=o.request.expires_at)
+    assert o.temporary is not None
+    return ResetOut(
+        status="RESET",
+        temporary_password=o.temporary.password,
+        expires_at=o.temporary.expires_at,
+        super_admin_fallback=o.super_admin,
+    )
+
+
+class ResetRequestOut(BaseModel):
+    id: uuid.UUID
+    target_username: str
+    target_full_name: str
+    requested_by: str
+    requested_by_id: uuid.UUID
+    reason: str
+    created_at: datetime
+    expires_at: datetime
 
 
 @router.get("/users", response_model=list[UserOut])
@@ -106,15 +173,82 @@ async def list_staff(session: SessionDep, _: CurrentUser) -> list[UserOut]:
     return [_user_out(u) for u in rows]
 
 
-@router.post("/users", response_model=UserOut, status_code=201)
+@router.post("/users", response_model=UserCreatedOut, status_code=201)
 async def create_user(
     body: UserIn, session: SessionDep, _: User = Depends(require_permission("admin.users"))
-) -> UserOut:
-    return _user_out(
-        await service.create_user(
-            session, body.username, body.full_name, body.password, body.roles, body.email, body.mobile
-        )
+) -> UserCreatedOut:
+    u, temp = await service.create_user(session, body.username, body.full_name, body.roles, body.email, body.mobile)
+    assert temp is not None
+    return UserCreatedOut(
+        **_user_out(u).model_dump(),
+        temporary_password=temp.password,
+        temporary_password_expires_at=temp.expires_at,
     )
+
+
+@router.post("/users/{user_id}/reset-password", response_model=ResetOut)
+async def reset_password(
+    user_id: uuid.UUID,
+    body: ReasonIn,
+    session: SessionDep,
+    actor: User = Depends(require_permission("user.reset_password")),
+) -> ResetOut:
+    """Non-admin target: a temporary password now. ADMIN target: a request a different admin must approve."""
+    return _reset_out(await recovery.reset_password(session, actor, user_id, body.reason))
+
+
+@router.post("/users/{user_id}/reset-2fa", response_model=UserOut)
+async def reset_2fa(
+    user_id: uuid.UUID, body: ReasonIn, session: SessionDep, actor: User = Depends(require_permission("user.reset_2fa"))
+) -> UserOut:
+    return _user_out(await recovery.reset_totp(session, actor, user_id, body.reason))
+
+
+@router.get("/reset-requests", response_model=list[ResetRequestOut])
+async def list_reset_requests(
+    session: SessionDep, _: User = Depends(require_permission("user.reset_password"))
+) -> list[ResetRequestOut]:
+    return [
+        ResetRequestOut(
+            id=r.id,
+            target_username=t.username,
+            target_full_name=t.full_name,
+            requested_by=q.username,
+            requested_by_id=q.id,
+            reason=r.reason,
+            created_at=r.created_at,
+            expires_at=r.expires_at,
+        )
+        for r, t, q in await recovery.pending_requests(session)
+    ]
+
+
+@router.post("/reset-requests/{request_id}/approve", response_model=ResetOut)
+async def approve_reset_request(
+    request_id: uuid.UUID,
+    body: ReasonIn,
+    session: SessionDep,
+    actor: User = Depends(require_permission("user.reset_password")),
+) -> ResetOut:
+    try:
+        return _reset_out(await recovery.approve_request(session, actor, request_id, body.reason))
+    except DomainError:
+        await session.commit()  # keep an expiry discovered on the way (status + activity log entry)
+        raise
+
+
+@router.post("/reset-requests/{request_id}/reject", status_code=204)
+async def reject_reset_request(
+    request_id: uuid.UUID,
+    body: ReasonIn,
+    session: SessionDep,
+    actor: User = Depends(require_permission("user.reset_password")),
+) -> None:
+    try:
+        await recovery.reject_request(session, actor, request_id, body.reason)
+    except DomainError:
+        await session.commit()  # keep an expiry discovered on the way (status + activity log entry)
+        raise
 
 
 class RolesIn(BaseModel):

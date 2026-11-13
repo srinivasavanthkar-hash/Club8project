@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, Text
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db import Base, Timestamps, UUIDPk, Versioned
+from app.core.db import Base, Timestamps, UUIDPk, Versioned, utcnow
 
 user_roles = Table(
     "user_roles",
@@ -50,6 +50,15 @@ class User(Base, UUIDPk, Timestamps, Versioned):
     totp_secret_enc: Mapped[str | None] = mapped_column(Text)  # Fernet-encrypted
     totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Set when 2FA is reset by an admin: the user must enrol again before using the app.
+    must_enroll_totp: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Carried in every access/refresh token as "tv". Incrementing it ends every session on every device at once.
+    token_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    password_changed_at: Mapped[datetime | None] = mapped_column()
+    # A system-generated temporary password (admin reset / new user) is valid until this time.
+    temp_password_expires_at: Mapped[datetime | None] = mapped_column()
+    # When the expiry job recorded TEMP_PASSWORD_EXPIRED (keeps the job idempotent).
+    temp_password_expired_at: Mapped[datetime | None] = mapped_column()
     last_login_at: Mapped[datetime | None] = mapped_column()
     # Extension point (OPEN_QUESTIONS #17): Entra ID object id for OIDC sign-in.
     external_subject: Mapped[str | None] = mapped_column(String(255), unique=True)
@@ -57,6 +66,32 @@ class User(Base, UUIDPk, Timestamps, Versioned):
 
     def permission_codes(self) -> set[str]:
         return {p.code for r in self.roles for p in r.permissions}
+
+
+class PasswordHistory(Base, UUIDPk):
+    """bcrypt hashes of a user's previous self-chosen passwords (reuse check). Never plain text."""
+
+    __tablename__ = "password_history"
+    __audited__ = False
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    password_hash: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=utcnow)
+
+
+class AdminResetRequest(Base, UUIDPk):
+    """A password reset of an ADMIN account: requested by one admin, approved by a different one (D-PW-3)."""
+
+    __tablename__ = "admin_reset_requests"
+    __audited__ = False  # every state change is recorded explicitly in the activity log
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=utcnow)
+    target_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    requested_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    reason: Mapped[str] = mapped_column(String(500))
+    expires_at: Mapped[datetime] = mapped_column()
+    status: Mapped[str] = mapped_column(String(20), default="PENDING")  # PENDING/APPROVED/REJECTED/EXPIRED/CANCELLED
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+    decision_reason: Mapped[str | None] = mapped_column(String(500))
+    decided_at: Mapped[datetime | None] = mapped_column()
 
 
 class RefreshToken(Base, UUIDPk):

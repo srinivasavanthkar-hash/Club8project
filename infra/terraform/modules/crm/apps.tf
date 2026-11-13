@@ -33,6 +33,10 @@ locals {
     CRM_KEYVAULT_URL        = azurerm_key_vault.kv.vault_uri
     CRM_OTEL_ENABLED        = "true"
     AZURE_CLIENT_ID         = azurerm_user_assigned_identity.app.client_id
+    # Breached-password check: outbound HTTPS to api.pwnedpasswords.com (k-anonymity range API; only the first
+    # 5 hex characters of a SHA-1 hash leave the app). Falls back to a bundled list if unreachable.
+    CRM_PASSWORD_BREACH_API_URL = "https://api.pwnedpasswords.com/range/"
+    CRM_SUPER_ADMIN_USERNAME    = var.super_admin_username
   }
   backend_secret_env = {
     CRM_DATABASE_URL                          = "database-url"
