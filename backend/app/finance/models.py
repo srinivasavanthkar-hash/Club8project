@@ -105,7 +105,10 @@ class AsfCharge(Base, UUIDPk, Timestamps, Versioned):
     total_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     currency: Mapped[str] = mapped_column(String(3), default="INR")
     amount_paid: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=Decimal(0))
-    status: Mapped[str] = mapped_column(String(12), default="RAISED")  # RAISED | PAID
+    status: Mapped[str] = mapped_column(String(12), default="RAISED")  # RAISED | PAID | WITHDRAWN
+    # WITHDRAWN (D-33): unpaid, and its only booking was cancelled or declined. A later booking re-raises this row.
+    withdrawn_on: Mapped[date | None] = mapped_column()
+    withdrawn_reason: Mapped[str | None] = mapped_column(String(300))
     __table_args__ = (Index("uq_asf_member_year", "member_id", "membership_year", unique=True),)
 
 

@@ -9,6 +9,7 @@ import { StatusStepper } from "@/components/crm/Stepper";
 import { StatusBadge } from "@/components/crm/StatusBadge";
 import { useToast } from "@/components/crm/Toast";
 import { DocLink } from "@/components/member/DocLink";
+import { CancellationDetails, CancellationOutcome, WrittenRequestPicker, type CancellationTerms } from "@/components/reservation/Cancellation";
 import { ErrorText, useCan, useMaster } from "@/components/providers";
 import { Alert, Button, buttonClasses, Card, Field, Input, Select } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -19,9 +20,10 @@ import { cn } from "@/lib/utils";
 type Detail = {
   reservation: Reservation;
   unpaid_asf_years: number[];
-  asf_charges: { id: string; membership_year: number; total: string; status: string; currency: string }[];
+  asf_charges: { id: string; membership_year: number; total: string; status: string; currency: string; withdrawn_on: string | null; withdrawn_reason: string | null }[];
   deduction: { state: string; plan: { lines: { year: number; kind: string; nights: string }[] } } | null;
   payments: { id: string; receipt_number: string; type: string; total: string; currency: string }[];
+  documents: { id: string; type: string; file_name: string; created_at: string; voided_at: string | null; void_reason: string | null }[];
 };
 
 function creditedBack(data: unknown): string | null {
@@ -43,6 +45,8 @@ export default function ReservationPage({ params }: { params: Promise<{ id: stri
   const [reasonId, setReasonId] = useState("");
   const [reasonText, setReasonText] = useState("");
   const [commRef, setCommRef] = useState("");
+  const [cancelDate, setCancelDate] = useState(""); // "" = the default (day the written request was received)
+  const [dateReason, setDateReason] = useState("");
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [rs, setRs] = useState({ check_in: "", check_out: "", reason: "", override_reason: "" });
   const refresh = () => qc.invalidateQueries();
@@ -50,10 +54,21 @@ export default function ReservationPage({ params }: { params: Promise<{ id: stri
     mutationFn: (to: string) => api.post(`/reservations/${id}/status`, {
       to_status: to, confirmation_number: conf || null, override_reason: override || null,
       reason_id: reasonId || null, reason_text: reasonText || null, communication_ref: commRef || null,
+      cancel_date: cancelDate || null, cancel_date_reason: dateReason || null,
     }),
     onSuccess: (_d, to) => { setConfirmCancel(false); refresh(); toast.success(`Reservation ${humanize(to).toLowerCase()}`); },
   });
   const reschedule = useMutation({ mutationFn: () => api.post(`/reservations/${id}/reschedule`, { ...rs, override_reason: rs.override_reason || null }), onSuccess: () => { refresh(); toast.success("Reservation rescheduled"); } });
+  const status = data?.reservation.status ?? "";
+  const open = !!data && !["DECLINED", "CANCELLED"].includes(status) && can("reservation.status.change");
+  const terms = useQuery({
+    queryKey: ["cancellation-terms", id, status, commRef, cancelDate, dateReason],
+    queryFn: () => api.get<CancellationTerms>(`/reservations/${id}/cancellation-terms`, {
+      communication_ref: commRef || undefined, cancel_date: cancelDate || undefined, cancel_date_reason: dateReason || undefined,
+    }),
+    enabled: open,
+    placeholderData: (prev) => prev,
+  });
   const voucher = useMutation({ mutationFn: () => api.post<{ id: string }>(`/reservations/${id}/voucher`), onSuccess: refresh });
   if (error) return <ErrorState message="This reservation could not be loaded." onRetry={() => refetch()} />;
   if (!data) return <PageSkeleton variant="record" />;
@@ -136,6 +151,9 @@ export default function ReservationPage({ params }: { params: Promise<{ id: stri
                   </li>
                 ))}</ul>
               )}
+              {data.asf_charges.filter((c) => c.status === "WITHDRAWN").map((c) => (
+                <p key={c.id} className="mt-2 text-sm text-fg-muted">ASF {c.membership_year} withdrawn on {formatDate(c.withdrawn_on)}: {c.withdrawn_reason}. A later booking in that year raises it again.</p>
+              ))}
               {asfBlocked && <Alert kind="warning" className="mt-3">ASF unpaid for {data.unpaid_asf_years.join(", ")}. Confirmation is blocked until it is paid (agreement: non-payment of ASF results in non-confirmation).</Alert>}
               {data.payments.length > 0 && (
                 <p className="mt-3 text-sm text-fg-muted">Linked payments: {data.payments.map((p) => <span key={p.id} className="mr-2 inline-block"><Mono>{p.receipt_number}</Mono> ({humanize(p.type)} <Money value={p.total} currency={p.currency} />)</span>)}</p>
@@ -186,7 +204,8 @@ export default function ReservationPage({ params }: { params: Promise<{ id: stri
                     </Select>
                   </Field>
                   <Field label="Explanation" htmlFor="rt"><Input id="rt" value={reasonText} onChange={(e) => setReasonText(e.target.value)} /></Field>
-                  {r.status === "CONFIRMED" && <Field label="Member's written request (email:<id> or document:<id>)" htmlFor="cr"><Input id="cr" className="font-mono" value={commRef} onChange={(e) => setCommRef(e.target.value)} /></Field>}
+                  {terms.data?.confirmed && <WrittenRequestPicker memberId={r.member_id} reservationId={r.id} value={commRef} onChange={(v) => { setCommRef(v); setCancelDate(""); setDateReason(""); }} />}
+                  <CancellationDetails terms={terms.data} cancelDate={cancelDate} onCancelDate={setCancelDate} dateReason={dateReason} onDateReason={setDateReason} />
                   <div className="flex flex-wrap gap-2">
                     {r.status !== "CONFIRMED" && <Button variant="outline" onClick={() => change.mutate("DECLINED")} disabled={change.isPending}>Decline</Button>}
                     <Button variant="destructive-outline" onClick={() => setConfirmCancel(true)}>Cancel reservation…</Button>
@@ -195,6 +214,30 @@ export default function ReservationPage({ params }: { params: Promise<{ id: stri
                 <ErrorText error={change.error} />
                 {creditedBack(change.data) !== null && <Alert kind="info">Nights credited back: {creditedBack(change.data)}</Alert>}
               </div>
+            </Card>
+          )}
+          {r.cancellation && (
+            <Card title="Cancellation">
+              <p className="text-base font-medium tabular-nums">{r.cancellation.summary}</p>
+              <dl className="mt-3 flex flex-col gap-1.5 text-sm">
+                <div><dt className="inline text-fg-subtle">Cancellation date: </dt><dd className="inline tabular-nums">{formatDate(r.cancellation.cancel_date)}{r.cancellation.date_source === "STAFF" ? ` (changed: ${r.cancellation.date_reason})` : r.cancellation.date_source === "CONFIRMATION" ? " (date of confirmation)" : " (request received)"}</dd></div>
+                {r.cancellation.request && <div><dt className="inline text-fg-subtle">Written request: </dt><dd className="inline">{r.cancellation.request.kind === "email" ? "Email" : "Letter"} “{r.cancellation.request.label}”, received {formatDate(r.cancellation.request.received_on)}</dd></div>}
+                <div><dt className="inline text-fg-subtle">Reason: </dt><dd className="inline">{r.cancellation.reason}{r.cancellation.reason_text ? `: ${r.cancellation.reason_text}` : ""}</dd></div>
+                {r.cancellation.asf_withdrawn.length > 0 && <div><dt className="inline text-fg-subtle">ASF withdrawn: </dt><dd className="inline">{r.cancellation.asf_withdrawn.join(", ")}</dd></div>}
+              </dl>
+              <p className="mt-3 text-xs text-fg-subtle">Nothing is sent automatically: share the letter with the member and the property.</p>
+            </Card>
+          )}
+          {data.documents.length > 0 && (
+            <Card title="Letters and vouchers">
+              <ul className="flex flex-col gap-2">{data.documents.map((d) => (
+                <li key={d.id} className="flex flex-wrap items-center gap-2">
+                  <DocLink id={d.id} label={d.type === "CANCELLATION_LETTER" ? "Cancellation letter" : d.type === "VOUCHER" ? "Voucher" : d.file_name} />
+                  {d.voided_at && <StatusBadge status="CANCELLED" size="sm" />}
+                  <span className="text-xs text-fg-subtle">{formatDateTime(d.created_at)}</span>
+                  {d.void_reason && <span className="basis-full text-xs text-fg-muted">{d.void_reason}. Kept for the record; no longer valid.</span>}
+                </li>
+              ))}</ul>
             </Card>
           )}
           {r.status === "CONFIRMED" && can("letter.generate") && (
@@ -237,6 +280,7 @@ export default function ReservationPage({ params }: { params: Promise<{ id: stri
         onConfirm={() => change.mutate("CANCELLED")}
       >
         {!reasonId && <Alert kind="warning">No cancellation reason selected yet.</Alert>}
+        {terms.data && <CancellationOutcome terms={terms.data} />}
         <ErrorText error={change.error} />
       </ConfirmDialog>
     </div>

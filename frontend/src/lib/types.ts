@@ -136,6 +136,22 @@ export type Reservation = {
   child_ages: number[];
   status_history: { from_status: string | null; to_status: string; changed_at: string; reason_text: string | null; override: boolean }[];
   date_versions: { version_no: number; check_in: string; check_out: string; entitlement_nights: string; reason: string | null }[];
+  cancellation: ReservationCancellation | null;
+};
+
+/** Facts of a confirmed reservation's cancellation (D-31..D-34). */
+export type ReservationCancellation = {
+  summary: string;
+  cancel_date: string;
+  date_source: "REQUEST" | "CONFIRMATION" | "STAFF";
+  date_reason: string | null;
+  request: { kind: "email" | "document"; label: string; received_on: string } | null;
+  reason: string;
+  reason_text: string | null;
+  credited: string;
+  forfeited: string;
+  asf_withdrawn: number[];
+  letter_document_id: string;
 };
 
 export type Quote = {

@@ -17,6 +17,7 @@ settings). The defaults below are seed values only.
 | `entitlement.deduction_rounding` | `UP` | Rounding of matrix-multiplied deductions to half nights |
 | `asf.charge_unraised_saved_source` | `true` | Charge a never-raised source year's ASF when its saved nights are used |
 | `asf.annual_cap_percent` | `5` | ASF revision above this % needs an override reason + permission |
+| `asf.withdraw_unpaid_on_cancel` | `true` | Withdraw an unpaid ASF when its only booking is cancelled or declined (D-33); paid ASF is never touched |
 | `finance.default_notice_days` | 14 | Default-notice payment window |
 | `finance.emi_due_day` | 1 | Day of month EMIs fall due (when no instalment start date is given) |
 | `member.require_signed_agreement` | `true` | Signed agreement upload required before approval |
@@ -82,6 +83,9 @@ settings). The defaults below are seed values only.
 | Gift/Rent: lead guest + a linked member email/call required | `gift_rent_requirements` | — | `test_confirmation_gate_and_gift` |
 | Reschedule keeps every date version; max 2 without override | `reschedule`, `check_reschedule_limit` | `reservation.max_reschedules` | `test_reschedule_adjusts_existing_deduction_and_limit` |
 | Cancelling a confirmed booking needs a written request; credit tiers > 30 / 15–30 / < 15 days | `cancellation_credit` | `cancellation_tiers` | `test_cancellation_tiers_and_boundaries`, `test_cancellation_tiers_need_written_request` |
+| Notice counts from the day the written request was received; a changed date needs a reason, never future or before confirmation (D-32) | `cancellation.terms` | — | `test_notice_counts_from_the_written_request`, `test_uploaded_letter_counts_from_its_upload_day`, `test_request_before_confirmation_counts_from_the_confirmation` |
+| Unpaid ASF withdrawn on cancel/decline unless another live booking uses the year; paid ASF untouched; raised again by the next booking (D-33) | `withdraw_unpaid_asf`, `raise_asf_for_booking` | `asf.withdraw_unpaid_on_cancel` | `test_unpaid_asf_withdrawn_on_decline_and_raised_again`, `test_asf_kept_while_another_booking_uses_the_year`, `test_paid_asf_is_never_withdrawn`, `test_setting_off_keeps_unpaid_asf` |
+| Confirmed cancellation: letter generated, voucher marked cancelled, nothing sent (D-34) | `cancellation.generate_letter`, `void_vouchers` | `letter_templates` | `test_notice_counts_from_the_written_request`, e2e `cancellation.spec.ts` |
 | Nights beyond entitlement → paid `ADDITIONAL_NIGHTS` (not deducted) | `plan_consumption.shortfall` | — | `test_insufficient_entitlement_needs_paid_nights` |
 | Season derived from the season calendar (overridable) | `derive_season` | `season_calendar`, `seasons.priority` | `test_stay_and_season` |
 

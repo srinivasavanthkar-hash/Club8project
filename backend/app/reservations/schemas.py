@@ -64,7 +64,10 @@ class StatusChangeIn(BaseModel):
     confirmation_number: str | None = Field(None, max_length=80)
     communication_ref: str | None = Field(None, pattern=r"^(email|document):[0-9a-f-]{36}$")
     override_reason: str | None = Field(None, max_length=500)
+    # Confirmed cancellations: the notice date defaults to the day the written request was received (D-32); a
+    # different date needs a reason
     cancel_date: date | None = None
+    cancel_date_reason: str | None = Field(None, max_length=500)
 
 
 class RescheduleIn(BaseModel):
@@ -123,6 +126,7 @@ class ReservationOut(ORM):
     reschedule_count: int
     remarks: str | None
     warnings_overridden: dict[str, Any] | None
+    cancellation: dict[str, Any] | None = None
     version: int
     status_history: list[StatusHistoryOut] = []
     date_versions: list[DateVersionOut] = []
@@ -134,6 +138,7 @@ class ReservationDetail(BaseModel):
     asf_charges: list[dict[str, Any]]
     deduction: dict[str, Any] | None
     payments: list[dict[str, Any]]
+    documents: list[dict[str, Any]] = []  # vouchers and letters linked to the reservation (voided ones marked)
 
 
 __all__ = ["Decimal"]

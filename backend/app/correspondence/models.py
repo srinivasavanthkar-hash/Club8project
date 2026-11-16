@@ -71,6 +71,9 @@ class Document(Base, UUIDPk, Timestamps, Versioned, SoftDelete):
     blob_path: Mapped[str] = mapped_column(String(500), unique=True)
     scan_status: Mapped[str] = mapped_column(String(12), default="PENDING")  # PENDING|CLEAN|INFECTED|ERROR
     is_generated: Mapped[bool] = mapped_column(default=False)
+    # A document that no longer holds (e.g. the voucher of a cancelled reservation): kept, marked, never deleted
+    voided_at: Mapped[datetime | None] = mapped_column()
+    void_reason: Mapped[str | None] = mapped_column(String(300))
     links: Mapped[list["DocumentLink"]] = relationship(lazy="selectin")
 
 

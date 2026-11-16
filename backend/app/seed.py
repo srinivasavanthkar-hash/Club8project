@@ -88,6 +88,8 @@ CODED: dict[type[Any], list[dict[str, Any]]] = {
         {"code": "PAYMENT_RECEIPT", "name": "Payment Receipt"},
         {"code": "BOOKING_CONFIRMATION", "name": "Booking Confirmation"},
         {"code": "VOUCHER", "name": "Voucher"},
+        {"code": "CANCELLATION_LETTER", "name": "Cancellation Letter"},
+        {"code": "MEMBER_LETTER", "name": "Member letter"},
         {"code": "DEFAULT_NOTICE", "name": "Default Notice", "is_sensitive": True},
         {"code": "CALL_RECORDING", "name": "Call recording"},
         {"code": "OTHER", "name": "Other"},

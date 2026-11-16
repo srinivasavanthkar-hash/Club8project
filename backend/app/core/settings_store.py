@@ -21,6 +21,8 @@ DEFAULTS: dict[str, Any] = {
     "entitlement.deduction_rounding": "UP",
     "asf.charge_unraised_saved_source": True,
     "asf.annual_cap_percent": "5",
+    # D-33: withdraw an unpaid ASF when its only booking is cancelled or declined (paid ASF is never touched)
+    "asf.withdraw_unpaid_on_cancel": True,
     "finance.default_notice_days": 14,
     "finance.emi_due_day": 1,
     "member.require_signed_agreement": True,

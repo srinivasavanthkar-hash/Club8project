@@ -242,6 +242,8 @@ def _doc_out(d: Document) -> dict[str, Any]:
         "size_bytes": d.size_bytes,
         "scan_status": d.scan_status,
         "is_generated": d.is_generated,
+        "voided_at": d.voided_at,
+        "void_reason": d.void_reason,
         "created_at": d.created_at,
         "created_by": str(d.created_by) if d.created_by else None,
         "links": [{"entity_type": lk.entity_type, "entity_id": str(lk.entity_id)} for lk in d.links],
