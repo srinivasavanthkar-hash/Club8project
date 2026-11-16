@@ -22,6 +22,13 @@ export function probeDuration(file: string): number {
   return Number(execFileSync(FFPROBE, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file], { encoding: "utf8" }).trim());
 }
 
+/** Filter: full-range BT.601 frames (JPEG screenshots) to limited-range BT.709 yuv420p. */
+export const TO_TV = "scale=in_range=full:out_range=limited:in_color_matrix=bt601:out_color_matrix=bt709,format=yuv420p,setparams=range=tv:colorspace=bt709:color_primaries=bt709:color_trc=bt709";
+/** Filter: RGB(A) images (caption bars, solid backgrounds) to limited-range BT.709, keeping alpha. */
+export const RGB_TO_TV = "scale=out_range=limited:out_color_matrix=bt709";
+/** Encoder flags: yuv420p, limited ("tv") range, BT.709, so every player decodes the colours the same way. */
+export const TV_TAGS = ["-pix_fmt", "yuv420p", "-color_range", "tv", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709"];
+
 type Frame = { file: string; t: number };
 
 export class Screencast {
@@ -99,7 +106,10 @@ export class Screencast {
     // The trailing repeat of the last file makes the concat demuxer honour the last duration, but ffmpeg 8 then adds
     // that duration once more: cut the output to the true length.
     const total = stopAt - this.frames[0]!.t;
-    ffmpeg(["-f", "concat", "-safe", "0", "-i", list, "-vf", "fps=30,format=yuv420p", "-t", total.toFixed(3), "-c:v", "libx264", "-preset", "medium", "-crf", "14", "-movflags", "+faststart", out]);
+    // The JPEG frames are full-range BT.601 (JFIF). Players expect limited-range (16–235) BT.709 for HD video, so
+    // convert explicitly and tag the stream, instead of leaving the range to ffmpeg's guess (washed-out or crushed
+    // blacks on some players).
+    ffmpeg(["-f", "concat", "-safe", "0", "-i", list, "-vf", `fps=30,${TO_TV}`, "-t", total.toFixed(3), "-c:v", "libx264", "-preset", "medium", "-crf", "14", ...TV_TAGS, "-movflags", "+faststart", out]);
     fs.rmSync(this.dir, { recursive: true, force: true });
     return probeDuration(out);
   }

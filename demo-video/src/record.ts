@@ -367,6 +367,10 @@ const SECTIONS: Section[] = [
       await s.step("Approved: the member is now Active.", 2800);
       await d.caption("Entitlement appears straight away: 7 nights for each of the 10 years.");
       await s.tab("Entitlement");
+      // the caption promises 7 nights: fail rather than record a stale 0.0 (header or table)
+      const thisYear = page.getByRole("row").filter({ hasText: "(current year)" });
+      await thisYear.getByRole("cell").nth(1).filter({ hasText: /^7\.0$/ }).waitFor({ timeout: 5000 });
+      await page.getByRole("link", { name: /Nights left in/ }).filter({ hasText: "7.0" }).waitFor({ timeout: 5000 });
       await d.pause(3200);
     },
   },

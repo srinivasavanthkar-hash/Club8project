@@ -22,7 +22,7 @@ Outputs in `demo-video/out/`:
 
 | File | What |
 |---|---|
-| `club8-crm-demo.mp4` | the video: H.264, yuv420p, CRF 20, 30 fps, `+faststart` (plays in WhatsApp and PowerPoint) |
+| `club8-crm-demo.mp4` | the video: H.264, yuv420p, limited ("tv") range, BT.709, CRF 20, 30 fps, `+faststart` (plays in WhatsApp and PowerPoint). The screencast JPEGs are full-range BT.601, so every clip is converted explicitly and tagged; `qc-report.txt` checks the tags and that luma stays within 16–235 |
 | `club8-crm-demo.srt` | the captions, timed to the final video |
 | `chapters.txt` | chapter start times (YouTube description, a slide) |
 | `club8-crm-demo-thumb.png` | thumbnail, from the reservation calculation screen |
