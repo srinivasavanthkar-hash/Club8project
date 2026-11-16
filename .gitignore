@@ -27,3 +27,8 @@ infra/terraform/**/*.tfvars
 
 # Claude Code local scheduler lock
 .claude/scheduled_tasks.lock
+
+# Demo video: recordings and the assembled MP4 never go in git (demo-video/README.md)
+demo-video/out/
+demo-video/node_modules/
+frontend/.next-video/
