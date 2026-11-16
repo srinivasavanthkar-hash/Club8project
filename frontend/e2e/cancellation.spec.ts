@@ -103,6 +103,10 @@ test("confirmed reservation: member's email → cancel → nights credited and f
   await a.call("POST", `/reservations/${res.id}/status`, { to_status: "CONFIRMED", confirmation_number: `CNF-${tag}` });
   await a.call("POST", `/reservations/${res.id}/voucher`);
 
+  // from here on the browser drives the app: any failed API call is a bug
+  const apiErrors: string[] = [];
+  page.on("response", (r) => { if (r.status() >= 400 && r.url().includes("/api/v1/")) apiErrors.push(`${r.status()} ${r.request().method()} ${r.url()}`); });
+
   // ---- the member's email asking to cancel, logged by member services
   await login(page, "demo.service");
   await page.goto(`/members/${member.id}?tab=correspondence`);
@@ -143,4 +147,5 @@ test("confirmed reservation: member's email → cancel → nights credited and f
   await page.goto(`/members/${member.id}?tab=entitlement`);
   const row = page.getByRole("row", { name: new RegExp(`^${year}\\b`) });
   await expect(row.getByRole("cell").last()).toHaveText("5.0");
+  expect(apiErrors).toEqual([]);
 });

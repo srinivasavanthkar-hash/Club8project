@@ -49,7 +49,9 @@ export default function ReservationPage({ params }: { params: Promise<{ id: stri
   const [dateReason, setDateReason] = useState("");
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [rs, setRs] = useState({ check_in: "", check_out: "", reason: "", override_reason: "" });
-  const refresh = () => qc.invalidateQueries();
+  // the cancellation preview is not refetched: after a cancel it would ask about a closed reservation (it turns
+  // itself off once the reservation's new status arrives)
+  const refresh = () => qc.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "cancellation-terms" });
   const change = useMutation({
     mutationFn: (to: string) => api.post(`/reservations/${id}/status`, {
       to_status: to, confirmation_number: conf || null, override_reason: override || null,
