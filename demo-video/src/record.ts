@@ -30,6 +30,7 @@ const LEAD = { name: "Ananya Rao", mobile: "9000000001", email: "ananya.rao@exam
 
 export type ClipMeta = { id: number; title: string; file: string; duration: number; captions: CaptionEvent[]; phone?: boolean };
 type Shared = { leadUrl?: string; memberUrl?: string; resUrl?: string; checkIn?: string; checkOut?: string };
+type MasterRow = { id: string; code: string };
 
 const totp = () => new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(DEMO_TOTP_KEY), digits: 6, period: 30 }).generate();
 
@@ -43,6 +44,24 @@ async function sessionCookies(user: string): Promise<Cookie[]> {
   await ctx.dispose();
   return cookies;
 }
+
+/** API calls as a role, for set-up the video doesn't show (CSRF double-submit header included). */
+async function apiAs(user: string) {
+  const ctx = await request.newContext({ baseURL: BASE });
+  let r = await ctx.post("/api/v1/auth/login", { data: { username: user, password: PASSWORD } });
+  if (r.status() === 401) r = await ctx.post("/api/v1/auth/login", { data: { username: user, password: PASSWORD, totp_code: totp() } });
+  if (!r.ok()) throw new Error(`sign-in for ${user} failed: ${r.status()} ${await r.text()}`);
+  const csrf = (await ctx.storageState()).cookies.find((c) => c.name === "crm_csrf")?.value ?? "";
+  const call = async <T>(method: "GET" | "POST", p: string, data?: unknown): Promise<T> => {
+    const res = await ctx.fetch(`/api/v1${p}`, { method, data, headers: { "X-CSRF-Token": csrf } });
+    if (!res.ok()) throw new Error(`${method} ${p}: ${res.status()} ${await res.text()}`);
+    return (await res.json()) as T;
+  };
+  const master = async (slug: string, code: string) => (await call<MasterRow[]>("GET", `/admin/master/${slug}`)).find((x) => x.code === code)!;
+  return { call, master, dispose: () => ctx.dispose() };
+}
+
+const addDays = (iso: string, n: number) => new Intl.DateTimeFormat("en-CA").format(new Date(new Date(`${iso}T12:00:00`).getTime() + n * 86_400_000));
 
 function stay(): [string, string] {
   let d = new Date(Date.now() + 21 * 86_400_000);
@@ -477,7 +496,60 @@ const SECTIONS: Section[] = [
   },
 
   {
-    id: 7, title: "Member services",
+    id: 7, title: "Cancel a stay",
+    run: async (s: Scene) => {
+      const { page, d } = s;
+      // Set-up the video doesn't show: a second confirmed 2-night stay a few days after the first (the year's ASF is
+      // already paid), and the member's email asking to cancel it, logged by member services.
+      const memberId = s.shared.memberUrl!.split("/").pop()!;
+      const ci = addDays(s.shared.checkOut!, 2);
+      let api = await apiAs("demo.reservations");
+      const res = await api.call<{ id: string }>("POST", `/members/${memberId}/reservations`, {
+        destination_id: (await api.master("destinations", "GOA")).id,
+        property_id: (await api.master("properties", "GOA-DEMO-PREM")).id,
+        unit_type_id: (await api.master("unit-types", "T0")).id,
+        adults: 2, check_in: ci, check_out: addDays(ci, 2),
+      });
+      await api.call("POST", `/reservations/${res.id}/status`, { to_status: "APPROVED" });
+      await api.call("POST", `/reservations/${res.id}/status`, { to_status: "CONFIRMED", confirmation_number: "GOA-48390" });
+      await api.call("POST", `/reservations/${res.id}/voucher`);
+      await api.dispose();
+      api = await apiAs("demo.service");
+      const subject = "Please cancel our second Goa stay";
+      await api.call("POST", `/members/${memberId}/emails`, {
+        direction: "INCOMING", sent_at: new Date().toISOString(), sender: LEAD.email, to: ["reservations@example.com"],
+        subject, body: "Sorry, we can only make the first trip. Please cancel the second one.",
+      });
+      await api.dispose();
+
+      await s.signInAs("demo.reservations", { announce: false, path: `/reservations/${res.id}` });
+      await s.begin();
+      await d.caption("The member emails to cancel a confirmed stay.");
+      await d.select(page.getByLabel("Decline / cancel reason", { exact: true }), "Member request");
+      await d.type(page.getByLabel("Explanation", { exact: true }), "Member can only make the first trip");
+      const today = istToday().split("-").reverse().join("-");
+      await d.select(page.getByLabel("Member's written request", { exact: true }), `${today} · Email: ${subject}`);
+      const outcome = page.getByRole("status").filter({ hasText: /days' notice → \d+%: [\d.]+ nights credited, [\d.]+ forfeited/ });
+      await outcome.waitFor();
+      await d.settle();
+      await d.caption("Notice counts from the day the email arrived. The outcome shows before anything changes.");
+      await d.star(outcome, 4000);
+      await d.click(page.getByRole("button", { name: "Cancel reservation…" }));
+      const dlg = page.getByRole("dialog", { name: "Cancel this reservation?" });
+      await d.pause(1200);
+      await d.click(dlg.getByRole("button", { name: "Cancel reservation" }));
+      await page.getByText("CANCELLED", { exact: true }).first().waitFor();
+      await d.settle();
+      await d.caption("Cancelled: nights credited back by the policy, a letter generated, the voucher marked cancelled.");
+      const card = page.locator("section").filter({ hasText: "Cancellation date" }).first();
+      await page.locator("section").filter({ hasText: "Letters and vouchers" }).getByText("CANCELLED", { exact: true }).waitFor();
+      await d.star(card, 3500);
+      await d.star(page.locator("section").filter({ hasText: "Letters and vouchers" }).first(), 3000);
+    },
+  },
+
+  {
+    id: 8, title: "Member services",
     run: async (s: Scene) => {
       const { page, d } = s;
       await s.signInAs("demo.service", { announce: false, path: `${s.shared.memberUrl}?tab=correspondence` });
@@ -499,7 +571,7 @@ const SECTIONS: Section[] = [
   },
 
   {
-    id: 8, title: "Audit trail",
+    id: 9, title: "Audit trail",
     run: async (s: Scene) => {
       const { page, d } = s;
       await s.signInAs("demo.manager", { announce: false, path: `${s.shared.memberUrl}?tab=profile` });
@@ -541,7 +613,7 @@ const SECTIONS: Section[] = [
   },
 
   {
-    id: 9, title: "Passwords and access",
+    id: 10, title: "Passwords and access",
     run: async (s: Scene) => {
       const { page, d } = s;
       await s.signInAs("demo.admin", { announce: false, path: "/admin" });
@@ -586,7 +658,7 @@ const SECTIONS: Section[] = [
   },
 
   {
-    id: 10, title: "On the phone", phone: true,
+    id: 11, title: "On the phone", phone: true,
     run: async (s: Scene) => {
       const { page, d } = s;
       await s.signInAs("demo.sales", { announce: false, path: "/" });
@@ -605,7 +677,7 @@ const SECTIONS: Section[] = [
     },
   },
 
-  { id: 11, title: "End", card: "end.html", hold: 8000 },
+  { id: 12, title: "End", card: "end.html", hold: 8000 },
 ];
 
 /** The newer headless mode includes Chrome's PDF viewer (receipts); the old one shows a blank frame. The window

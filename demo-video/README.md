@@ -39,7 +39,7 @@ Outputs in `demo-video/out/`:
   - SHA-256 `401dffcf14c301082e1fc03b0bc876b92ea676bfc521fc56e80a1537d137034f`, checked against the release's
     `checksums.sha256` and GitHub's asset digest. Unzip so that
     `.local/ffmpeg/ffmpeg-n8.1.3-27-g8dca1586f4-win64-gpl-8.1/bin/ffmpeg.exe` exists.
-- **Mailpit** in `.local/mailpit/` (v1.32.0, see the main README), for the forgot-password email in section 9.
+- **Mailpit** in `.local/mailpit/` (v1.32.0, see the main README), for the forgot-password email in section 10.
 - **Azurite** comes with this package (`npm ci`), the same version as docker-compose (3.33.0).
 - Playwright's Chromium (already installed for the frontend's tests: `npx playwright install chromium`).
 
@@ -56,7 +56,7 @@ Outputs in `demo-video/out/`:
 - **Overlays** (`src/overlay.ts`): cursor, click ring, caption bar (brand indigo, orange top rule), highlight
   outline for the ★ moments. Injected into the page by the recording script only; they are not part of the app.
 - **Pace**: typing 60 ms per character, 400 ms mouse moves, 1.5–3 s reading pauses, 3.5–4 s on ★ moments.
-- **Sign-ins**: one visible sign-in in section 1 (with the show-password eye) and one in section 8 (the
+- **Sign-ins**: one visible sign-in in section 1 (with the show-password eye) and one in section 9 (the
   administrator's 2FA code, generated from the FICTITIOUS demo key with the `otpauth` library). Everywhere else the
   script swaps in a saved session for the role and a caption says "Now signed in as …".
 - **Dates** are relative (stay about 3 weeks ahead, EMIs from next month), so a re-recording is always valid.
@@ -70,14 +70,14 @@ Outputs in `demo-video/out/`:
 `npm run record -- --section 6` starts a fresh stack, replays sections 1–5 **without recording** (fast, to recreate
 the same data: the lead, member MSMC8-9002, payments), records section 6 into `out/clips/06.mp4`, then re-assembles
 the video with the other clips already in `out/clips/`. Sections: 0 title card, 1 sign in, 2 lead, 3 convert,
-4 approve, 5 payments, 6 reservation, 7 member services, 8 audit trail, 9 passwords, 10 phone, 11 end card.
+4 approve, 5 payments, 6 reservation, 7 cancellation, 8 member services, 9 audit trail, 10 passwords, 11 phone, 12 end card.
 
 ## Change a caption
 
 Captions are the `d.caption("…")` and `s.step("…")` calls in `src/record.ts`, one per step, in plain business
 language. Edit the text, then re-record that section (`--section N`); the SRT and chapters are regenerated from the
 clips' timing. Keep captions to two lines. The title and end cards are `cards/title.html` and `cards/end.html`
-(re-record section 0 or 11 after editing).
+(re-record section 0 or 12 after editing).
 
 ## Voice-over later
 

@@ -14,7 +14,7 @@ import { ROOT } from "./stack";
 const OUT = path.join(ROOT, "demo-video", "out");
 const CLIPS = path.join(OUT, "clips");
 const FADE = 0.3;
-const SECTIONS = 12;
+const SECTIONS = 13;
 
 const ts = (s: number, sep = ",") => {
   const ms = Math.max(0, Math.round(s * 1000));
