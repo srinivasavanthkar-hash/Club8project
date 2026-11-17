@@ -684,10 +684,13 @@ const SECTIONS: Section[] = [
       await d.type(page.getByLabel("Search members and leads", { exact: true }), "Ananya");
       await page.getByRole("listbox").waitFor();
       await d.pause(2800);
-      await d.caption("Every detail of the membership is one tap away.");
       await d.click(page.getByRole("option").filter({ hasText: "MSMC8-9002" }).first());
+      // only caption the member page once its data is on screen: no loading skeletons, the summary tiles filled
       await page.getByRole("heading", { name: /^MSMC8-9002/ }).waitFor();
+      await page.locator('[aria-busy="true"]').first().waitFor({ state: "detached" });
+      await page.getByText(/^of [\d.]+ available$/).first().waitFor(); // the nights tile shows "…" until entitlement loads
       await d.settle();
+      await d.caption("Every detail of the membership is one tap away.");
       await d.pause(3600);
     },
   },
