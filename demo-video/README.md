@@ -27,16 +27,17 @@ The recording always starts from a fresh `crm_video` database, in one of two pla
 | `--db` | Where | Needs |
 |---|---|---|
 | `docker` (default) | a throwaway `postgres:16-alpine` container, `club8-crm-video-db`, on `127.0.0.1:5433`. Its data is on tmpfs (no volume), so nothing survives the run | Docker running |
-| `embedded` | embedded PostgreSQL 16 (pgserver) in `.local/club8-crm-pgserver`, shared with `scripts/local_db.py`; only the `crm_video` database is replaced | nothing extra (for machines without Docker) |
+| `embedded` | the scratch embedded PostgreSQL 16 (pgserver) in `.local/club8-crm-pgserver-scratch`, shared with the e2e runner and tests; only the `crm_video` database is replaced. Never `crm_local`'s server: `scripts/local_db.py` refuses its folder for any other database | nothing extra (for machines without Docker) |
 
 With Docker, the run waits for the container's health check (`pg_isready` over TCP, polled every second, up to two
 minutes) instead of a fixed timeout, and removes the container at the end: also when a section fails, the run
 is interrupted with Ctrl+C, or the script crashes. A container left by a run that was killed outright (e.g. the
 terminal closed) is removed at the start of the next run. To remove one by hand: `docker rm -f club8-crm-video-db`.
 
-The embedded server stays running between runs. If it was not shut down cleanly (computer restarted mid-run),
-its next start runs crash recovery, which can take longer than pgserver's 10-second start timeout: the run then
-fails with "Timeout starting server". Wait a minute and run again, or use `--db docker`.
+The scratch embedded server stays running between runs. If it was not shut down cleanly (computer restarted
+mid-run), its next start runs crash recovery, which can take longer than pgserver's 10-second start timeout: the
+run then fails with "Timeout starting server". Wait a minute and run again, or use `--db docker`. It holds only
+throwaway databases, so deleting `.local/club8-crm-pgserver-scratch` (with the server stopped) is always safe.
 
 Outputs in `demo-video/out/`:
 

@@ -3,7 +3,8 @@
  * separately built frontend and its own Mailpit. Started before recording, stopped afterwards.
  *
  *   Database 127.0.0.1:5433          (--db docker, the default: a throwaway postgres:16-alpine container, data on
- *                                     tmpfs, removed at the end; --db embedded: pgserver in .local/, no Docker)
+ *                                     tmpfs, removed at the end; --db embedded: the scratch pgserver in
+ *                                     .local/club8-crm-pgserver-scratch, no Docker; never crm_local's server)
  *   API      http://127.0.0.1:8002   (CRM_E2E_TARGET=true, local rate limits for many quick sign-ins)
  *   Web      http://127.0.0.1:3002   (built into frontend/.next-video; CRM_ENV unset, so no DEV badge, as in prod)
  *   Mailpit  http://127.0.0.1:8027   (SMTP 1027)
@@ -106,14 +107,11 @@ export async function startStack(opts: { build: boolean; db: DbMode }): Promise<
 
   try {
     console.log(`==> Fresh database crm_video (migrations + DEMO seed; ${opts.db === "docker" ? `${VIDEO_DB.image} container on :${VIDEO_DB.port}` : "embedded PostgreSQL"})`);
+    // embedded: local_db.py puts crm_video on the scratch server (.local/club8-crm-pgserver-scratch) and refuses
+    // crm_local's folder; docker: the container started here
     const dbArgs = [path.join(ROOT, "scripts", "local_db.py"), "--name", "crm_video"];
-    // embedded PostgreSQL lives in .local/ (Python checks TMPDIR first, which Git Bash sets)
-    let dbEnv: NodeJS.ProcessEnv = { ...process.env, TMPDIR: LOCAL, TMP: LOCAL, TEMP: LOCAL };
-    if (opts.db === "docker") {
-      dbArgs.push("--admin-url", await startDockerDb());
-      dbEnv = env;
-    }
-    const out = execFileSync(PY, dbArgs, { env: dbEnv, encoding: "utf8" });
+    if (opts.db === "docker") dbArgs.push("--admin-url", await startDockerDb());
+    const out = execFileSync(PY, dbArgs, { env, encoding: "utf8" });
     const dbUrl = out.trim().split(/\r?\n/).pop()!;
 
     const mailpit = path.join(LOCAL, "mailpit", process.platform === "win32" ? "mailpit.exe" : "mailpit");

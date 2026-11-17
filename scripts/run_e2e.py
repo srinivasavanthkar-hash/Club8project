@@ -6,7 +6,8 @@
     python scripts/run_e2e.py --no-build ...        # reuse the previous e2e frontend build
 
 What it does (and undoes):
-1. Creates a fresh database `crm_e2e` (embedded PostgreSQL in .local/, migrations, DEMO master data and users) and
+1. Creates a fresh database `crm_e2e` (scratch embedded PostgreSQL in .local/, migrations, DEMO master data and
+   users; never crm_local's server) and
    starts its own Mailpit (.local/mailpit, SMTP :1026, API :8026) for the reset emails of this run.
 2. Starts the API on :8001 with CRM_E2E_TARGET=true. Specs that write data refuse to run unless the API reports it
    (frontend/e2e/support/stack.ts), so they can never touch the demo database on :8000.
@@ -63,7 +64,8 @@ def main() -> int:
     args, playwright_args = p.parse_known_args()
 
     LOCAL.mkdir(exist_ok=True)
-    # embedded PostgreSQL lives in .local/, not %TEMP% (Python checks TMPDIR first, which Git Bash sets)
+    # temp files in .local/, not %TEMP% (Python checks TMPDIR first, which Git Bash sets). The database: local_db.py
+    # puts crm_e2e on the scratch embedded server (.local/club8-crm-pgserver-scratch), never crm_local's.
     env = {
         **os.environ,
         "TMPDIR": str(LOCAL),
