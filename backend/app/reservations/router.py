@@ -5,11 +5,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 
+from app.admin.models import DocumentType
 from app.auth.models import User
 from app.core.db import TransactionalRoute
 from app.core.deps import SessionDep, require_permission
 from app.core.repository import get_or_404, paginate
 from app.core.schemas import Page, PageParams
+from app.correspondence.models import Document, DocumentLink
 from app.entitlement import service as ent_service
 from app.finance import service as fin
 from app.finance.models import AsfCharge, Payment, ReservationAsfLink
@@ -102,6 +104,19 @@ async def get_reservation(
     ).scalars()
     d = await ent_service.active_deduction(session, r.id)
     pays = (await session.execute(select(Payment).where(Payment.reservation_id == r.id))).scalars()
+    docs = (
+        await session.execute(
+            select(Document, DocumentType.code)
+            .join(DocumentLink, DocumentLink.document_id == Document.id)
+            .join(DocumentType, DocumentType.id == Document.document_type_id)
+            .where(
+                DocumentLink.entity_type == "RESERVATION",
+                DocumentLink.entity_id == r.id,
+                Document.deleted_at.is_(None),
+            )
+            .order_by(Document.created_at)
+        )
+    ).all()
     return ReservationDetail(
         reservation=ReservationOut.model_validate(r),
         unpaid_asf_years=await fin.unpaid_asf_years(session, r.id),
@@ -114,6 +129,8 @@ async def get_reservation(
                 "gst": str(c.gst_amount),
                 "status": c.status,
                 "currency": c.currency,
+                "withdrawn_on": c.withdrawn_on.isoformat() if c.withdrawn_on else None,
+                "withdrawn_reason": c.withdrawn_reason,
             }
             for c in charges
         ],
@@ -128,6 +145,17 @@ async def get_reservation(
             }
             for p in pays
         ],
+        documents=[
+            {
+                "id": str(d.id),
+                "type": code,
+                "file_name": d.file_name,
+                "created_at": d.created_at.isoformat(),
+                "voided_at": d.voided_at.isoformat() if d.voided_at else None,
+                "void_reason": d.void_reason,
+            }
+            for d, code in docs
+        ],
     )
 
 
@@ -139,7 +167,22 @@ async def change_status(
     user: User = Depends(require_permission("reservation.status.change")),
 ) -> dict[str, Any]:
     r, extra = await service.change_status(session, reservation_id, body, user)
-    return {"reservation": ReservationOut.model_validate(r), "entitlement": extra}
+    asf_withdrawn = extra.pop("asf_withdrawn", [])
+    return {"reservation": ReservationOut.model_validate(r), "entitlement": extra, "asf_withdrawn": asf_withdrawn}
+
+
+@router.get("/reservations/{reservation_id}/cancellation-terms")
+async def cancellation_terms(
+    reservation_id: uuid.UUID,
+    session: SessionDep,
+    _: User = Depends(require_permission("reservation.status.change")),
+    communication_ref: str | None = Query(None, pattern=r"^(email|document):[0-9a-f-]{36}$"),
+    cancel_date: date | None = None,
+    cancel_date_reason: str | None = Query(None, max_length=500),
+) -> dict[str, Any]:
+    """What cancelling would do: notice date and its source, tier, nights credited and forfeited, ASF withdrawn.
+    Changes nothing; the same rules are checked again when the reservation is cancelled."""
+    return await service.cancellation_terms(session, reservation_id, communication_ref, cancel_date, cancel_date_reason)
 
 
 @router.post("/reservations/{reservation_id}/reschedule", response_model=ReservationOut)

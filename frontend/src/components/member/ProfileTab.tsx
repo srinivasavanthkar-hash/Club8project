@@ -32,7 +32,12 @@ export function ProfileTab({ member: m }: { member: Member }) {
   });
   const approve = useMutation({
     mutationFn: () => api.post(`/members/${m.id}/approve`, {}),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["member", m.id] }); toast.success("Member approved", "Entitlement has been created for each membership year."); },
+    // approval creates the entitlement rows and changes the money position: refresh everything about this member
+    // (header nights, Entitlement tab, finance summary), not just the member record
+    onSuccess: () => {
+      qc.invalidateQueries({ predicate: (q) => String(q.queryKey[1]) === m.id || q.queryKey[0] === "member" });
+      toast.success("Member approved", "Entitlement has been created for each membership year.");
+    },
   });
   const reveal = async (id: string) => (await api.post<{ value: string }>(`/kyc/${id}/reveal`)).value;
   const [editing, setEditing] = useState(false);

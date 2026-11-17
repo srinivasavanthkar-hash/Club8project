@@ -53,6 +53,7 @@ export const STATUS_TONES: Record<string, Def> = {
   // ASF per year
   NOT_YET_DUE: { tone: "outline" },
   RAISED: { tone: "warning" },
+  WITHDRAWN: { tone: "muted" },
   // Default notices
   OPEN: { tone: "danger-subtle", icon: AlertTriangle },
   CURED: { tone: "success" },

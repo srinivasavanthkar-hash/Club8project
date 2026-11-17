@@ -36,6 +36,7 @@ dependencies = [
   "azure-keyvault-secrets>=4.8",
   "azure-keyvault-keys>=4.9",
   "azure-storage-blob>=12.22",
+  "aiohttp>=3.9",  # transport for the async Azure SDK clients (blob storage); without it every upload fails
   "azure-communication-email>=1.0",  # password-reset and security emails (managed identity)
   "azure-monitor-opentelemetry>=1.6",
   "opentelemetry-instrumentation-fastapi>=0.48b0",

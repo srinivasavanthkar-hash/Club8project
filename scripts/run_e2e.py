@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -44,9 +45,7 @@ def wait_for(url: str, seconds: int = 120) -> None:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument(
         "--no-build",
         action="store_true",
@@ -64,11 +63,21 @@ def main() -> int:
     args, playwright_args = p.parse_known_args()
 
     LOCAL.mkdir(exist_ok=True)
+    # embedded PostgreSQL lives in .local/, not %TEMP% (Python checks TMPDIR first, which Git Bash sets)
     env = {
         **os.environ,
+        "TMPDIR": str(LOCAL),
         "TMP": str(LOCAL),
         "TEMP": str(LOCAL),
-    }  # embedded PostgreSQL lives in .local/, not %TEMP%
+    }
+    # Git Bash puts Git's own MinGW folders on PATH; their glib/pango DLLs clash with WeasyPrint's (receipts) and
+    # crash the API mid-request. Drop them for the processes started here.
+    path_key = next((k for k in env if k.upper() == "PATH"), "PATH")
+    env[path_key] = os.pathsep.join(
+        p
+        for p in env.get(path_key, "").split(os.pathsep)
+        if not re.search(r"[\\/]Git[\\/](mingw64|usr)[\\/]", p, re.I) and not re.match(r"^/(mingw64|usr)/", p)
+    )
     print("==> Fresh database crm_e2e")
     out = subprocess.run(
         [PY, str(ROOT / "scripts" / "local_db.py"), "--name", "crm_e2e"],
@@ -110,9 +119,7 @@ def main() -> int:
     try:
         mailpit = LOCAL / "mailpit" / ("mailpit.exe" if os.name == "nt" else "mailpit")
         if not mailpit.exists():
-            raise SystemExit(
-                f"Mailpit not found at {mailpit}: see README (Run locally without Docker)"
-            )
+            raise SystemExit(f"Mailpit not found at {mailpit}: see README (Run locally without Docker)")
         print(f"==> Mailpit on :{args.mailpit_port} (SMTP :{args.smtp_port})")
         procs.append(
             subprocess.Popen(
@@ -156,9 +163,7 @@ def main() -> int:
             )
         if not args.no_build or not (ROOT / "frontend" / ".next-e2e").exists():
             print("==> Frontend build (.next-e2e)")
-            subprocess.run(
-                [*next_bin, "build"], cwd=ROOT / "frontend", env=web_env, check=True
-            )
+            subprocess.run([*next_bin, "build"], cwd=ROOT / "frontend", env=web_env, check=True)
         print(f"==> Frontend on :{args.web_port}")
         web_log = open(LOCAL / "e2e-web.log", "wb")
         procs.append(

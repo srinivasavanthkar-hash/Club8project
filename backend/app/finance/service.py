@@ -121,6 +121,12 @@ async def record_payment(
             raise NotFound("ASF charge not found for this member")
         if asf.status == "PAID":
             raise Conflict(f"ASF for {asf.membership_year} is already paid", code="AsfAlreadyPaid")
+        if asf.status == "WITHDRAWN":
+            raise Conflict(
+                f"ASF for {asf.membership_year} was withdrawn (its booking was cancelled); it is raised again by the "
+                "next booking that uses that year",
+                code="AsfWithdrawn",
+            )
         if asf.amount_paid != ZERO or money(data.base_amount) != asf.base_amount:
             # D-14: an ASF charge is settled by one payment of its full base amount (+GST)
             raise RuleViolation(
@@ -518,7 +524,7 @@ async def raise_asf_for_booking(
             rate_cache[d] = await asf_rate_on(session, member, d)
         return rate_cache[d]
 
-    need_rate = any(y not in state for y, _ in years_used)
+    need_rate = any(y not in state or state[y].status == "WITHDRAWN" for y, _ in years_used)
     rate, rate_row = await _rate(booking_date) if need_rate else (None, None)
     charge_saved = bool(await get_setting(session, "asf.charge_unraised_saved_source"))
     decision = domain.decide_asf(
@@ -529,21 +535,29 @@ async def raise_asf_for_booking(
         charge_unraised_saved_source=charge_saved,
     )
     created = []
+    again: set[uuid.UUID] = set()
     for r in decision.to_raise:
-        c = AsfCharge(
-            member_id=member.id,
-            membership_year=r.membership_year,
-            raised_on=booking_date,
-            raised_by_reservation_id=reservation_id,
-            reason=r.reason,
-            asf_rate_id=rate_row.id if rate_row else None,
-            base_amount=r.base,
-            gst_rate=r.gst_rate,
-            gst_amount=r.gst,
-            total_amount=r.total,
-            currency=r.currency,
-        )
-        session.add(c)
+        fields = {
+            "raised_on": booking_date,
+            "raised_by_reservation_id": reservation_id,
+            "reason": r.reason,
+            "asf_rate_id": rate_row.id if rate_row else None,
+            "base_amount": r.base,
+            "gst_rate": r.gst_rate,
+            "gst_amount": r.gst,
+            "total_amount": r.total,
+            "currency": r.currency,
+        }
+        old = state.get(r.membership_year)
+        if old is not None:  # WITHDRAWN earlier: raise the same row again at today's rate (unique per member/year)
+            for k, v in fields.items():
+                setattr(old, k, v)
+            old.status, old.amount_paid, old.withdrawn_on, old.withdrawn_reason = "RAISED", ZERO, None, None
+            c = old
+            again.add(c.id)
+        else:
+            c = AsfCharge(member_id=member.id, membership_year=r.membership_year, **fields)
+            session.add(c)
         created.append(c)
         state[r.membership_year] = c
     await session.flush()
@@ -551,7 +565,8 @@ async def raise_asf_for_booking(
         audit.record(
             session,
             "ASF_RAISED",
-            f"ASF for membership year {c.membership_year} raised: {c.total_amount} {c.currency} incl. GST ({c.reason})",
+            f"ASF for membership year {c.membership_year} raised{' again' if c.id in again else ''}: "
+            f"{c.total_amount} {c.currency} incl. GST ({c.reason})",
             entity_type="asf_charges",
             entity_id=c.id,
             member_id=member.id,
@@ -577,7 +592,8 @@ async def preview_asf(
 ) -> list[dict[str, Any]]:
     existing = list((await session.execute(select(AsfCharge).where(AsfCharge.member_id == member.id))).scalars())
     rate = None
-    if any(y not in {c.membership_year for c in existing} for y, _ in years_used):
+    live = {c.membership_year for c in existing if c.status != "WITHDRAWN"}
+    if any(y not in live for y, _ in years_used):
         rate, _ = await asf_rate_on(session, member, booking_date)
     decision = domain.decide_asf(
         booking_date=booking_date,
@@ -614,12 +630,70 @@ async def preview_asf(
     return out
 
 
+async def withdraw_unpaid_asf(
+    session: AsyncSession,
+    reservation_id: uuid.UUID,
+    why: str,
+    user: User | None,
+    on: date | None = None,
+    *,
+    dry_run: bool = False,
+) -> list[int]:
+    """D-33: when a reservation is cancelled or declined, withdraw each ASF charge it raised or used that is still
+    unpaid, unless another live reservation uses that membership year. Paid ASF is never refunded or changed.
+    Setting `asf.withdraw_unpaid_on_cancel` (default on). Returns the membership years withdrawn."""
+    if not bool(await get_setting(session, "asf.withdraw_unpaid_on_cancel")):
+        return []
+    from app.reservations.models import Reservation  # import here: reservations imports finance
+
+    q = (
+        select(AsfCharge)
+        .join(ReservationAsfLink, ReservationAsfLink.asf_charge_id == AsfCharge.id)
+        .where(ReservationAsfLink.reservation_id == reservation_id)
+    )
+    charges = list((await session.execute(q if dry_run else q.with_for_update(of=AsfCharge))).scalars())
+    withdrawn: list[int] = []
+    for c in charges:
+        if c.status != "RAISED" or c.amount_paid != ZERO:
+            continue  # paid (or part paid, which D-14 forbids anyway): never touched
+        others = (
+            await session.execute(
+                select(func.count())
+                .select_from(ReservationAsfLink)
+                .join(Reservation, Reservation.id == ReservationAsfLink.reservation_id)
+                .where(
+                    ReservationAsfLink.asf_charge_id == c.id,
+                    ReservationAsfLink.reservation_id != reservation_id,
+                    Reservation.status.not_in(["CANCELLED", "DECLINED"]),
+                    Reservation.deleted_at.is_(None),
+                )
+            )
+        ).scalar_one()
+        if others:
+            continue
+        withdrawn.append(c.membership_year)
+        if dry_run:
+            continue
+        c.status, c.withdrawn_on, c.withdrawn_reason = "WITHDRAWN", on or today_ist(), why[:300]
+        c.updated_by = user.id if user else None
+        audit.record(
+            session,
+            "ASF_WITHDRAWN",
+            f"Unpaid ASF for membership year {c.membership_year} ({c.total_amount} {c.currency} incl. GST) "
+            f"withdrawn: {why}",
+            entity_type="asf_charges",
+            entity_id=c.id,
+            member_id=c.member_id,
+        )
+    return sorted(withdrawn)
+
+
 async def unpaid_asf_years(session: AsyncSession, reservation_id: uuid.UUID) -> list[int]:
     rows = (
         await session.execute(
             select(AsfCharge.membership_year)
             .join(ReservationAsfLink, ReservationAsfLink.asf_charge_id == AsfCharge.id)
-            .where(ReservationAsfLink.reservation_id == reservation_id, AsfCharge.status != "PAID")
+            .where(ReservationAsfLink.reservation_id == reservation_id, AsfCharge.status == "RAISED")
         )
     ).scalars()
     return sorted(set(rows))
@@ -792,7 +866,7 @@ async def totals(session: AsyncSession, member_id: uuid.UUID | None = None) -> d
         ).all()
     }
     aq = select(AsfCharge.currency, func.sum(AsfCharge.total_amount - AsfCharge.amount_paid)).where(
-        AsfCharge.status != "PAID"
+        AsfCharge.status == "RAISED"
     )
     if member_id:
         aq = aq.where(AsfCharge.member_id == member_id)
@@ -855,7 +929,7 @@ async def dashboard(
                 .join(Member, Member.id == Reservation.member_id)
                 .join(ReservationAsfLink, ReservationAsfLink.reservation_id == Reservation.id)
                 .join(AsfCharge, AsfCharge.id == ReservationAsfLink.asf_charge_id)
-                .where(AsfCharge.status != "PAID", Reservation.status.in_(["REQUESTED", "APPROVED"]))
+                .where(AsfCharge.status == "RAISED", Reservation.status.in_(["REQUESTED", "APPROVED"]))
             ).limit(500)
         )
     ).all()

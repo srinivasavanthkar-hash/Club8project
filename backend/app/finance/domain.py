@@ -155,6 +155,7 @@ class AsfChargeState(StrEnum):
     NOT_YET_DUE = "NOT_YET_DUE"
     RAISED = "RAISED"  # raised, unpaid / part paid
     PAID = "PAID"
+    WITHDRAWN = "WITHDRAWN"  # unpaid, its only booking cancelled or declined (D-33): raised again when next needed
 
 
 @dataclass(frozen=True)
@@ -206,7 +207,7 @@ def decide_asf(
             continue
         seen.add(year)
         state = have.get(year, AsfChargeState.NOT_YET_DUE)
-        if state is not AsfChargeState.NOT_YET_DUE:
+        if state not in (AsfChargeState.NOT_YET_DUE, AsfChargeState.WITHDRAWN):
             link.append(year)
             continue
         if kind == "SAVED" and not charge_unraised_saved_source:

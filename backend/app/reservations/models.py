@@ -40,6 +40,8 @@ class Reservation(Base, UUIDPk, Timestamps, Versioned, SoftDelete):
     reschedule_count: Mapped[int] = mapped_column(SmallInteger, default=0)
     remarks: Mapped[str | None] = mapped_column(Text)
     warnings_overridden: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # {warning: reason}
+    # Facts of a confirmed cancellation (notice date and its source, tier, nights, ASF withdrawn, letter); D-31..D-34
+    cancellation: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
 
     status_history: Mapped[list["ReservationStatusHistory"]] = relationship(
         order_by="ReservationStatusHistory.changed_at", lazy="selectin"

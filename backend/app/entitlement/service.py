@@ -185,17 +185,14 @@ async def plan(
     return domain.plan_consumption(required, use_year, on, bal, await policy_for(session, member))
 
 
-async def active_deduction(session: AsyncSession, reservation_id: uuid.UUID) -> ReservationDeduction | None:
-    return (
-        await session.execute(
-            select(ReservationDeduction)
-            .where(
-                ReservationDeduction.reservation_id == reservation_id,
-                ReservationDeduction.state.in_(["HELD", "DEDUCTED"]),
-            )
-            .with_for_update()
-        )
-    ).scalar_one_or_none()
+async def active_deduction(
+    session: AsyncSession, reservation_id: uuid.UUID, *, lock: bool = True
+) -> ReservationDeduction | None:
+    q = select(ReservationDeduction).where(
+        ReservationDeduction.reservation_id == reservation_id,
+        ReservationDeduction.state.in_(["HELD", "DEDUCTED"]),
+    )
+    return (await session.execute(q.with_for_update() if lock else q)).scalar_one_or_none()
 
 
 def _plan_years(d: ReservationDeduction) -> dict[int, Decimal]:
@@ -320,6 +317,29 @@ async def release(session: AsyncSession, reservation_id: uuid.UUID, user: User, 
         entity_id=reservation_id,
         member_id=d.member_id,
     )
+
+
+def cancellation_preview(
+    d: ReservationDeduction | None,
+    cancel_date: date,
+    check_in: date,
+    tiers: list[domain.CancellationTier],
+    rounding: str,
+) -> dict[str, Any]:
+    """What cancel_with_tiers would credit, without changing anything (shown before the user cancels)."""
+    if d is None:
+        return {"deducted": "0.0", "credited": "0.0", "forfeited": "0.0", "tier_percent": None}
+    taken = _plan_years(d)
+    total = nights(sum(taken.values(), ZERO))
+    if d.state == "HELD":
+        return {"deducted": str(total), "credited": str(total), "forfeited": "0.0", "tier_percent": "100"}
+    credit, _per_year, tier = domain.cancellation_credit(taken, cancel_date, check_in, tiers, rounding)
+    return {
+        "deducted": str(total),
+        "credited": str(nights(credit)),
+        "forfeited": str(nights(total - credit)),
+        "tier_percent": format(tier.credit_percent.normalize(), "f"),  # "50", "100" (not "1E+2")
+    }
 
 
 async def cancel_with_tiers(

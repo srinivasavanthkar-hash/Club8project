@@ -111,12 +111,31 @@ non-refundable under the agreement.</p>""",
 <p>Property: {{ property }}<br>Check-in: {{ r.check_in|ddmmyyyy }}<br>Check-out: {{ r.check_out|ddmmyyyy }}
 <br>Nights: {{ r.nights }}<br>Guests: {{ r.adults }} adult(s), {{ r.child_ages|length }} child(ren)
 {% if r.guest_name %}<br>Lead guest: {{ r.guest_name }}{% endif %}</p>""",
+    # D-34. Generated when a confirmed reservation is cancelled; kept with the member's documents, not sent.
+    "CANCELLATION_LETTER": """<h1>Reservation Cancellation</h1>
+<p>Date: <span class="ref">{{ issued_on|ddmmyyyy }}</span><br>To: {{ name }}<br>Membership No: <span class="ref">{{ m.membership_number }}</span></p>
+<p>As requested in your {{ c.request_kind }} received on {{ c.request_received_on|ddmmyyyy }}, reservation
+<span class="ref">{{ r.reservation_number }}</span> has been cancelled.</p>
+<table><tr><th>Property</th><td>{{ property }}</td></tr>
+<tr><th>Stay</th><td>{{ r.check_in|ddmmyyyy }} to {{ r.check_out|ddmmyyyy }} ({{ r.nights }} nights)</td></tr>
+<tr><th>Confirmation No</th><td><span class="ref">{{ r.confirmation_number or '' }}</span>{% if c.confirmed_on %} (confirmed {{ c.confirmed_on|ddmmyyyy }}){% endif %}</td></tr>
+<tr><th>Cancellation date</th><td>{{ c.cancel_date|ddmmyyyy }}{% if c.date_source == 'STAFF' %} (set by our team: {{ c.date_reason }}){% elif c.date_source == 'CONFIRMATION' %} (your request was dated before the confirmation){% endif %}</td></tr>
+<tr><th>Notice period</th><td>{% if c.notice_days >= 0 %}{{ c.notice_days }} day{{ '' if c.notice_days == 1 else 's' }} before check-in{% else %}{{ -c.notice_days }} day(s) after check-in{% endif %}</td></tr>
+<tr><th>Cancellation tier</th><td>{{ c.tier_percent }}% of the nights credited back</td></tr>
+<tr><th>Entitlement nights deducted</th><td>{{ c.deducted }}</td></tr>
+<tr class="total"><th>Nights credited back</th><td>{{ c.credited }}</td></tr>
+<tr><th>Nights forfeited</th><td>{{ c.forfeited }}</td></tr>
+<tr><th>Reason</th><td>{{ c.reason }}{% if c.reason_text %}: {{ c.reason_text }}{% endif %}</td></tr></table>
+{% if c.asf_withdrawn %}<p>The unpaid Annual Subscription Fee (ASF) for membership year {{ c.asf_withdrawn|join(', ') }} has been withdrawn.</p>{% endif %}
+{% if c.asf_paid %}<p>The ASF paid for membership year {{ c.asf_paid|join(', ') }} is not refunded; it covers other stays in that membership year.</p>{% endif %}
+{% if c.voucher_voided %}<p>The confirmation voucher issued for this reservation is no longer valid.</p>{% endif %}
+<p>This is a computer-generated letter.</p>""",
 }
 
 # Earlier default bodies (they printed the company header themselves). Migration 0002 swaps rows still identical
 # to one of these for the new defaults; admin-edited templates are left alone.
 PREVIOUS_DEFAULT_TEMPLATES: dict[str, list[str]] = {
-    code: [_ORIGINAL_TEMPLATES[code], _RESTYLED_TEMPLATES[code]] for code in DEFAULT_TEMPLATES
+    code: [_ORIGINAL_TEMPLATES[code], _RESTYLED_TEMPLATES[code]] for code in _ORIGINAL_TEMPLATES
 }
 
 

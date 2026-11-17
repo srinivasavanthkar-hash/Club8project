@@ -117,6 +117,12 @@ test("Section 14 demo: lead → member → finance → reservation → correspon
   await expect(page.getByText("All checks passed")).toBeVisible();
   await page.getByRole("button", { name: "Approve member" }).click();
   await expect(page.getByText("ACTIVE", { exact: true }).first()).toBeVisible();
+  // approval creates the entitlement: the header and the Entitlement tab show it straight away, without a reload
+  await expect(page.getByRole("link", { name: /Nights left in/ })).toContainText("7.0");
+  await page.getByRole("tab", { name: /^Entitlement/ }).click();
+  const thisYear = page.getByRole("row").filter({ hasText: "(current year)" });
+  await expect(thisYear.getByRole("cell").nth(1)).toHaveText("7.0"); // Allocated
+  await expect(thisYear.getByRole("cell").last()).toHaveText("7.0"); // Remaining
 
   // 3. Down payment by card (recorded at conversion), EMI schedule, one EMI payment with receipt
   await login(page, "demo.finance");

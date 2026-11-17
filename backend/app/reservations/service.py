@@ -12,7 +12,6 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.admin.models import (
-    CancellationTier,
     DeductionMatrix,
     HolidayCalendar,
     Property,
@@ -30,13 +29,13 @@ from app.core.repository import get_or_404
 from app.core.sequences import reservation_number
 from app.core.settings_store import get_settings_map
 from app.core.state_machine import reservation_sm
-from app.core.timeutil import today_ist
+from app.core.timeutil import fmt_date, today_ist
 from app.correspondence.models import Call, Document, Email
 from app.entitlement import domain as ent
 from app.entitlement import service as ent_service
 from app.finance import service as fin
 from app.members.models import Member
-from app.reservations import domain
+from app.reservations import cancellation, domain
 from app.reservations.models import Reservation, ReservationDateVersion, ReservationStatusHistory
 from app.reservations.schemas import RescheduleIn, ReservationIn, StatusChangeIn
 
@@ -336,26 +335,6 @@ async def create(session: AsyncSession, member_id: uuid.UUID, data: ReservationI
     return r
 
 
-async def _tiers(session: AsyncSession, on: date) -> tuple[list[ent.CancellationTier], str]:
-    rows = list(
-        (
-            await session.execute(
-                select(CancellationTier)
-                .where(
-                    CancellationTier.effective_from <= on,
-                    or_(CancellationTier.effective_to.is_(None), CancellationTier.effective_to >= on),
-                )
-                .order_by(CancellationTier.min_days.desc())
-            )
-        ).scalars()
-    )
-    if not rows:
-        return list(ent.DEFAULT_TIERS), "DOWN"
-    return [ent.CancellationTier(r.min_days, r.max_days, Decimal(r.credit_percent)) for r in rows], rows[
-        0
-    ].rounding_mode
-
-
 async def change_status(
     session: AsyncSession, reservation_id: uuid.UUID, data: StatusChangeIn, user: User
 ) -> tuple[Reservation, dict[str, Any]]:
@@ -365,6 +344,8 @@ async def change_status(
     can_override = "reservation.override" in user.permission_codes()
     extra: dict[str, Any] = {}
     override_used = False
+    reason: Reason | None = None
+    terms: cancellation.Terms | None = None  # set for a confirmed booking's cancellation
     if data.to_status in ("DECLINED", "CANCELLED"):
         if data.reason_id is None or not data.reason_text:
             raise RuleViolation(
@@ -410,16 +391,19 @@ async def change_status(
     elif data.to_status == "DECLINED":
         await ent_service.release(session, r.id, user, "Reservation declined")
     elif data.to_status == "CANCELLED":
-        cancel_date = data.cancel_date or today_ist()
-        if r.status in ("CONFIRMED",) or (r.status == "RESCHEDULED" and r.confirmation_number):
-            if not await _communication_exists(session, member.id, data.communication_ref, ("email", "document")):
-                raise RuleViolation(
-                    "Cancelling a confirmed reservation requires the member's written request: link "
-                    "the email or uploaded document",
-                    code="WrittenCommunicationRequired",
-                )
-            tiers, rounding = await _tiers(session, cancel_date)
-            extra = await ent_service.cancel_with_tiers(session, r.id, cancel_date, r.check_in, tiers, rounding, user)
+        if cancellation.needs_written_request(r):
+            terms = await cancellation.terms(
+                session, r, member, data.communication_ref, data.cancel_date, data.cancel_date_reason
+            )
+            if terms.missing_request:
+                raise RuleViolation(terms.problems[0], code="WrittenCommunicationRequired")
+            if terms.problems:
+                raise RuleViolation("; ".join(terms.problems), code="CancellationDate")
+            assert terms.cancel_date is not None
+            tiers, rounding = await cancellation.tiers_on(session, terms.cancel_date)
+            extra = await ent_service.cancel_with_tiers(
+                session, r.id, terms.cancel_date, r.check_in, tiers, rounding, user
+            )
         else:
             await ent_service.release(session, r.id, user, "Cancelled before confirmation")
             extra = {"credited": str(r.entitlement_nights), "tier": "FULL_RELEASE"}
@@ -447,9 +431,72 @@ async def change_status(
         member_id=member.id,
         changes={"status": [old, data.to_status]},
     )
+    if data.to_status in ("DECLINED", "CANCELLED"):
+        why = f"Reservation {r.reservation_number} {data.to_status.lower()}"
+        extra["asf_withdrawn"] = await fin.withdraw_unpaid_asf(session, r.id, why, user)
+    if terms is not None:
+        assert reason is not None and terms.cancel_date is not None
+        voided = await cancellation.void_vouchers(
+            session, r, f"Reservation {r.reservation_number} cancelled on {fmt_date(terms.cancel_date)}", user
+        )
+        letter = await cancellation.generate_letter(
+            session,
+            r,
+            member,
+            terms,
+            reason_name=reason.name,
+            reason_text=data.reason_text,
+            asf_withdrawn=extra["asf_withdrawn"],
+            voucher_voided=bool(voided),
+            user=user,
+        )
+        facts = terms.as_dict()
+        r.cancellation = {
+            **{k: (v.isoformat() if isinstance(v, date) else v) for k, v in facts.items() if k != "problems"},
+            "request": (
+                {**facts["request"], "received_on": facts["request"]["received_on"].isoformat()}
+                if facts["request"]
+                else None
+            ),
+            "reason": reason.name,
+            "reason_text": data.reason_text,
+            "asf_withdrawn": extra["asf_withdrawn"],
+            "vouchers_voided": voided,
+            "letter_document_id": str(letter.id),
+        }
+        extra["summary"] = terms.summary
+        extra["letter_document_id"] = str(letter.id)
+        audit.record(
+            session,
+            "RESERVATION_CANCELLED",
+            f"Reservation {r.reservation_number} cancelled: {terms.summary}. Notice date "
+            f"{fmt_date(terms.cancel_date)} ({terms.date_source}"
+            f"{': ' + terms.date_reason if terms.date_reason else ''}), "
+            f"written request {terms.request.ref if terms.request else '-'}",
+            entity_type="reservations",
+            entity_id=r.id,
+            entity_ref=r.reservation_number,
+            member_id=member.id,
+        )
     await session.flush()
     await session.refresh(r, ["status_history", "date_versions"])
     return r, extra
+
+
+async def cancellation_terms(
+    session: AsyncSession,
+    reservation_id: uuid.UUID,
+    communication_ref: str | None,
+    cancel_date: date | None,
+    cancel_date_reason: str | None,
+) -> dict[str, Any]:
+    """Read-only: what cancelling now would do (shown before the user presses Cancel)."""
+    r = await get_or_404(session, Reservation, reservation_id, label="Reservation")
+    member = await get_or_404(session, Member, r.member_id, label="Member")
+    if r.status not in ("REQUESTED", "APPROVED", "CONFIRMED", "RESCHEDULED"):
+        raise RuleViolation(f"A {r.status.lower()} reservation cannot be cancelled", code="NotCancellable")
+    t = await cancellation.terms(session, r, member, communication_ref, cancel_date, cancel_date_reason)
+    return t.as_dict()
 
 
 async def reschedule(session: AsyncSession, reservation_id: uuid.UUID, data: RescheduleIn, user: User) -> Reservation:

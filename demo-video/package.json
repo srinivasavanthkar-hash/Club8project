@@ -1,0 +1,22 @@
+{
+  "name": "club8-crm-demo-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Records the Club8 CRM demo video with Playwright and assembles it with ffmpeg (see README.md). Not part of the test suite or CI.",
+  "type": "module",
+  "scripts": {
+    "record": "tsx src/record.ts",
+    "assemble": "tsx src/record.ts --assemble-only",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "otpauth": "9.5.2",
+    "playwright": "1.49.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "azurite": "3.33.0",
+    "tsx": "4.23.15",
+    "typescript": "5.7.2"
+  }
+}
