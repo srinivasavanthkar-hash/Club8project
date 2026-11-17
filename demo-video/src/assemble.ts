@@ -150,7 +150,8 @@ export async function assemble(): Promise<void> {
   ].join("\n");
   fs.writeFileSync(path.join(OUT, "qc-report.txt"), report + "\n");
   console.log(report);
-  if (total < 300 || total > 360) console.warn(`!! length ${mmss(total)} is outside 5:00-6:00`);
+  // 6:30 upper limit: docs/DEMO_VIDEO_PROMPT.md, the same as the voiced main video (docs/DEMO_VOICEOVER_PROMPT.md)
+  if (total < 300 || total > 390) console.warn(`!! length ${mmss(total)} is outside 5:00-6:30`);
   if (mb >= 100) console.warn("!! file is 100 MB or larger");
   if (!fmtOk) console.warn("!! video is not tagged yuv420p, limited range, BT.709");
   if (!lumaOk) console.warn("!! luma body leaves the limited range 16-235 (full-range video?)");

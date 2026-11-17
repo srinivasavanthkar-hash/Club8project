@@ -1,6 +1,6 @@
 # Club8 CRM demo video
 
-A 5–6 minute screen recording of the real CRM for the Club8 owners: one new member from street lead to confirmed
+A 5:00–6:30 screen recording of the real CRM for the Club8 owners: one new member from street lead to confirmed
 holiday, plus the audit trail and password features. The brief is `docs/DEMO_VIDEO_PROMPT.md`; the story follows
 `docs/DEMO_SCRIPT.md` and the walkthrough.
 

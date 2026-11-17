@@ -2,7 +2,7 @@
 
 ## 0. Goal and rules
 
-Produce a **5–6 minute screen-recorded demo video** of the running Club8 CRM, for the Club8 owners. It follows the story in the walkthrough guide (`docs/DEMO_SCRIPT.md` and the walkthrough HTML): one new member goes from street lead to confirmed holiday, plus a short look at the audit trail and password features.
+Produce a **5:00–6:30 screen-recorded demo video** of the running Club8 CRM, for the Club8 owners. It follows the story in the walkthrough guide (`docs/DEMO_SCRIPT.md` and the walkthrough HTML): one new member goes from street lead to confirmed holiday, plus a short look at the audit trail and password features.
 
 Rules:
 - **Fictitious demo data only.** Never show real names, phone numbers, PANs or Aadhaar numbers. Reset and re-seed a dedicated recording database first, so the video starts from a clean, predictable state.
@@ -56,7 +56,9 @@ Rules:
 | 10 | On the phone | demo.sales | Switch to a 390×844 viewport, recorded as a separate clip. Dashboard and search. | 0:15 |
 | 11 | **End card** | — | "Club8 CRM": key points (one system for both brands, every change on record, ASF rules enforced), plus the contact line from me. | 0:08 |
 
-Total: about 5 minutes 30 seconds. If you run over 6 minutes, shorten pauses on non-★ steps; don't drop sections.
+Total: about 5 minutes 30 seconds as first planned; with the "Cancel a stay" section and the Docker recording database
+it runs about 6:10, which is accepted. The limit is **6:30**, the same as the main video in
+`docs/DEMO_VOICEOVER_PROMPT.md`. If you run over 6:30, shorten pauses on non-★ steps; don't drop sections.
 
 **In section 9, don't complete a password reset or create clutter that remains afterwards.** Cancel the reset dialog. The new user exists only in the throwaway recording database.
 
@@ -81,7 +83,7 @@ Watch the finished MP4 yourself, or sample frames every 5 seconds and review the
 - every caption is readable and on screen for at least 2.5 seconds;
 - the cursor is visible, clicks show the ring, and there are no jumps or blank frames between sections;
 - the ★ moments are on screen long enough to read;
-- the length is between 5:00 and 6:00, and the file is under 100 MB;
+- the length is between 5:00 and 6:30, and the file is under 100 MB;
 - the password typed in section 1 appears only as dots, except during the deliberate eye-button moment. In that moment the demo password is visible for 1–2 seconds, which is acceptable because it is fictitious and only for the demo environment.
 
 Then report: the file path, length, size, the chapter times, and anything you had to compromise on.
