@@ -72,3 +72,10 @@ Still outside this repository: `docs/BUILD_PROMPT.md` Section 3.1 (the file was 
 * Admin reset option A "send reset link" (Section 3A); "password changed" notification emails.
 * Telemetry scrubbing of URLs (reset tokens appear in URLs only from Phase 2).
 * Demo users get `@example.test` addresses; e2e forgot → Mailpit → reset → login, expired link.
+
+## Before go-live (added 17-11-2026)
+| Task | Done | Notes |
+|---|---|---|
+| Upgrade Node 20 → Node 22 LTS: local machines, CI (`actions/setup-node`, three jobs in `.github/workflows/ci.yml`) and the Docker images (`frontend/Dockerfile`: `node:20-alpine`, three stages) | | Node 20 reached end of life in April 2026. Then run the full checks: lint, typecheck, unit, e2e (visual baselines), Docker rebuild, demo-video recording |
+| Then: Azurite 3.33.0 → current (3.37.0 on 17-11-2026), in `docker-compose.yml` and `demo-video/package.json` together | | 3.36+ needs Node 21+. Clears the 3 high `axios` findings inside Azurite (demo-video `npm audit`). Re-check whether `--skipApiVersionCheck` is still needed |
+| Then: Vite 6.4 → current and Vitest 4.1 → current (5.x on 17-11-2026), with `@vitejs/plugin-react` to match | | Vite 7+ needs Node 20.19+, Vitest 5 needs Node 22.12+; kept on Node-20-compatible patched versions for CVE-2025-66478 work (`chore/docker-stack`) |
