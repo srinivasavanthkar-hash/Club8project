@@ -1,7 +1,11 @@
-"""Developer helper for machines without Docker: start an embedded PostgreSQL (pgserver), create a fresh
-database, run Alembic migrations and seed DEMO data. Prints the asyncpg URL to use as CRM_DATABASE_URL.
+"""Developer helper: create a fresh database, run Alembic migrations and seed DEMO data. Prints the asyncpg URL to
+use as CRM_DATABASE_URL.
+
+By default it starts an embedded PostgreSQL (pgserver) in the temp folder, for machines without Docker. With
+--admin-url it uses that server instead (e.g. a throwaway Docker container; demo-video/src/stack.ts).
 
     python scripts/local_db.py [--name crm_e2e]
+    python scripts/local_db.py --name crm_video --admin-url postgresql+asyncpg://user:pw@127.0.0.1:5433/postgres
 """
 
 import argparse
@@ -14,13 +18,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "backend"))
 
 
-async def main(name: str) -> str:
-    import pgserver
+async def main(name: str, admin_url: str | None = None) -> str:
     from sqlalchemy import text
     from sqlalchemy.ext.asyncio import create_async_engine
 
-    srv = pgserver.get_server(os.path.join(tempfile.gettempdir(), "club8-crm-pgserver"), cleanup_mode=None)
-    admin_url = srv.get_uri().replace("postgresql://", "postgresql+asyncpg://")
+    if admin_url is None:
+        import pgserver
+
+        srv = pgserver.get_server(os.path.join(tempfile.gettempdir(), "club8-crm-pgserver"), cleanup_mode=None)
+        admin_url = srv.get_uri().replace("postgresql://", "postgresql+asyncpg://")
     admin = create_async_engine(admin_url, isolation_level="AUTOCOMMIT")
     async with admin.connect() as c:
         await c.execute(text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'))
@@ -59,4 +65,6 @@ async def main(name: str) -> str:
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--name", default="crm_local")
-    print(asyncio.run(main(p.parse_args().name)))
+    p.add_argument("--admin-url", help="asyncpg URL of an existing server's admin database (default: embedded pgserver)")
+    a = p.parse_args()
+    print(asyncio.run(main(a.name, a.admin_url)))

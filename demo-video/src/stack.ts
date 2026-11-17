@@ -2,11 +2,13 @@
  * The recording stack: a throwaway database `crm_video` (never the developers' `crm_local`), its own API, a
  * separately built frontend and its own Mailpit. Started before recording, stopped afterwards.
  *
+ *   Database 127.0.0.1:5433          (--db docker, the default: a throwaway postgres:16-alpine container, data on
+ *                                     tmpfs, removed at the end; --db embedded: pgserver in .local/, no Docker)
  *   API      http://127.0.0.1:8002   (CRM_E2E_TARGET=true, local rate limits for many quick sign-ins)
  *   Web      http://127.0.0.1:3002   (built into frontend/.next-video; CRM_ENV unset, so no DEV badge, as in prod)
  *   Mailpit  http://127.0.0.1:8027   (SMTP 1027)
  */
-import { type ChildProcess, execFileSync, spawn } from "node:child_process";
+import { type ChildProcess, execFileSync, spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,22 +33,89 @@ async function waitFor(url: string, seconds = 180): Promise<void> {
 }
 
 export type Stack = { stop: () => void };
+export type DbMode = "docker" | "embedded";
+export const DB_MODES: readonly DbMode[] = ["docker", "embedded"];
 
-export async function startStack(opts: { build: boolean }): Promise<Stack> {
+// ---------------------------------------------------------------- throwaway PostgreSQL container (--db docker)
+// Development-only credentials for a container that lives for one recording; it listens on 127.0.0.1 only.
+const VIDEO_DB = { container: "club8-crm-video-db", image: "postgres:16-alpine", port: 5433, user: "crm_owner", password: "crm_video_dev" };
+
+function docker(args: string[]): { ok: boolean; out: string } {
+  const r = spawnSync("docker", args, { encoding: "utf8", windowsHide: true });
+  return { ok: r.status === 0, out: `${r.stdout ?? ""}${r.stderr ?? ""}`.trim() || (r.error?.message ?? "") };
+}
+
+/** Removes the recording database container, if there is one (idempotent; safe in an exit handler). */
+function removeVideoDb(): void {
+  docker(["rm", "--force", "--volumes", VIDEO_DB.container]);
+}
+
+/** Starts the container and waits for its health check; returns the admin (asyncpg) URL. */
+async function startDockerDb(): Promise<string> {
+  if (!docker(["version", "--format", "{{.Server.Version}}"]).ok) {
+    throw new Error("Docker is not running: start Docker Desktop, or record with --db embedded");
+  }
+  removeVideoDb(); // left behind by a run that was killed before it could clean up
+  const { container, image, port, user, password } = VIDEO_DB;
+  const run = docker([
+    "run", "--detach", "--name", container,
+    "--env", `POSTGRES_USER=${user}`, "--env", `POSTGRES_PASSWORD=${password}`, "--env", "POSTGRES_DB=postgres",
+    "--publish", `127.0.0.1:${port}:5432`,
+    // data on tmpfs: no volume, nothing survives the container
+    "--tmpfs", "/var/lib/postgresql/data",
+    // over TCP: during first-time setup the image runs a temporary server on the Unix socket only, which a plain
+    // pg_isready would already report as ready just before that server restarts
+    "--health-cmd", `pg_isready -h 127.0.0.1 -U ${user} -d postgres`,
+    "--health-interval", "1s", "--health-timeout", "3s", "--health-retries", "90",
+    image,
+  ]);
+  if (!run.ok) throw new Error(`Could not start the ${image} container on 127.0.0.1:${port}:\n${run.out}`);
+  const deadline = Date.now() + 120_000;
+  for (;;) {
+    const s = docker(["inspect", "--format", "{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{end}}", container]);
+    const [state, health] = s.ok ? s.out.split(/\s+/) : ["missing", ""];
+    if (state === "running" && health === "healthy") break;
+    if (state !== "running" && state !== "created" || health === "unhealthy" || Date.now() > deadline) {
+      const logs = docker(["logs", "--tail", "40", container]).out;
+      throw new Error(`The recording database did not become healthy (${state}${health ? `, ${health}` : ""}):\n${logs}`);
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  return `postgresql+asyncpg://${user}:${password}@127.0.0.1:${port}/postgres`;
+}
+
+export async function startStack(opts: { build: boolean; db: DbMode }): Promise<Stack> {
   fs.mkdirSync(LOCAL, { recursive: true });
-  // embedded PostgreSQL lives in .local/ (Python checks TMPDIR first, which Git Bash sets)
-  const dbEnv = { ...process.env, TMPDIR: LOCAL, TMP: LOCAL, TEMP: LOCAL }; // only the database helper needs this
   // Git Bash puts Git's own MinGW folders on PATH; their glib/pango DLLs clash with WeasyPrint's (receipts, vouchers)
   // and crash the API mid-request. Drop them for the processes we start.
   const env: NodeJS.ProcessEnv = { ...process.env };
   const pathKey = Object.keys(env).find((k) => k.toUpperCase() === "PATH") ?? "PATH";
   env[pathKey] = (env[pathKey] ?? "").split(path.delimiter).filter((p) => !/[\\/]Git[\\/](mingw64|usr)[\\/]/i.test(p) && !/^\/(mingw64|usr)\//.test(p)).join(path.delimiter);
-  console.log("==> Fresh database crm_video (migrations + DEMO seed)");
-  const out = execFileSync(PY, [path.join(ROOT, "scripts", "local_db.py"), "--name", "crm_video"], { env: dbEnv, encoding: "utf8" });
-  const dbUrl = out.trim().split(/\r?\n/).pop()!;
+
   const procs: ChildProcess[] = [];
-  const stop = () => { for (const p of procs.reverse()) { try { p.kill(); } catch { /* gone */ } } };
+  let stopped = false;
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    for (const p of procs.reverse()) { try { p.kill(); } catch { /* gone */ } }
+    if (opts.db === "docker") removeVideoDb();
+  };
+  // also on Ctrl+C or a crash: the exit handler runs synchronously, so the container never outlives the run
+  process.once("exit", stop);
+  for (const sig of ["SIGINT", "SIGTERM"] as const) process.once(sig, () => process.exit(130));
+
   try {
+    console.log(`==> Fresh database crm_video (migrations + DEMO seed; ${opts.db === "docker" ? `${VIDEO_DB.image} container on :${VIDEO_DB.port}` : "embedded PostgreSQL"})`);
+    const dbArgs = [path.join(ROOT, "scripts", "local_db.py"), "--name", "crm_video"];
+    // embedded PostgreSQL lives in .local/ (Python checks TMPDIR first, which Git Bash sets)
+    let dbEnv: NodeJS.ProcessEnv = { ...process.env, TMPDIR: LOCAL, TMP: LOCAL, TEMP: LOCAL };
+    if (opts.db === "docker") {
+      dbArgs.push("--admin-url", await startDockerDb());
+      dbEnv = env;
+    }
+    const out = execFileSync(PY, dbArgs, { env: dbEnv, encoding: "utf8" });
+    const dbUrl = out.trim().split(/\r?\n/).pop()!;
+
     const mailpit = path.join(LOCAL, "mailpit", process.platform === "win32" ? "mailpit.exe" : "mailpit");
     procs.push(spawn(mailpit, ["--smtp", `127.0.0.1:${PORTS.smtp}`, "--listen", `127.0.0.1:${PORTS.mailpit}`], { stdio: "ignore" }));
     await waitFor(`${MAILPIT}/api/v1/info`);
