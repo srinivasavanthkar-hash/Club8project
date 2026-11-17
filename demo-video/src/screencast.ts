@@ -35,6 +35,9 @@ export class Screencast {
   private cdp: CDPSession | null = null;
   private frames: Frame[] = [];
   private frozen = false;
+  /** During a cut: frames are dropped, and the time spent is taken out of the clip (offset). */
+  private skipping = false;
+  private offset = 0;
   private pending: Promise<void>[] = [];
   /** Wall-clock seconds of the first frame: time zero of the clip (captions are measured from it). */
   start = 0;
@@ -69,6 +72,19 @@ export class Screencast {
     await this.page.evaluate(() => { document.body.style.outline = "0 solid transparent"; requestAnimationFrame(() => { document.body.style.outline = ""; }); });
   }
 
+  /** A real cut: wait `ms` while nothing is captured, then continue as if no time had passed (the clip jumps from the
+   * last frame before the cut to the first one after it). Returns the seconds taken out, for the caption clock. */
+  async cut(ms: number): Promise<number> {
+    this.skipping = true;
+    const t = Date.now();
+    await this.page.waitForTimeout(ms);
+    this.skipping = false;
+    const cutS = (Date.now() - t) / 1000;
+    this.offset += cutS;
+    await this.page.evaluate(() => { document.body.style.outline = "0 solid transparent"; requestAnimationFrame(() => { document.body.style.outline = ""; }); });
+    return cutS;
+  }
+
   private async attach(): Promise<void> {
     const vp = this.page.viewportSize()!;
     this.cdp = await this.page.context().newCDPSession(this.page);
@@ -76,10 +92,11 @@ export class Screencast {
     // clip doesn't open with a long still frame.
     const beganAt = Date.now() / 1000;
     this.cdp.on("Page.screencastFrame", (e: { data: string; metadata: { timestamp?: number }; sessionId: number }) => {
-      if (this.frozen) { void this.cdp?.send("Page.screencastFrameAck", { sessionId: e.sessionId }).catch(() => undefined); return; }
+      if (this.frozen || this.skipping) { void this.cdp?.send("Page.screencastFrameAck", { sessionId: e.sessionId }).catch(() => undefined); return; }
       const file = path.join(this.dir, `f${String(this.frames.length).padStart(6, "0")}.jpg`);
-      // arrival time on the same clock as the captions (the frame metadata timestamp runs on a different clock)
-      const t = Math.max(Date.now() / 1000, beganAt);
+      // arrival time on the same clock as the captions (the frame metadata timestamp runs on a different clock),
+      // minus the time taken out by cuts
+      const t = Math.max(Date.now() / 1000, beganAt) - this.offset;
       this.frames.push({ file, t });
       this.pending.push(fs.promises.writeFile(file, Buffer.from(e.data, "base64")));
       void this.cdp?.send("Page.screencastFrameAck", { sessionId: e.sessionId }).catch(() => undefined);
@@ -89,7 +106,7 @@ export class Screencast {
 
   /** Stop capturing and encode the clip (constant 30 fps, near-lossless intermediate). Returns its duration. */
   async end(out: string, opts: { holdLast?: number } = {}): Promise<number> {
-    const stopAt = Date.now() / 1000 + (opts.holdLast ?? 0);
+    const stopAt = Date.now() / 1000 - this.offset + (opts.holdLast ?? 0);
     await this.cdp?.send("Page.stopScreencast").catch(() => undefined);
     await this.cdp?.detach().catch(() => undefined);
     await Promise.all(this.pending);

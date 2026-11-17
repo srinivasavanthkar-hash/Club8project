@@ -16,6 +16,7 @@ npm run record                         # fresh stack, all sections, then assembl
 npm run record -- --no-build           # reuse the previous recording build of the frontend (faster)
 npm run record -- --section 6          # re-record one section only (see below)
 npm run record -- --db embedded        # no Docker: the database in embedded PostgreSQL (see "Database" below)
+npm run record -- --clip all           # the three follow-up clips (see "Follow-up clips" below)
 npm run assemble                       # only re-join the existing clips (out/clips) into the MP4
 ```
 The flags combine, e.g. `npm run record -- --section 6 --no-build --db embedded`.
@@ -66,6 +67,10 @@ Outputs in `demo-video/out/`:
   (3.36+) needs Node 21 or later; this package runs on the Node 20 the frontend uses.
 - Playwright's Chromium: the same Playwright version as the frontend (1.65.1), so one browser download serves both
   (`npx playwright install chromium`).
+- PDFs (receipts, vouchers, notices) are made by the recording API on this machine. WeasyPrint needs the native
+  Pango/GTK libraries; without them (the usual case on Windows) the app falls back to a plain-text PDF with the same
+  details but no logo or layout (`backend/app/correspondence/pdf.py`), and the recordings show that. Docker and Azure
+  have the libraries and produce the branded PDFs. Clip 2's captions therefore speak of company details, not logos.
 
 ## How it works
 
@@ -103,6 +108,48 @@ Captions are the `d.caption("…")` and `s.step("…")` calls in `src/record.ts`
 language. Edit the text, then re-record that section (`--section N`); the SRT and chapters are regenerated from the
 clips' timing. Keep captions to two lines. The title and end cards are `cards/title.html` and `cards/end.html`
 (re-record section 0 or 12 after editing).
+
+## Follow-up clips
+
+Three short clips (`docs/DEMO_CLIPS_PROMPT.md`) answer the questions Club8 is likely to ask after the main video. They use
+the same recorder (overlays, pacing, cards, ffmpeg settings and QC); the clips are defined in `src/clips.ts` and their
+data in `src/seed-clips.ts`.
+
+```bash
+npm run record -- --clip 1             # one clip: 1 reservation rules, 2 money, 3 control and admin
+npm run record -- --clip all           # all three, one after the other
+npm run record -- --clip 2 --dry       # seed and run the clip's scenes at full speed without recording (a check)
+```
+
+Each clip runs on **its own fresh stack and throwaway database** (`--db docker` or `--db embedded` as above), seeded
+through the API, and the database is removed afterwards, also when the run fails. `--no-build` reuses the frontend
+build. Outputs in `demo-video/out/clips/`: `club8-crm-clip<n>-<slug>.mp4` and `.srt`, `chapters-clip<n>.txt`,
+`qc-clip<n>.txt`, and `clips-index.md` (the clips, their lengths and what each answers, ready to paste into a message).
+The clips' section files are in `out/clip<n>/` (the main video's stay in `out/clips/NN.mp4`).
+
+QC per clip: the main video's checks (format, limited range, captions at least 2.5 s, no console errors or error
+toasts, no DEV badge), a length of 2:00–3:15 and under 50 MB, and a numbers check after the scenes: clip 1 Kavya's
+balances after borrowing, rescheduling and declining; clip 2 Rohan's notice amount against his schedule and Meera
+terminated; clips 2 and 3 the activity log's hash chain (verified by the app itself).
+
+**Dates and time-dependent states**
+
+- Clip 1 needs all of Kavya's stays in one membership year, at least 7 working days ahead. Recorded by about
+  22 November it is December of this year, borrowing from next year, as in the storyboard; later in the year the seed
+  moves everything to February of next year and the first scene shows that year's row on the Entitlement tab (the
+  header always shows the current year).
+- Clip 2: Rohan's overdue EMIs come from a purchase date about 4 months back and EMIs from about 45 days back (the API
+  accepts past dates), then the app's own nightly overdue job, run once (`seed_clock.py mark-overdue`).
+- Clip 2: Meera's default notice must be older than 14 days. `seed_clock.py default-notice` issues it through the
+  app's own `issue_default_notice`, with "today" set 20 days back **for that one call only, in that short-lived
+  process**: the API and worker always run on the real clock, and no table is edited by hand. It refuses to run
+  against anything but the recording database `crm_video` (CRM_E2E_TARGET=true, CRM_ENV local or test). Afterwards the
+  seed runs the activity-log integrity check and stops if it fails.
+- Clip 3's KYC reveal hides itself after 30 seconds: the clip shows that with a real cut (`scene.cut`), the app's
+  timer unchanged.
+
+**Change a clip's caption**: the `d.caption("…")` calls in `src/clips.ts`; re-record that clip (`--clip N`). The title
+card's subtitle is the clip title (`cards/title.html?sub=…`); the end card is the main video's.
 
 ## Voice-over later
 
