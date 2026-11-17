@@ -8,7 +8,7 @@ import { chromium } from "playwright";
 import type { ClipMeta } from "./record";
 import { OVERLAY_SCRIPT } from "./overlay";
 import { execFileSync } from "node:child_process";
-import { FFMPEG, FFPROBE, RGB_TO_TV, TV_TAGS, ffmpeg, probeDuration } from "./screencast";
+import { FFMPEG, FFPROBE, PHONE, RGB_TO_TV, TV_TAGS, ffmpeg, probeDuration } from "./screencast";
 import { ROOT } from "./stack";
 
 const OUT = path.join(ROOT, "demo-video", "out");
@@ -23,13 +23,18 @@ const ts = (s: number, sep = ",") => {
 };
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
-/** The caption bar exactly as in the app recordings, rendered to a transparent 1920×1080 PNG (phone clip). */
-async function captionPngs(captions: { text: string }[], dir: string): Promise<string[]> {
+/** The caption bar as in the app recordings, rendered to a transparent 1920×1080 PNG (phone clip). `left`: place the
+ * bar there, vertically centred and left-aligned (beside the phone), instead of the centred lower third. */
+async function captionPngs(captions: { text: string }[], dir: string, left?: number): Promise<string[]> {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   await page.addInitScript(OVERLAY_SCRIPT);
   await page.setContent("<!doctype html><html><head></head><body style='margin:0;background:transparent'></body></html>");
   await page.evaluate(OVERLAY_SCRIPT);
+  if (left !== undefined) {
+    await page.addStyleTag({ content: `#demo-caption{left:${left}px!important;right:auto!important;top:50%!important;bottom:auto!important;` +
+      `transform:translateY(-50%)!important;max-width:${1920 - left - 140}px!important;text-align:left!important}` });
+  }
   const files: string[] = [];
   for (const [i, c] of captions.entries()) {
     await page.evaluate((t) => (window as unknown as { __demoCaption: (t: string, i: boolean) => void }).__demoCaption(t, true), c.text);
@@ -42,14 +47,15 @@ async function captionPngs(captions: { text: string }[], dir: string): Promise<s
   return files;
 }
 
-/** Section 10: the 390×844 phone recording centred on #F7F7FB with a soft shadow, captions drawn full-size. */
+/** The phone section: the PHONE-sized recording on #F7F7FB with a soft shadow, left of centre at 1.46 video pixels per
+ * CSS pixel (readable text), with the captions beside it rather than over its lower half. */
 async function composePhone(meta: ClipMeta): Promise<string> {
   const dir = path.join(OUT, "phone");
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true });
-  const caps = await captionPngs(meta.captions, dir);
+  const H = 972, W = Math.round((PHONE.width / PHONE.height) * H / 2) * 2, X = 380, Y = (1080 - H) / 2;
+  const caps = await captionPngs(meta.captions, dir, X + W + 100);
   const D = meta.duration;
-  const H = 820, W = Math.round((390 / 844) * H / 2) * 2, X = (1920 - W) / 2, Y = 50;
   const inputs = ["-f", "lavfi", "-i", `color=c=0xF7F7FB:s=1920x1080:r=30:d=${D.toFixed(3)}`, "-i", meta.file];
   caps.forEach((f) => inputs.push("-loop", "1", "-t", D.toFixed(3), "-i", f));
   // RGB sources (background colour, caption PNGs) go to limited-range BT.709 like the clips, so colours match
@@ -69,7 +75,7 @@ async function composePhone(meta: ClipMeta): Promise<string> {
     graph.push(`[${last}][c${i}]overlay=0:0:enable='between(t,${s.toFixed(2)},${e.toFixed(2)})'[o${i}]`);
     last = `o${i}`;
   });
-  const out = path.join(CLIPS, "10-composed.mp4");
+  const out = path.join(CLIPS, `${String(meta.id).padStart(2, "0")}-composed.mp4`);
   graph.push(`[${last}]format=yuv420p,setparams=range=tv:colorspace=bt709:color_primaries=bt709:color_trc=bt709[pout]`);
   ffmpeg([...inputs, "-filter_complex", graph.join(";"), "-map", "[pout]", "-t", D.toFixed(3), "-r", "30", "-c:v", "libx264", "-preset", "medium", "-crf", "14", ...TV_TAGS, out]);
   return out;

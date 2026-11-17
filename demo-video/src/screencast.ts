@@ -114,3 +114,7 @@ export class Screencast {
     return probeDuration(out);
   }
 }
+
+/** The phone clip's viewport in CSS pixels. iPhone SE height (not 844), so the phone fits the 1080p frame at 1.46
+ * video pixels per CSS pixel, 1.5× the earlier size, and its text is readable. */
+export const PHONE = { width: 390, height: 667 };

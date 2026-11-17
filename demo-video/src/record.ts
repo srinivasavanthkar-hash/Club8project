@@ -13,7 +13,7 @@ import * as OTPAuth from "otpauth";
 import { type Browser, type BrowserContext, type Cookie, type Page, chromium, request } from "playwright";
 import { assemble } from "./assemble";
 import { type CaptionEvent, Director, NAME_SHIM, OVERLAY_SCRIPT, PACE, TOUCH_SCRIPT } from "./overlay";
-import { Screencast } from "./screencast";
+import { PHONE, Screencast } from "./screencast";
 import { BASE, MAILPIT, ROOT, startStack } from "./stack";
 
 export const OUT = path.join(ROOT, "demo-video", "out");
@@ -173,10 +173,10 @@ class Scene {
 /** Runs a section; `scene.begin()` (called by the section once its first screen is settled) starts the recording. */
 async function runSection(c: Ctx, sec: Section): Promise<ClipMeta | null> {
   const phone = !!sec.phone;
-  const vp = phone ? { width: 390, height: 844 } : { width: 1920, height: 1080 };
+  const vp = phone ? PHONE : { width: 1920, height: 1080 };
   // The screencast captures the browser window (not the emulated viewport): the phone clip gets its own window,
   // at device pixel ratio 2 so the phone screen stays sharp when it is placed on the 1080p background.
-  const phoneBrowser = phone ? await chromium.launch(browserOptions(["--window-size=390,844", "--force-device-scale-factor=2"])) : null;
+  const phoneBrowser = phone ? await chromium.launch(browserOptions([`--window-size=${PHONE.width},${PHONE.height}`, "--force-device-scale-factor=2"])) : null;
   const context = await (phoneBrowser ?? c.browser).newContext({
     viewport: vp,
     deviceScaleFactor: phone ? 2 : 1,
@@ -522,9 +522,19 @@ const SECTIONS: Section[] = [
       });
       await api.dispose();
 
-      await s.signInAs("demo.reservations", { announce: false, path: `/reservations/${res.id}` });
+      // open on the member's reservations list, so it is clear this is a second stay and not the Goa stay just booked
+      await s.signInAs("demo.reservations", { announce: false, path: `${s.shared.memberUrl}?tab=reservations` });
+      const second = page.getByRole("row").filter({ has: page.locator(`a[href="/reservations/${res.id}"]`) });
+      await second.waitFor();
       await s.begin();
-      await d.caption("The member emails to cancel a confirmed stay.");
+      const month = new Intl.DateTimeFormat("en-IN", { month: "long", timeZone: "UTC" }).format(new Date(`${ci}T00:00:00Z`));
+      await d.caption(`A second stay, 2 nights, already confirmed for ${month}.`);
+      await d.star(second, 3200);
+      await d.click(second.getByRole("link", { name: /^R-/ }));
+      await page.waitForURL(new RegExp(`/reservations/${res.id}$`));
+      await page.getByLabel("Member's written request", { exact: true }).waitFor();
+      await d.settle();
+      await d.caption("The member emails to cancel this second stay.");
       await d.select(page.getByLabel("Decline / cancel reason", { exact: true }), "Member request");
       await d.type(page.getByLabel("Explanation", { exact: true }), "Member can only make the first trip");
       const today = istToday().split("-").reverse().join("-");
@@ -601,11 +611,16 @@ const SECTIONS: Section[] = [
       await d.click(page.getByRole("button", { name: "Sign in" }));
       await page.getByRole("heading", { name: "Dashboard" }).waitFor();
       await d.settle();
-      await d.caption("The activity log records every sign-in, view of sensitive data and change.");
       await d.click(page.getByRole("link", { name: "Activity log" }));
+      // only caption the log once its rows are on screen: no loading skeleton, and a non-zero entry count
+      await page.getByRole("table", { name: "User activity log" }).getByRole("row").nth(1).waitFor();
+      await page.locator('[aria-busy="true"]').first().waitFor({ state: "detached" });
+      await page.getByRole("navigation", { name: "Pagination" }).getByText(/^[1-9][\d,]* entries$/).waitFor();
       await d.settle();
-      await d.pause(1800);
+      await d.caption("The activity log records every sign-in, view of sensitive data and change.");
+      await d.pause(2800); // hold on the populated table
       await d.caption("Verify integrity proves the log has not been altered.");
+      await d.pause(900);
       await d.click(page.getByRole("button", { name: "Verify integrity" }));
       await page.getByText(/Hash chain intact/).waitFor();
       await d.star(page.getByText(/Hash chain intact/), 3800);
