@@ -1,0 +1,5 @@
+# Files that run inside Linux containers or under bash keep LF endings, even on a Windows checkout with
+# core.autocrlf=true (a CRLF shell script fails with "pipefail\r: invalid option name").
+*.sh        text eol=lf
+*.sql       text eol=lf
+Dockerfile  text eol=lf

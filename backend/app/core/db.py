@@ -2,6 +2,8 @@
 
 import uuid
 from collections.abc import AsyncIterator, Callable, Coroutine
+from contextlib import asynccontextmanager
+from contextvars import ContextVar
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Annotated, Any
@@ -12,6 +14,7 @@ from sqlalchemy import DateTime, ForeignKey, Integer, MetaData, Numeric, String,
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
+from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
@@ -106,9 +109,33 @@ def set_engine(engine: AsyncEngine) -> None:
 
 
 def sessionmaker() -> async_sessionmaker[AsyncSession]:
+    job = _job_sessionmaker.get()
+    if job is not None:
+        return job
     get_engine()
     assert _sessionmaker is not None
     return _sessionmaker
+
+
+# Background jobs: each runs in its own event loop (asyncio.run in a Dramatiq worker thread). asyncpg connections
+# belong to the loop that opened them, so a pool shared across jobs hands one job another loop's connection
+# ("attached to a different loop", "Event loop is closed"). A job gets its own engine instead, without a pool, closed
+# when the job ends; sessionmaker() returns it for everything the job calls (contextvars are per thread and per loop).
+_job_sessionmaker: ContextVar[async_sessionmaker[AsyncSession] | None] = ContextVar(
+    "crm_job_sessionmaker", default=None
+)
+
+
+@asynccontextmanager
+async def job_engine() -> AsyncIterator[AsyncEngine]:
+    """An engine for one background job, on the same database as the app engine; disposed when the job ends."""
+    engine = create_async_engine(get_engine().url, poolclass=NullPool)
+    token = _job_sessionmaker.set(async_sessionmaker(engine, expire_on_commit=False, autoflush=True))
+    try:
+        yield engine
+    finally:
+        _job_sessionmaker.reset(token)
+        await engine.dispose()
 
 
 async def get_session(request: Request) -> AsyncIterator[AsyncSession]:

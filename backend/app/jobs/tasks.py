@@ -22,7 +22,7 @@ from sqlalchemy import select
 from app.audit.service import install_session_hooks
 from app.core.config import get_settings
 from app.core.context import RequestContext, set_context
-from app.core.db import sessionmaker
+from app.core.db import job_engine, sessionmaker
 from app.core.timeutil import today_ist
 from app.email.dispatch import install as install_email_dispatch
 
@@ -33,8 +33,14 @@ install_email_dispatch()  # emails queued by jobs are sent after their commit
 
 
 def _run(coro_fn: Callable[[], Coroutine[Any, Any, Any]]) -> Any:
+    """Runs one job in a fresh event loop with its own database engine (app.core.db.job_engine)."""
     set_context(RequestContext(username="system:worker"))
-    return asyncio.run(coro_fn())
+
+    async def job() -> Any:
+        async with job_engine():
+            return await coro_fn()
+
+    return asyncio.run(job())
 
 
 async def _mark_overdue() -> int:

@@ -4,6 +4,7 @@
  *   npm run record                     full run: fresh crm_video stack, all sections, assemble the MP4
  *   npm run record -- --section 6      re-record one section (earlier sections replay unrecorded to recreate data)
  *   npm run record -- --no-build       reuse the previous recording frontend build
+ *   npm run record -- --db embedded    database in embedded PostgreSQL instead of a Docker container (no Docker)
  *   npm run assemble                   only re-assemble out/clips into the MP4 (e.g. after editing nothing)
  */
 import fs from "node:fs";
@@ -14,7 +15,7 @@ import { type Browser, type BrowserContext, type Cookie, type Page, chromium, re
 import { assemble } from "./assemble";
 import { type CaptionEvent, Director, NAME_SHIM, OVERLAY_SCRIPT, PACE, TOUCH_SCRIPT } from "./overlay";
 import { PHONE, Screencast } from "./screencast";
-import { BASE, MAILPIT, ROOT, startStack } from "./stack";
+import { BASE, DB_MODES, type DbMode, MAILPIT, ROOT, startStack } from "./stack";
 
 export const OUT = path.join(ROOT, "demo-video", "out");
 export const CLIPS = path.join(OUT, "clips");
@@ -709,8 +710,10 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const only = args.includes("--section") ? Number(args[args.indexOf("--section") + 1]) : null;
   if (args.includes("--assemble-only")) { await assemble(); return; }
+  const db = (args.includes("--db") ? args[args.indexOf("--db") + 1] : "docker") as DbMode;
+  if (!DB_MODES.includes(db)) throw new Error(`--db must be one of: ${DB_MODES.join(", ")}`);
   fs.mkdirSync(CLIPS, { recursive: true });
-  const stack = await startStack({ build: !args.includes("--no-build") });
+  const stack = await startStack({ build: !args.includes("--no-build"), db });
   const browser = await chromium.launch(browserOptions(["--window-size=1920,1080"]));
   try {
     const shared: Shared = {};

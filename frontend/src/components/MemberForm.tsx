@@ -103,6 +103,8 @@ export const memberFormSchema = z
   });
 
 export type MemberFormValues = z.infer<typeof memberFormSchema>;
+/** What the fields hold before validation (zod 4 types coerced numbers as `unknown` on input). */
+type MemberFormInput = z.input<typeof memberFormSchema>;
 
 export function toPayload(v: MemberFormValues, sourceLeadId?: string) {
   const [ey, em] = (v.emi_start ?? "").split("-");
@@ -227,7 +229,7 @@ export function MemberForm({
   const summaryRef = useRef<HTMLDivElement>(null);
   const year = Number(todayIso().slice(0, 4));
 
-  const form = useForm<MemberFormValues>({
+  const form = useForm<MemberFormInput, unknown, MemberFormValues>({
     resolver: zodResolver(memberFormSchema),
     mode: "onTouched",
     defaultValues: {

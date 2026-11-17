@@ -1,6 +1,5 @@
 import contextlib
 import os
-import tempfile
 import uuid
 from collections.abc import AsyncIterator, Iterator
 from typing import Any
@@ -12,6 +11,18 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 pytestmark = pytest.mark.integration
+
+
+def _load_local_db() -> Any:
+    """scripts/local_db.py, which owns the embedded-server folders (crm_local's and the scratch one)."""
+    import importlib.util
+
+    path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "scripts", "local_db.py")
+    spec = importlib.util.spec_from_file_location("crm_local_db", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _admin_url() -> Iterator[str]:
@@ -31,7 +42,10 @@ def _admin_url() -> Iterator[str]:
         import pgserver
     except ImportError:
         pytest.skip("No PostgreSQL available (set CRM_TEST_DATABASE_URL, run Docker, or pip install pgserver)")
-    d = os.path.join(tempfile.gettempdir(), "club8-crm-pgserver")
+    # the scratch embedded server, never crm_local's (scripts/local_db.py owns both folders)
+    local_db = _load_local_db()
+    d = local_db.scratch_dir()
+    local_db.refuse_crm_local_dir(d, "integration tests")
     srv = pgserver.get_server(d, cleanup_mode=None)
     yield srv.get_uri().replace("postgresql://", "postgresql+asyncpg://")
 

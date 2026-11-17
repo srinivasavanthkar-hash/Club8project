@@ -1,6 +1,6 @@
 # Club8 CRM demo video
 
-A 5–6 minute screen recording of the real CRM for the Club8 owners: one new member from street lead to confirmed
+A 5:00–6:30 screen recording of the real CRM for the Club8 owners: one new member from street lead to confirmed
 holiday, plus the audit trail and password features. The brief is `docs/DEMO_VIDEO_PROMPT.md`; the story follows
 `docs/DEMO_SCRIPT.md` and the walkthrough.
 
@@ -15,8 +15,29 @@ npm ci                                 # once
 npm run record                         # fresh stack, all sections, then assembles the MP4 (about 15 minutes)
 npm run record -- --no-build           # reuse the previous recording build of the frontend (faster)
 npm run record -- --section 6          # re-record one section only (see below)
+npm run record -- --db embedded        # no Docker: the database in embedded PostgreSQL (see "Database" below)
 npm run assemble                       # only re-join the existing clips (out/clips) into the MP4
 ```
+The flags combine, e.g. `npm run record -- --section 6 --no-build --db embedded`.
+
+### Database
+
+The recording always starts from a fresh `crm_video` database, in one of two places:
+
+| `--db` | Where | Needs |
+|---|---|---|
+| `docker` (default) | a throwaway `postgres:16-alpine` container, `club8-crm-video-db`, on `127.0.0.1:5433`. Its data is on tmpfs (no volume), so nothing survives the run | Docker running |
+| `embedded` | the scratch embedded PostgreSQL 16 (pgserver) in `.local/club8-crm-pgserver-scratch`, shared with the e2e runner and tests; only the `crm_video` database is replaced. Never `crm_local`'s server: `scripts/local_db.py` refuses its folder for any other database | nothing extra (for machines without Docker) |
+
+With Docker, the run waits for the container's health check (`pg_isready` over TCP, polled every second, up to two
+minutes) instead of a fixed timeout, and removes the container at the end: also when a section fails, the run
+is interrupted with Ctrl+C, or the script crashes. A container left by a run that was killed outright (e.g. the
+terminal closed) is removed at the start of the next run. To remove one by hand: `docker rm -f club8-crm-video-db`.
+
+The scratch embedded server stays running between runs. If it was not shut down cleanly (computer restarted
+mid-run), its next start runs crash recovery, which can take longer than pgserver's 10-second start timeout: the
+run then fails with "Timeout starting server". Wait a minute and run again, or use `--db docker`. It holds only
+throwaway databases, so deleting `.local/club8-crm-pgserver-scratch` (with the server stopped) is always safe.
 
 Outputs in `demo-video/out/`:
 
@@ -40,13 +61,17 @@ Outputs in `demo-video/out/`:
     `checksums.sha256` and GitHub's asset digest. Unzip so that
     `.local/ffmpeg/ffmpeg-n8.1.3-27-g8dca1586f4-win64-gpl-8.1/bin/ffmpeg.exe` exists.
 - **Mailpit** in `.local/mailpit/` (v1.32.0, see the main README), for the forgot-password email in section 10.
-- **Azurite** comes with this package (`npm ci`), the same version as docker-compose (3.33.0).
-- Playwright's Chromium (already installed for the frontend's tests: `npx playwright install chromium`).
+- **Docker** (Docker Desktop) for the default database; or `--db embedded` with `pgserver` in `.venv`.
+- **Azurite** comes with this package (`npm ci`), the same version as docker-compose (3.33.0). Newer Azurite
+  (3.36+) needs Node 21 or later; this package runs on the Node 20 the frontend uses.
+- Playwright's Chromium: the same Playwright version as the frontend (1.65.1), so one browser download serves both
+  (`npx playwright install chromium`).
 
 ## How it works
 
-- **Recording stack** (`src/stack.ts`): a fresh database `crm_video` (migrations, DEMO seed and the Section 14
-  scenario so the dashboard has content), its own API on :8002, a separately built frontend on :3002
+- **Recording stack** (`src/stack.ts`): a fresh database `crm_video` (in Docker or embedded, see "Database";
+  `scripts/local_db.py` runs the migrations and DEMO seed, then the Section 14
+  scenario runs so the dashboard has content), its own API on :8002, a separately built frontend on :3002
   (`frontend/.next-video`), Mailpit on :8027 and Azurite on :10000 for documents. The developers' `crm_local` is
   never touched. Everything is stopped at the end. The frontend runs **without `CRM_ENV`**, so the DEV badge is not
   shown, exactly as in production; the app itself is unchanged.

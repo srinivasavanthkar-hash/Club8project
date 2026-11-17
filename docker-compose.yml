@@ -8,7 +8,9 @@ services:
       POSTGRES_USER: crm_owner
       POSTGRES_PASSWORD: crm_owner_dev
       POSTGRES_DB: crm
-    ports: ["5432:5432"]
+    # Host port, for tools on the host only (the services use postgres:5432 inside the network). Set
+    # CRM_PG_HOST_PORT in a git-ignored .env next to this file when 5432 is taken (e.g. a system PostgreSQL).
+    ports: ["${CRM_PG_HOST_PORT:-5432}:5432"]
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./infra/local/init-roles.sql:/docker-entrypoint-initdb.d/01-roles.sql:ro
@@ -23,7 +25,9 @@ services:
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:3.33.0
-    command: azurite-blob --blobHost 0.0.0.0 --loose
+    # --skipApiVersionCheck: the Azure SDK in the image requests a newer blob API version than this Azurite knows
+    # (uploads fail with a 500 otherwise); the demo-video recorder starts Azurite the same way. Real Azure is unaffected.
+    command: azurite-blob --blobHost 0.0.0.0 --loose --skipApiVersionCheck
     ports: ["10000:10000"]
 
   # Local / CI mail catcher: every email the CRM sends appears at http://localhost:8025 (nothing leaves the machine)
@@ -82,6 +86,8 @@ services:
     build: ./backend
     command: ["dramatiq", "app.jobs.tasks", "--processes", "1", "--threads", "2"]
     environment: *backend-env
+    # the image's HEALTHCHECK polls the API on :8000, which this container does not run
+    healthcheck: {disable: true}
     depends_on:
       migrate: {condition: service_completed_successfully}
       mailpit: {condition: service_started}
@@ -90,6 +96,7 @@ services:
     build: ./backend
     command: ["python", "-m", "app.jobs.scheduler"]
     environment: *backend-env
+    healthcheck: {disable: true}  # as for the worker: no API in this container
     depends_on: [worker]
 
   web:

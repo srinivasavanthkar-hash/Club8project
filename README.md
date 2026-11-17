@@ -29,11 +29,16 @@ bash scripts/seed-demo.sh                   # migrate + DEMO master data/users +
 # demo.admin also asks for a 2FA code: add the FICTITIOUS demo key DEMOADMINTWOFACTORKEY234 to an authenticator app
 ```
 `docker compose --profile scan up -d clamav` and `CRM_VIRUS_SCAN_PROVIDER=clamav` enable local virus scanning.
+If port 5432 is already taken (e.g. by a system PostgreSQL), put `CRM_PG_HOST_PORT=5434` in a `.env` file next to
+`docker-compose.yml` (git-ignored); only tools on the host use that port, the services talk to `postgres:5432` inside.
 
 ## Run locally without Docker (Windows/macOS/Linux)
 ```bash
 python -m venv .venv && .venv/Scripts/pip install -e "backend[dev]" pgserver   # (bin/ on macOS/Linux)
-python scripts/local_db.py --name crm_local        # embedded PostgreSQL 16, migrate, seed DEMO data; prints the URL
+python scripts/local_db.py --name crm_local        # embedded PostgreSQL 16: DROPS and re-creates crm_local (DEMO data); prints the URL
+python scripts/local_db.py --name crm_local --no-reset   # later: just start its server and print the URL (keeps your data)
+# crm_local has its own server folder (.local/club8-crm-pgserver), started only by the two commands above. Every other
+# database (e2e, demo video, test fallback) uses the scratch server in .local/club8-crm-pgserver-scratch.
 cd backend && CRM_DATABASE_URL=<printed url> CRM_BLOB_PROVIDER=memory CRM_VIRUS_SCAN_PROVIDER=none \
   CRM_COOKIE_SECURE=false uvicorn app.main:app --port 8000
 cd frontend && npm ci && npm run build && npm start   # http://localhost:3000, proxies /api/v1 to :8000
