@@ -29,6 +29,8 @@ bash scripts/seed-demo.sh                   # migrate + DEMO master data/users +
 # demo.admin also asks for a 2FA code: add the FICTITIOUS demo key DEMOADMINTWOFACTORKEY234 to an authenticator app
 ```
 `docker compose --profile scan up -d clamav` and `CRM_VIRUS_SCAN_PROVIDER=clamav` enable local virus scanning.
+If port 5432 is already taken (e.g. by a system PostgreSQL), put `CRM_PG_HOST_PORT=5434` in a `.env` file next to
+`docker-compose.yml` (git-ignored); only tools on the host use that port, the services talk to `postgres:5432` inside.
 
 ## Run locally without Docker (Windows/macOS/Linux)
 ```bash

@@ -18,7 +18,8 @@ COPY --from=deps /usr/local/bin /usr/local/bin
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
-RUN useradd --uid 10001 --no-create-home crm && chown -R crm /app
+# A home directory: gunicorn's control socket and fontconfig's cache (WeasyPrint PDFs) are written there
+RUN useradd --uid 10001 --create-home crm && chown -R crm /app
 USER 10001
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/healthz')"
