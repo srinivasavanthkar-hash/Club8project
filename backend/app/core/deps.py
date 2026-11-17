@@ -21,7 +21,11 @@ CSRF_COOKIE = "crm_csrf"
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-async def current_user(request: Request, session: SessionDep) -> User:
+async def authenticated_user(request: Request, session: SessionDep) -> User:
+    """A valid session, even if the account still has to change its password or enrol 2FA.
+
+    Only the account-setup routes (/auth/me, /auth/logout, /auth/change-password, /auth/totp/*) use this directly;
+    everything else goes through `current_user`."""
     token = request.cookies.get(ACCESS_COOKIE)
     if not token:
         auth = request.headers.get("authorization", "")
@@ -35,8 +39,25 @@ async def current_user(request: Request, session: SessionDep) -> User:
     user = (await session.execute(select(User).where(User.id == data["sub"]))).scalar_one_or_none()
     if user is None or not user.is_active:
         raise Unauthorized("User inactive", code="UserInactive")
+    # Token version: a password change/reset, "sign out everywhere" or 2FA reset increments users.token_version,
+    # which ends every outstanding access token at once. The row is loaded anyway, so this costs no extra query.
+    if data.get("tv", 0) != user.token_version:
+        raise Unauthorized("Your session has ended. Sign in again.", code="SessionRevoked")
     with_user(user.id, user.username)
     request.state.user = user
+    request.state.mfa = bool(data.get("mfa"))  # this session passed two-step verification
+    return user
+
+
+AccountUser = Annotated[User, Depends(authenticated_user)]
+
+
+async def current_user(user: AccountUser) -> User:
+    """A signed-in user who may use the app: nothing else is reachable until a forced change is done."""
+    if user.must_change_password:
+        raise Forbidden("Change your password to continue.", code="PasswordChangeRequired")
+    if user.must_enroll_totp:
+        raise Forbidden("Set up two-step verification to continue.", code="TotpEnrolmentRequired")
     return user
 
 

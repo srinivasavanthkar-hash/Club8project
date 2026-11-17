@@ -24,6 +24,10 @@ from app.core.security import hash_password
 from app.seed import seed_reference
 
 DEMO_PASSWORD = os.environ.get("CRM_DEMO_PASSWORD", "Demo-Passw0rd!")
+# demo.admin signs in with two-step verification. FICTITIOUS authenticator key (base32), for demos and tests only:
+# add it to any authenticator app ("Enter a set-up key") to get the codes. Never used outside DEMO data.
+DEMO_ADMIN_TOTP_SECRET = os.environ.get("CRM_DEMO_TOTP_SECRET", "DEMOADMINTWOFACTORKEY234")
+DEMO_TOTP_USERS = {"demo.admin": DEMO_ADMIN_TOTP_SECRET}
 DEMO_USERS = [
     ("demo.admin", "Demo Admin", ["ADMIN"]),
     ("demo.manager", "Demo Manager", ["MANAGEMENT"]),
@@ -59,6 +63,9 @@ async def seed_demo(session: AsyncSession) -> None:
         receipt_prefix="RC8",
         registered_address="DEMO ADDRESS - Bengaluru, Karnataka",
         next_membership_seq=9001,
+        logo_path="club8/club8-logo.png",
+        primary_colour="#393186",
+        accent_colour="#EF7F1B",
     )
     await _get_or_add(
         session,
@@ -66,12 +73,17 @@ async def seed_demo(session: AsyncSession) -> None:
         "code",
         "K8",
         name="K8",
-        legal_name="Multiple Sales and Marketing LLP",
+        # K8's legal entity and address are not confirmed (docs/OPEN_QUESTIONS.md); never assume the Club8 LLP.
+        legal_name="Klub Eight Asia Ventures",
         brand="K8",
         membership_prefix="MSMK8",
         receipt_prefix="RK8",
-        registered_address="DEMO ADDRESS - Bengaluru, Karnataka",
+        registered_address="DEMO ADDRESS - pending confirmation",
         next_membership_seq=5001,
+        logo_path="k8/k8-logo.png",
+        primary_colour="#172040",
+        accent_colour="#BC9C23",
+        details_pending_confirmation=True,
     )
     await _get_or_add(
         session,
@@ -178,9 +190,17 @@ async def seed_demo(session: AsyncSession) -> None:
                     full_name=name,
                     password_hash=hash_password(DEMO_PASSWORD),
                     roles=[roles[c] for c in rcodes],
-                    email=f"{username}@example.com",
+                    email=f"{username}@example.test",  # FICTITIOUS (reserved .test domain); shown in Mailpit
                 )
             )
+    await session.flush()
+    from app.auth.service import _fernet
+
+    for username, secret in DEMO_TOTP_USERS.items():
+        u = (await session.execute(select(User).where(User.username == username))).scalar_one()
+        if not u.totp_enabled:
+            u.totp_secret_enc = _fernet().encrypt(secret.encode()).decode()
+            u.totp_enabled = True
     await session.flush()
 
 

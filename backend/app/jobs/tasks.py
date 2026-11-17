@@ -5,6 +5,7 @@ Scheduled by app.jobs.scheduler (APScheduler, one leader) in the worker containe
   * expire_saved_nights       - daily 01:00 IST (only produces entries on/after 1 Jan)
   * expire_memberships        - daily 01:30 IST (ACTIVE -> EXPIRED after last year of use)
   * refresh_scan_results      - every 2 minutes (Defender malware verdicts from blob index tags)
+  * expire_account_recovery   - every 15 minutes (unused temporary passwords, ADMIN reset requests)
 """
 
 from __future__ import annotations
@@ -23,10 +24,12 @@ from app.core.config import get_settings
 from app.core.context import RequestContext, set_context
 from app.core.db import sessionmaker
 from app.core.timeutil import today_ist
+from app.email.dispatch import install as install_email_dispatch
 
 log = logging.getLogger("crm.jobs")
 dramatiq.set_broker(RedisBroker(url=get_settings().redis_url))  # type: ignore[no-untyped-call]
 install_session_hooks()
+install_email_dispatch()  # emails queued by jobs are sent after their commit
 
 
 def _run(coro_fn: Callable[[], Coroutine[Any, Any, Any]]) -> Any:
@@ -112,3 +115,27 @@ def expire_saved_nights() -> None:
 @dramatiq.actor(max_retries=3, time_limit=600_000)
 def expire_memberships() -> None:
     log.info("memberships expired: %s", _run(_expire_memberships))
+
+
+@dramatiq.actor(max_retries=5, min_backoff=10_000, time_limit=120_000)
+def send_email(job: dict[str, Any]) -> None:
+    """Deliver one email queued after a commit (app/email/dispatch.py). Raises on failure so Dramatiq retries."""
+    from app.email.dispatch import deliver
+
+    _run(lambda: deliver(job, attempts=1, raise_on_failure=True))
+
+
+async def _expire_account_recovery() -> tuple[int, int]:
+    from app.auth.recovery import expire_reset_requests, expire_temporary_passwords
+
+    async with sessionmaker()() as s:
+        temps = await expire_temporary_passwords(s)
+        requests = await expire_reset_requests(s)
+        await s.commit()
+    return temps, requests
+
+
+@dramatiq.actor(max_retries=3, time_limit=300_000)
+def expire_account_recovery() -> None:
+    temps, requests = _run(_expire_account_recovery)
+    log.info("temporary passwords expired: %s; admin reset requests expired: %s", temps, requests)

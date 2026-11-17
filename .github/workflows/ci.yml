@@ -49,7 +49,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
-      - run: npm run lint
+      - run: npm run lint # ESLint + design-token check (no hard-coded colours / font sizes)
+      - run: npm run check:contrast # WCAG AA contrast of the design tokens
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
@@ -61,23 +62,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Start the full stack (docker compose)
-        run: docker compose up -d --build --wait postgres redis azurite && docker compose up -d --build api web worker
+        run: docker compose up -d --build --wait postgres redis azurite mailpit && docker compose up -d --build api web worker
+        env: { CRM_E2E_TARGET: "true" } # throwaway stack: the data-writing specs may run
       - name: Seed demo master data + users (fictitious)
         run: bash scripts/seed-demo.sh --no-scenario
       - name: Section 14 demo scenario through the API
         run: docker compose run --rm api python -m app.demo_cli --base-url http://web:3000
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
-      - name: Playwright (Section 14 demo through the UI)
+      - name: Playwright (Section 14 demo, axe-core a11y scan, visual regression)
         working-directory: frontend
         run: |
           npm ci
           npx playwright install --with-deps chromium
           npx playwright test
-        env: { E2E_BASE_URL: "http://localhost:3000", CI: "1" }
+        env: { E2E_BASE_URL: "http://localhost:3000", MAILPIT_URL: "http://localhost:8025", CI: "1" }
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: playwright-report, path: frontend/playwright-report }
+      - uses: actions/upload-artifact@v4 # Linux visual baselines written on first run: commit them to lock the look
+        if: always()
+        with: { name: visual-baselines-linux, path: frontend/e2e/visual.spec.ts-snapshots/*-linux.png }
       - name: Stack logs on failure
         if: failure()
         run: docker compose logs --no-color api web | tail -500

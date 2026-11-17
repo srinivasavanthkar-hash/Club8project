@@ -32,17 +32,6 @@ def burn_password_check(password: str) -> None:
     verify_password(password, _DUMMY_HASH)
 
 
-def password_policy_problems(password: str) -> list[str]:
-    out = []
-    if len(password) < 12:
-        out.append("at least 12 characters")
-    if password.lower() == password or password.upper() == password:
-        out.append("mixed case")
-    if not any(c.isdigit() for c in password):
-        out.append("a digit")
-    return out
-
-
 def create_token(user_id: uuid.UUID, kind: str, ttl: timedelta, extra: dict[str, Any] | None = None) -> tuple[str, str]:
     s = get_settings()
     jti = secrets.token_hex(16)

@@ -25,6 +25,14 @@ settings). The defaults below are seed values only.
 | `documents.max_upload_mb` | 15 | Upload size limit |
 | `documents.allowed_types` | PDF, JPEG, PNG | Allowed content types (checked by magic bytes) |
 | `kyc.aadhaar_full_storage` | `false` | Store the full Aadhaar number (off until legal basis is confirmed) |
+| `password.min_length` | 12 | Minimum password length (no composition rules) |
+| `password.max_length` | 128 | Maximum password length |
+| `password.history_count` | 5 | Previous passwords that cannot be reused (besides the current one) |
+| `password.forbidden_words` | `["club8","k8"]` | Words a password may not contain (besides the username and name) |
+| `password.breach_check` | `true` | Reject passwords found in breach data (HIBP range API, offline list fallback) |
+| `password.temp_expiry_hours` | 24 | Lifetime of an unused system-generated temporary password |
+| `password.admin_reset_approval_hours` | 24 | Window for a second admin to approve the reset of an ADMIN's password |
+| `security.require_2fa_roles` | `[]` | Roles that must use two-step verification (enrol at next sign-in). Recommended: `["ADMIN","MANAGEMENT","FINANCE"]` |
 
 ## Members (Section 5)
 | Rule | Implementation | Config | Tests |

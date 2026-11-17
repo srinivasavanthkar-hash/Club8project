@@ -43,6 +43,8 @@ PERMISSIONS: dict[str, str] = {
     "auditlog.verify": "Verify activity log integrity",
     "export.run": "Run exports",
     "admin.users": "Manage users",
+    "user.reset_password": "Reset another user's password (system-generated temporary password)",
+    "user.reset_2fa": "Reset another user's two-step verification",
     "admin.roles": "Manage roles and permissions",
     "admin.masterdata": "Manage master data",
     "admin.rates": "Manage rate tables (ASF, tax, matrix, tiers)",
@@ -64,7 +66,8 @@ _VIEW = {
 
 ROLE_DEFAULTS: dict[str, tuple[str, set[str]]] = {
     "ADMIN": ("Administrator", _ALL),
-    "MANAGEMENT": ("Management", _ALL - {"admin.users"}),
+    # Account-recovery permissions are seeded for ADMIN only (docs/PASSWORD_PROMPT.md Section 3).
+    "MANAGEMENT": ("Management", _ALL - {"admin.users", "user.reset_password", "user.reset_2fa"}),
     "MARKETING": (
         "Marketing",
         {"lead.view", "lead.create", "lead.update", "lead.status.change", "lead.duplicate_override"},

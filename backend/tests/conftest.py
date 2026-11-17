@@ -14,6 +14,17 @@ os.environ.setdefault("CRM_VIRUS_SCAN_PROVIDER", "none")
 os.environ.setdefault("CRM_COOKIE_SECURE", "false")
 os.environ.setdefault("CRM_RATE_LIMIT_LOGIN", "10000/minute")
 os.environ.setdefault("CRM_RATE_LIMIT_DEFAULT", "100000/minute")
+os.environ.setdefault("CRM_RATE_LIMIT_LOGIN_ACCOUNT", "10000/minute")
+os.environ.setdefault("CRM_RATE_LIMIT_CHANGE_PASSWORD", "10000/minute")
+os.environ.setdefault("CRM_RATE_LIMIT_CHANGE_PASSWORD_IP", "10000/minute")
+os.environ.setdefault("CRM_RATE_LIMIT_FORGOT_IP", "10000/minute")
+os.environ.setdefault("CRM_RATE_LIMIT_RESET_IP", "10000/minute")
+# Never call the live breached-password API from tests: the offline list answers (tests that cover the API mock it).
+os.environ.setdefault("CRM_PASSWORD_BREACH_API_ENABLED", "false")
+# Emails are kept in app.email.sender.OUTBOX and sent in-process after commit.
+os.environ.setdefault("CRM_EMAIL_PROVIDER", "memory")
+os.environ.setdefault("CRM_EMAIL_DISPATCH", "inline")
+os.environ.setdefault("CRM_APP_BASE_URL", "https://crm.club8.example")
 
 from hypothesis import HealthCheck, settings
 

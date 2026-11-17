@@ -9,6 +9,7 @@ coverage.xml
 htmlcov/
 node_modules/
 .next/
+.next-e2e/
 frontend/test-results/
 frontend/playwright-report/
 *.tsbuildinfo
@@ -19,3 +20,10 @@ infra/terraform/**/.terraform/
 infra/terraform/**/*.tfstate*
 infra/terraform/**/*.tfvars
 !infra/terraform/**/example.tfvars
+*.log
+
+# embedded PostgreSQL for local runs without Docker
+.local/
+
+# Claude Code local scheduler lock
+.claude/scheduled_tasks.lock

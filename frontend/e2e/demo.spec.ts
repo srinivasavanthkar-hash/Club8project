@@ -3,6 +3,7 @@
  * Pre-requisite: demo master data + users (scripts/seed-demo.sh --no-scenario).
  */
 import { expect, type Page, test } from "@playwright/test";
+import { requireIsolatedStack } from "./support/stack";
 
 const PASSWORD = process.env.CRM_DEMO_PASSWORD ?? "Demo-Passw0rd!";
 const tag = Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -27,6 +28,8 @@ function stay(): [string, string, string, string] {
 }
 
 /** Fails with the visible validation / server messages instead of a bare timeout. */
+test.beforeAll(requireIsolatedStack); // creates leads, members and payments: never against the demo database
+
 async function expectNavigated(page: Page, heading: RegExp) {
   try {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible({ timeout: 10_000 });
@@ -203,6 +206,8 @@ test("Section 14 demo: lead → member → finance → reservation → correspon
   await page.getByLabel("Comments", { exact: true }).fill("Prefers sea-facing rooms");
   await page.getByLabel("Reason for change (recorded in history)", { exact: true }).fill("Welcome call");
   await page.getByRole("button", { name: "Save" }).click();
+  // wait for the save to land (edit mode closes) before navigating, so the PATCH is not aborted mid-flight
+  await expect(page.getByRole("button", { name: "Edit" })).toBeVisible();
   await page.goto(`${memberUrl}?tab=history`);
   const trail = page.getByRole("region").filter({ hasText: "Activity trail" }).or(page.locator("section", { hasText: "Activity trail" }));
   for (const action of ["LEAD_CONVERTED", "MEMBER_APPROVED", "PAYMENT", "SCHEDULE_GENERATED", "ASF_RAISED", "ENTITLEMENT_DEDUCTED", "UPLOAD"]) {

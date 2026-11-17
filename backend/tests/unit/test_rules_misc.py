@@ -288,6 +288,7 @@ def test_every_api_route_commits_before_responding():
             else:
                 yield r
 
-    api_routes = [r for r in walk(app.routes) if isinstance(r, APIRoute) and r.path not in ("/healthz", "/readyz")]
+    no_db = ("/healthz", "/readyz", "/api/v1/meta")  # no database session
+    api_routes = [r for r in walk(app.routes) if isinstance(r, APIRoute) and r.path not in no_db]
     assert api_routes
     assert [r.path for r in api_routes if not isinstance(r, TransactionalRoute)] == []

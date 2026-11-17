@@ -23,7 +23,10 @@ export const handlers = [
   http.get("*/api/v1/admin/master/:slug", ({ params }) => HttpResponse.json(master[String(params.slug)] ?? [])),
   http.get("*/api/v1/admin/staff", () => HttpResponse.json([{ id: "u1", username: "demo.sales", full_name: "Demo Sales", roles: ["SALES"] }])),
   http.get("*/api/v1/auth/me", () =>
-    HttpResponse.json({ id: "u1", username: "demo.sales", full_name: "Demo Sales", roles: ["SALES"], permissions: ["member.view"], totp_enabled: false }),
+    HttpResponse.json({
+      id: "u1", username: "demo.sales", full_name: "Demo Sales", roles: ["SALES"], permissions: ["member.view"], totp_enabled: false,
+      must_change_password: false, must_enroll_totp: false, password_is_temporary: false, temp_password_expires_at: null, password_changed_at: null,
+    }),
   ),
 ];
 

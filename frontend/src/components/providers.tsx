@@ -1,6 +1,10 @@
 "use client";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { RefreshCw } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
+import { ToastProvider } from "@/components/crm/Toast";
+import { Alert, Button } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { MasterRow, Me } from "@/lib/types";
 
@@ -17,7 +21,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }),
   );
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={client}>
+      <ToastProvider>{children}</ToastProvider>
+    </QueryClientProvider>
+  );
 }
 
 export function useMe() {
@@ -46,20 +54,38 @@ export function useStaff() {
   });
 }
 
+/** Plain-language API error. 409 version conflicts get a reload action; duplicates list the matches with links.
+ * Never shows stack traces: only the RFC 7807 detail, field errors and business-rule blockers. */
 export function ErrorText({ error }: { error: unknown }) {
   if (!error) return null;
   const e = error as ApiError;
   const p = e.problem;
+  if (e instanceof ApiError && e.status === 409 && p?.code !== "ProbableDuplicate" && !p?.blockers?.length) {
+    return (
+      <Alert
+        kind="error"
+        title="Someone else updated this record"
+        action={<Button size="sm" variant="outline" onClick={() => window.location.reload()}><RefreshCw aria-hidden />Reload</Button>}
+      >
+        <p>Reload to see their changes, then make your edit again.</p>
+      </Alert>
+    );
+  }
   return (
-    <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-      <p className="font-medium">{p?.detail ?? e.message}</p>
-      {p?.errors?.map((x, i) => (
-        <p key={i}>• {x.loc.slice(1).join(".")}: {x.msg}</p>
-      ))}
-      {p?.blockers?.map((b, i) => <p key={i}>• {b}</p>)}
-      {p?.matches?.map((m) => (
-        <p key={m.ref}>• Possible duplicate {m.kind.toLowerCase()} {m.ref} (matched on {m.reasons.join(", ")})</p>
-      ))}
-    </div>
+    <Alert kind="error" title={p?.detail ?? (e instanceof ApiError ? e.message : "Something went wrong. Please try again.")}>
+      {(p?.errors?.length || p?.blockers?.length || p?.matches?.length) ? (
+        <ul className="mt-1 list-disc space-y-0.5 pl-4">
+          {p?.errors?.map((x, i) => <li key={i}>{x.loc.slice(1).join(".")}: {x.msg}</li>)}
+          {p?.blockers?.map((b, i) => <li key={i}>{b}</li>)}
+          {p?.matches?.map((m) => (
+            <li key={m.ref}>
+              Possible duplicate {m.kind.toLowerCase()}{" "}
+              <Link className="font-medium text-primary underline" href={`/${m.kind.toLowerCase().startsWith("lead") ? "leads" : "members"}?q=${encodeURIComponent(m.ref)}`}>{m.ref}</Link>{" "}
+              (matched on {m.reasons.join(", ")})
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </Alert>
   );
 }

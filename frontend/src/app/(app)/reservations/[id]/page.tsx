@@ -1,13 +1,20 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { BadgeCheck, CalendarRange, Calculator, ExternalLink, FileDown, Receipt, Users } from "lucide-react";
 import Link from "next/link";
 import { use, useState } from "react";
+import { CategoryChip, Chip, Money, Mono, PageHeader, SeasonChip } from "@/components/crm/Display";
+import { ConfirmDialog, ErrorState, PageSkeleton } from "@/components/crm/States";
+import { StatusStepper } from "@/components/crm/Stepper";
+import { StatusBadge } from "@/components/crm/StatusBadge";
+import { useToast } from "@/components/crm/Toast";
 import { DocLink } from "@/components/member/DocLink";
 import { ErrorText, useCan, useMaster } from "@/components/providers";
-import { Alert, Badge, Button, Card, Field, Input, KeyValue, Select } from "@/components/ui";
+import { Alert, Button, buttonClasses, Card, Field, Input, Select } from "@/components/ui";
 import { api } from "@/lib/api";
-import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
+import { formatDate, formatDateTime, formatNights, humanize } from "@/lib/format";
 import type { Reservation } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 type Detail = {
   reservation: Reservation;
@@ -22,17 +29,21 @@ function creditedBack(data: unknown): string | null {
   return typeof credited === "string" ? credited : null;
 }
 
+const PATH = ["REQUESTED", "APPROVED", "CONFIRMED"];
+
 export default function ReservationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const qc = useQueryClient();
   const can = useCan();
+  const toast = useToast();
   const reasons = useMaster("reasons");
-  const { data } = useQuery({ queryKey: ["reservation", id], queryFn: () => api.get<Detail>(`/reservations/${id}`) });
+  const { data, error, refetch } = useQuery({ queryKey: ["reservation", id], queryFn: () => api.get<Detail>(`/reservations/${id}`) });
   const [conf, setConf] = useState("");
   const [override, setOverride] = useState("");
   const [reasonId, setReasonId] = useState("");
   const [reasonText, setReasonText] = useState("");
   const [commRef, setCommRef] = useState("");
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const [rs, setRs] = useState({ check_in: "", check_out: "", reason: "", override_reason: "" });
   const refresh = () => qc.invalidateQueries();
   const change = useMutation({
@@ -40,93 +51,194 @@ export default function ReservationPage({ params }: { params: Promise<{ id: stri
       to_status: to, confirmation_number: conf || null, override_reason: override || null,
       reason_id: reasonId || null, reason_text: reasonText || null, communication_ref: commRef || null,
     }),
-    onSuccess: refresh,
+    onSuccess: (_d, to) => { setConfirmCancel(false); refresh(); toast.success(`Reservation ${humanize(to).toLowerCase()}`); },
   });
-  const reschedule = useMutation({ mutationFn: () => api.post(`/reservations/${id}/reschedule`, { ...rs, override_reason: rs.override_reason || null }), onSuccess: refresh });
+  const reschedule = useMutation({ mutationFn: () => api.post(`/reservations/${id}/reschedule`, { ...rs, override_reason: rs.override_reason || null }), onSuccess: () => { refresh(); toast.success("Reservation rescheduled"); } });
   const voucher = useMutation({ mutationFn: () => api.post<{ id: string }>(`/reservations/${id}/voucher`), onSuccess: refresh });
-  if (!data) return <p>Loading…</p>;
+  if (error) return <ErrorState message="This reservation could not be loaded." onRetry={() => refetch()} />;
+  if (!data) return <PageSkeleton variant="record" />;
   const r = data.reservation;
   const canChange = can("reservation.status.change");
   const kind = (k: string) => reasons.data?.filter((x) => x.kind === k) ?? [];
+  const asfBlocked = data.unpaid_asf_years.length > 0;
+  const closed = ["DECLINED", "CANCELLED"].includes(r.status);
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold">Reservation {r.reservation_number}</h1><Badge>{r.status}</Badge>
-        <Link className="underline" href={`/members/${r.member_id}?tab=reservations`}>Open member</Link>
-      </div>
-      <Card title="Stay">
-        <KeyValue items={[
-          ["Check-in", formatDate(r.check_in)], ["Check-out", formatDate(r.check_out)], ["Nights", r.nights],
-          ["Entitlement nights deducted", r.entitlement_nights], ["Additional paid nights", r.additional_paid_nights],
-          ["Season / category", `${r.season_code} / ${r.resort_category_code}`], ["Guests", `${r.adults} adult(s), ${r.child_ages.length} child(ren)`],
-          ["Occupancy", r.occupancy_type], ["Confirmation no.", r.confirmation_number], ["Reschedules", r.reschedule_count],
-          ["Entitlement movement", data.deduction ? `${data.deduction.state}: ${data.deduction.plan.lines.map((l) => `${l.nights} from ${l.year} (${l.kind})`).join(", ")}` : "—"],
-        ]} />
-        <p className="mt-2 text-xs text-muted-foreground">{r.deduction_explanation}</p>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title={<>Reservation <Mono>{r.reservation_number}</Mono></>}
+        docTitle={`Reservation ${r.reservation_number}`}
+        meta={<StatusBadge status={r.status} />}
+        actions={<Link className={buttonClasses({ variant: "outline" })} href={`/members/${r.member_id}?tab=reservations`}><ExternalLink aria-hidden />Open member</Link>}
+      />
+
+      <Card>
+        <StatusStepper path={PATH} current={r.status} offPath={["DECLINED", "CANCELLED", "RESCHEDULED"]} label="Reservation status" />
       </Card>
-      <Card title="ASF for this booking">
-        {data.unpaid_asf_years.length > 0 && <Alert kind="warning">ASF unpaid for {data.unpaid_asf_years.join(", ")}. Confirmation is blocked until it is paid (agreement: non-payment of ASF results in non-confirmation).</Alert>}
-        <ul className="text-sm">{data.asf_charges.map((c) => <li key={c.id}>{c.membership_year}: {formatMoney(c.total, c.currency)} incl. GST <Badge>{c.status}</Badge></li>)}</ul>
-        {data.payments.length > 0 && <p className="mt-2 text-sm">Linked payments: {data.payments.map((p) => `${p.receipt_number} (${p.type} ${formatMoney(p.total, p.currency)})`).join(", ")}</p>}
-      </Card>
-      {canChange && !["DECLINED", "CANCELLED"].includes(r.status) && (
-        <Card title="Actions">
-          <div className="grid gap-3 md:grid-cols-3">
-            {["REQUESTED", "RESCHEDULED"].includes(r.status) && <Button onClick={() => change.mutate("APPROVED")}>Approve (deduct entitlement)</Button>}
-            {["APPROVED", "RESCHEDULED"].includes(r.status) && (
-              <div className="flex flex-col gap-2">
-                <Field label="Property confirmation number" htmlFor="cn"><Input id="cn" value={conf} onChange={(e) => setConf(e.target.value)} /></Field>
-                {can("reservation.override") && <Field label="Override reason (only to bypass ASF gate)" htmlFor="ov"><Input id="ov" value={override} onChange={(e) => setOverride(e.target.value)} /></Field>}
-                <Button onClick={() => change.mutate("CONFIRMED")}>Confirm</Button>
+
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="flex flex-col gap-5 lg:col-span-2">
+          <Card title="Stay">
+            <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <div className="flex items-center gap-3">
+                <CalendarRange aria-hidden className="size-5 text-fg-subtle" />
+                <div>
+                  <p className={cn("text-lg font-semibold tabular-nums", r.status === "CANCELLED" && "text-fg-subtle line-through")}>{formatDate(r.check_in)} → {formatDate(r.check_out)}</p>
+                  <p className="text-sm text-fg-muted">{r.nights} {r.nights === 1 ? "night" : "nights"}</p>
+                </div>
               </div>
-            )}
-            <div className="flex flex-col gap-2">
-              <Field label="Decline / cancel reason" htmlFor="rr">
-                <Select id="rr" value={reasonId} onChange={(e) => setReasonId(e.target.value)}>
-                  <option value="">Select…</option>
-                  <optgroup label="Decline">{kind("DECLINE").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>
-                  <optgroup label="Cancel">{kind("CANCEL").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>
-                </Select>
-              </Field>
-              <Field label="Explanation" htmlFor="rt"><Input id="rt" value={reasonText} onChange={(e) => setReasonText(e.target.value)} /></Field>
-              {r.status === "CONFIRMED" && <Field label="Member's written request (email:<id> or document:<id>)" htmlFor="cr"><Input id="cr" value={commRef} onChange={(e) => setCommRef(e.target.value)} /></Field>}
-              <div className="flex gap-2">
-                {r.status !== "CONFIRMED" && <Button variant="outline" onClick={() => change.mutate("DECLINED")}>Decline</Button>}
-                <Button variant="destructive" onClick={() => change.mutate("CANCELLED")}>Cancel</Button>
+              <div className="flex items-center gap-3">
+                <Users aria-hidden className="size-5 text-fg-subtle" />
+                <p className="text-base">{r.adults} adult(s), {r.child_ages.length} child(ren)</p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <SeasonChip code={r.season_code} />
+                <CategoryChip code={r.resort_category_code} />
+                <Chip>{humanize(r.occupancy_type)}</Chip>
               </div>
             </div>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-border pt-4 sm:grid-cols-4">
+              {([
+                ["Confirmation no.", r.confirmation_number ? <Mono key="c">{r.confirmation_number}</Mono> : "—"],
+                ["Additional paid nights", formatNights(r.additional_paid_nights)],
+                ["Reschedules", r.reschedule_count],
+                ["Season / category", `${r.season_code} / ${r.resort_category_code}`],
+              ] as [string, React.ReactNode][]).map(([k, v]) => (
+                <div key={k}><dt className="text-xs font-medium text-fg-subtle">{k}</dt><dd className="text-base">{v}</dd></div>
+              ))}
+            </dl>
+          </Card>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <section aria-label="Entitlement calculation" className="rounded-lg border border-primary/25 bg-primary-subtle/40 p-4 sm:p-5">
+              <h2 className="mb-2 flex items-center gap-2 text-md font-semibold"><Calculator aria-hidden className="size-4 text-primary" />Entitlement</h2>
+              <p className="flex items-baseline gap-2"><span className="text-3xl font-semibold tabular-nums text-primary">{formatNights(r.entitlement_nights)}</span><span className="text-base text-fg-muted">nights deducted</span></p>
+              <p className="mt-2 rounded-md bg-surface px-3 py-2 font-mono text-sm text-fg-muted">{r.deduction_explanation}</p>
+              {data.deduction ? (
+                <div className="mt-3">
+                  <p className="mb-1 flex items-center gap-2 text-sm text-fg-muted">Entitlement movement <StatusBadge status={data.deduction.state} size="sm" /></p>
+                  <ul className="flex flex-col gap-1">
+                    {data.deduction.plan.lines.map((l, i) => (
+                      <li key={i} className="flex justify-between text-base"><span className="tabular-nums">{l.year} <span className="text-fg-subtle">({humanize(l.kind).toLowerCase()})</span></span><span className="font-medium tabular-nums">{formatNights(l.nights)}</span></li>
+                    ))}
+                  </ul>
+                </div>
+              ) : <p className="mt-3 text-sm text-fg-subtle">Nights are deducted when the reservation is approved.</p>}
+            </section>
+
+            <section aria-label="ASF for this booking" className={cn("rounded-lg border p-4 sm:p-5", asfBlocked ? "border-warning/40 bg-warning-subtle/50" : "border-border bg-surface")}>
+              <h2 className="mb-2 flex items-center gap-2 text-md font-semibold"><Receipt aria-hidden className="size-4 text-fg-subtle" />ASF for this booking</h2>
+              {data.asf_charges.length === 0 ? <p className="text-base text-fg-muted">No ASF raised by this booking.</p> : (
+                <ul className="flex flex-col gap-1.5">{data.asf_charges.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-2 text-base">
+                    <span className="tabular-nums">{c.membership_year}</span>
+                    <span className="flex items-center gap-2"><Money value={c.total} currency={c.currency} /> <span className="text-xs text-fg-subtle">incl. GST</span> <StatusBadge status={c.status} size="sm" /></span>
+                  </li>
+                ))}</ul>
+              )}
+              {asfBlocked && <Alert kind="warning" className="mt-3">ASF unpaid for {data.unpaid_asf_years.join(", ")}. Confirmation is blocked until it is paid (agreement: non-payment of ASF results in non-confirmation).</Alert>}
+              {data.payments.length > 0 && (
+                <p className="mt-3 text-sm text-fg-muted">Linked payments: {data.payments.map((p) => <span key={p.id} className="mr-2 inline-block"><Mono>{p.receipt_number}</Mono> ({humanize(p.type)} <Money value={p.total} currency={p.currency} />)</span>)}</p>
+              )}
+            </section>
           </div>
-          <ErrorText error={change.error} />
-          {creditedBack(change.data) !== null && <Alert kind="info">Nights credited back: {creditedBack(change.data)}</Alert>}
-        </Card>
-      )}
-      {can("reservation.update") && ["REQUESTED", "APPROVED", "CONFIRMED", "RESCHEDULED"].includes(r.status) && (
-        <Card title="Reschedule (original dates are kept)">
-          <div className="grid gap-3 md:grid-cols-4">
-            <Field label="New check-in" htmlFor="nci"><Input id="nci" type="date" value={rs.check_in} onChange={(e) => setRs({ ...rs, check_in: e.target.value })} /></Field>
-            <Field label="New check-out" htmlFor="nco"><Input id="nco" type="date" value={rs.check_out} onChange={(e) => setRs({ ...rs, check_out: e.target.value })} /></Field>
-            <Field label="Reason" htmlFor="nr"><Input id="nr" value={rs.reason} onChange={(e) => setRs({ ...rs, reason: e.target.value })} /></Field>
-            {r.reschedule_count >= 2 && <Field label="Override reason (3rd+ reschedule)" htmlFor="no"><Input id="no" value={rs.override_reason} onChange={(e) => setRs({ ...rs, override_reason: e.target.value })} /></Field>}
-          </div>
-          <Button className="mt-2" variant="outline" onClick={() => reschedule.mutate()}>Reschedule</Button>
-          <ErrorText error={reschedule.error} />
-        </Card>
-      )}
-      {r.status === "CONFIRMED" && can("letter.generate") && (
-        <Card title="Voucher">
-          <Button variant="outline" onClick={() => voucher.mutate()}>Generate confirmation / voucher PDF</Button>
-          {voucher.data && <span className="ml-2"><DocLink id={voucher.data.id} label="Open voucher" /></span>}
-          <ErrorText error={voucher.error} />
-        </Card>
-      )}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card title="Date history">
-          <ol className="text-sm">{r.date_versions.map((v) => <li key={v.version_no}>v{v.version_no}: {formatDate(v.check_in)} → {formatDate(v.check_out)} ({v.entitlement_nights} nights) {v.reason ? `· ${v.reason}` : ""}</li>)}</ol>
-        </Card>
-        <Card title="Status history">
-          <ol className="text-sm">{r.status_history.map((h, i) => <li key={i}>{formatDateTime(h.changed_at)} · {h.from_status ?? "—"} → {h.to_status}{h.override ? " (override)" : ""}{h.reason_text ? ` · ${h.reason_text}` : ""}</li>)}</ol>
-        </Card>
+
+          {can("reservation.update") && ["REQUESTED", "APPROVED", "CONFIRMED", "RESCHEDULED"].includes(r.status) && (
+            <Card title="Reschedule" description="The original dates are kept in the date history.">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Field label="New check-in" htmlFor="nci"><Input id="nci" type="date" value={rs.check_in} onChange={(e) => setRs({ ...rs, check_in: e.target.value })} /></Field>
+                <Field label="New check-out" htmlFor="nco"><Input id="nco" type="date" value={rs.check_out} onChange={(e) => setRs({ ...rs, check_out: e.target.value })} /></Field>
+                <Field label="Reason" htmlFor="nr"><Input id="nr" value={rs.reason} onChange={(e) => setRs({ ...rs, reason: e.target.value })} /></Field>
+                {r.reschedule_count >= 2 && <Field label="Override reason (3rd+ reschedule)" htmlFor="no"><Input id="no" value={rs.override_reason} onChange={(e) => setRs({ ...rs, override_reason: e.target.value })} /></Field>}
+              </div>
+              <Button className="mt-4" variant="outline" onClick={() => reschedule.mutate()} disabled={reschedule.isPending}>Reschedule</Button>
+              <div className="mt-2"><ErrorText error={reschedule.error} /></div>
+            </Card>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-5">
+          {canChange && !closed && (
+            <Card title="Actions">
+              <div className="flex flex-col gap-4">
+                {["REQUESTED", "RESCHEDULED"].includes(r.status) && (
+                  <Button onClick={() => change.mutate("APPROVED")} disabled={change.isPending}><BadgeCheck aria-hidden />Approve (deduct entitlement)</Button>
+                )}
+                {["APPROVED", "RESCHEDULED"].includes(r.status) && (
+                  <div className="flex flex-col gap-3 rounded-md border border-border p-3">
+                    <Field label="Property confirmation number" htmlFor="cn"><Input id="cn" className="font-mono" value={conf} onChange={(e) => setConf(e.target.value)} /></Field>
+                    {can("reservation.override") && <Field label="Override reason (only to bypass ASF gate)" htmlFor="ov"><Input id="ov" value={override} onChange={(e) => setOverride(e.target.value)} /></Field>}
+                    {asfBlocked && (
+                      <p id="confirm-blocked" className="flex gap-2 text-sm text-warning">
+                        <Receipt aria-hidden className="mt-0.5 size-4 shrink-0" />
+                        Blocked: ASF {data.unpaid_asf_years.join(", ")} unpaid. Record the ASF payment first{can("reservation.override") ? ", or give an override reason" : ""}.
+                      </p>
+                    )}
+                    <Button onClick={() => change.mutate("CONFIRMED")} disabled={change.isPending} aria-describedby={asfBlocked ? "confirm-blocked" : undefined}>Confirm</Button>
+                  </div>
+                )}
+                <div className="flex flex-col gap-3 rounded-md border border-border p-3">
+                  <Field label="Decline / cancel reason" htmlFor="rr">
+                    <Select id="rr" value={reasonId} onChange={(e) => setReasonId(e.target.value)}>
+                      <option value="">Select…</option>
+                      <optgroup label="Decline">{kind("DECLINE").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>
+                      <optgroup label="Cancel">{kind("CANCEL").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>
+                    </Select>
+                  </Field>
+                  <Field label="Explanation" htmlFor="rt"><Input id="rt" value={reasonText} onChange={(e) => setReasonText(e.target.value)} /></Field>
+                  {r.status === "CONFIRMED" && <Field label="Member's written request (email:<id> or document:<id>)" htmlFor="cr"><Input id="cr" className="font-mono" value={commRef} onChange={(e) => setCommRef(e.target.value)} /></Field>}
+                  <div className="flex flex-wrap gap-2">
+                    {r.status !== "CONFIRMED" && <Button variant="outline" onClick={() => change.mutate("DECLINED")} disabled={change.isPending}>Decline</Button>}
+                    <Button variant="destructive-outline" onClick={() => setConfirmCancel(true)}>Cancel reservation…</Button>
+                  </div>
+                </div>
+                <ErrorText error={change.error} />
+                {creditedBack(change.data) !== null && <Alert kind="info">Nights credited back: {creditedBack(change.data)}</Alert>}
+              </div>
+            </Card>
+          )}
+          {r.status === "CONFIRMED" && can("letter.generate") && (
+            <Card title="Voucher">
+              <Button variant="outline" onClick={() => voucher.mutate()} disabled={voucher.isPending}><FileDown aria-hidden />Generate confirmation / voucher PDF</Button>
+              {voucher.data && <div className="mt-2"><DocLink id={voucher.data.id} label="Open voucher" /></div>}
+              <ErrorText error={voucher.error} />
+            </Card>
+          )}
+          <Card title="Date history">
+            <ol className="flex flex-col gap-2">{r.date_versions.map((v) => (
+              <li key={v.version_no} className="text-base">
+                <span className="mr-2 rounded-sm bg-surface-sunken px-1.5 text-xs font-medium text-fg-muted">v{v.version_no}</span>
+                <span className="tabular-nums">{formatDate(v.check_in)} → {formatDate(v.check_out)}</span> <span className="text-fg-muted">({formatNights(v.entitlement_nights)} nights)</span>
+                {v.reason && <span className="block pl-8 text-sm text-fg-subtle">{v.reason}</span>}
+              </li>
+            ))}</ol>
+          </Card>
+          <Card title="Status history">
+            <ol className="flex flex-col gap-2">{r.status_history.map((h, i) => (
+              <li key={i} className="text-base">
+                <span className="block text-xs tabular-nums text-fg-subtle">{formatDateTime(h.changed_at)}</span>
+                {h.from_status ? humanize(h.from_status) : "—"} → <span className="font-medium">{humanize(h.to_status)}</span>
+                {h.override && <span className="ml-1 rounded-sm bg-warning-subtle px-1 text-xs font-medium text-warning">override</span>}
+                {h.reason_text && <span className="block text-sm text-fg-muted">{h.reason_text}</span>}
+              </li>
+            ))}</ol>
+          </Card>
+        </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmCancel}
+        onClose={() => setConfirmCancel(false)}
+        title="Cancel this reservation?"
+        description={<>Reservation <Mono>{r.reservation_number}</Mono> will be cancelled using the reason and explanation entered in Actions. Nights are credited back according to the cancellation tiers.</>}
+        reasonLabel={null}
+        confirmLabel="Cancel reservation"
+        pending={change.isPending}
+        onConfirm={() => change.mutate("CANCELLED")}
+      >
+        {!reasonId && <Alert kind="warning">No cancellation reason selected yet.</Alert>}
+        <ErrorText error={change.error} />
+      </ConfirmDialog>
     </div>
   );
 }

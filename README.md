@@ -15,7 +15,9 @@ correspondence and documents, and a tamper-evident activity log.
 [Plan](docs/PLAN.md) · [Architecture](docs/ARCHITECTURE.md) · [Data model](docs/DATA_MODEL.md) ·
 [Form mapping](docs/FORM_MAPPING.md) · [Business rules](docs/BUSINESS_RULES.md) · [Decisions](docs/DECISIONS.md) ·
 [Open questions](docs/OPEN_QUESTIONS.md) · [Backup & restore runbook](docs/BACKUP_RESTORE_RUNBOOK.md) ·
-[User guide](docs/USER_GUIDE.md) · [Demo script](docs/DEMO_SCRIPT.md) · [OpenAPI](docs/openapi.json)
+[User guide](docs/USER_GUIDE.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Client walkthrough](docs/demo-tour/index.html) · [OpenAPI](docs/openapi.json) ·
+[Design system](docs/DESIGN_SYSTEM.md) · [Design decisions](docs/DESIGN_DECISIONS.md) · [UI audit](docs/ui-audit/AUDIT.md) ·
+[Brand prompt](docs/BRAND_PROMPT.md)
 (live at `/api/v1/docs` outside prod)
 
 ## Run locally with Docker
@@ -24,6 +26,7 @@ docker compose up -d --build                # postgres, redis, azurite, api, wor
 bash scripts/seed-demo.sh                   # migrate + DEMO master data/users + run the Section 14 demo scenario
 # open http://localhost:3000 — users demo.admin / demo.manager / demo.sales / demo.finance /
 # demo.reservations / demo.service / demo.marketing, password Demo-Passw0rd!
+# demo.admin also asks for a 2FA code: add the FICTITIOUS demo key DEMOADMINTWOFACTORKEY234 to an authenticator app
 ```
 `docker compose --profile scan up -d clamav` and `CRM_VIRUS_SCAN_PROVIDER=clamav` enable local virus scanning.
 
@@ -34,6 +37,9 @@ python scripts/local_db.py --name crm_local        # embedded PostgreSQL 16, mig
 cd backend && CRM_DATABASE_URL=<printed url> CRM_BLOB_PROVIDER=memory CRM_VIRUS_SCAN_PROVIDER=none \
   CRM_COOKIE_SECURE=false uvicorn app.main:app --port 8000
 cd frontend && npm ci && npm run build && npm start   # http://localhost:3000, proxies /api/v1 to :8000
+# Emails (password reset, notices): Mailpit catches them. Docker: the `mailpit` service (http://localhost:8025).
+# Without Docker: unzip mailpit-windows-amd64.zip (github.com/axllent/mailpit, v1.32.0) into .local/mailpit/ and run
+#   .local/mailpit/mailpit.exe --smtp 127.0.0.1:1025 --listen 127.0.0.1:8025   (the API's default SMTP is :1025)
 ```
 
 ## Tests
@@ -42,8 +48,11 @@ cd backend
 ruff check app tests alembic && mypy app
 pytest --cov=app                 # unit + integration (real PostgreSQL via testcontainers, or pgserver, or CRM_TEST_DATABASE_URL)
 cd ../frontend
-npm run lint && npm run typecheck && npm test
-npx playwright test              # needs the full stack running (E2E_BASE_URL, default http://127.0.0.1:3000)
+npm run lint && npm run typecheck && npm test   # lint includes the design-token check
+npm run check:contrast           # WCAG AA contrast of the colour tokens
+cd .. && python scripts/run_e2e.py   # Playwright on a THROWAWAY stack (fresh crm_e2e database, :8001/:3001):
+                                     # Section 14 demo, passwords, axe a11y, visual regression. Specs that write data
+                                     # refuse to run against any stack that isn't flagged CRM_E2E_TARGET (the demo).
 ```
 Status at hand-over: 110 backend tests passing (65 unit/property tests + 45 integration tests on PostgreSQL 16,
 including the full Section 14 demo); 90% coverage on the service + domain layer (CI gate: 80%); ruff and mypy clean;

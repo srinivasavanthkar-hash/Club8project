@@ -23,6 +23,7 @@ locals {
     "jwt-signing-key"  = "jwt-signing-key"
     "redis-url"        = "redis-url"
     "appinsights-conn" = "appinsights-conn"
+    "acs-endpoint"     = "acs-endpoint"
   }
   backend_env = {
     CRM_ENV                 = var.env
@@ -33,12 +34,22 @@ locals {
     CRM_KEYVAULT_URL        = azurerm_key_vault.kv.vault_uri
     CRM_OTEL_ENABLED        = "true"
     AZURE_CLIENT_ID         = azurerm_user_assigned_identity.app.client_id
+    # Breached-password check: outbound HTTPS to api.pwnedpasswords.com (k-anonymity range API; only the first
+    # 5 hex characters of a SHA-1 hash leave the app). Falls back to a bundled list if unreachable.
+    CRM_PASSWORD_BREACH_API_URL = "https://api.pwnedpasswords.com/range/"
+    CRM_SUPER_ADMIN_USERNAME    = var.super_admin_username
+    # Email: ACS via managed identity, sent by the worker with retries; links built from the public address only
+    CRM_EMAIL_PROVIDER = "acs"
+    CRM_EMAIL_DISPATCH = "worker"
+    CRM_EMAIL_FROM     = local.email_from
+    CRM_APP_BASE_URL   = local.app_base_url
   }
   backend_secret_env = {
     CRM_DATABASE_URL                          = "database-url"
     CRM_JWT_SIGNING_KEY                       = "jwt-signing-key"
     CRM_REDIS_URL                             = "redis-url"
     CRM_APPLICATIONINSIGHTS_CONNECTION_STRING = "appinsights-conn"
+    CRM_ACS_ENDPOINT                          = "acs-endpoint"
   }
 }
 
@@ -167,6 +178,10 @@ resource "azurerm_container_app" "web" {
       image  = local.image_web
       cpu    = 0.5
       memory = "1Gi"
+      env {
+        name  = "CRM_ENV" # environment ribbon (DEV / STAGING); nothing is shown in prod
+        value = var.env
+      }
       liveness_probe {
         transport = "HTTP"
         port      = 3000

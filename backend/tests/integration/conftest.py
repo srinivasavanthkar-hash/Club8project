@@ -90,11 +90,18 @@ class Api:
     def __init__(self, client: httpx.AsyncClient) -> None:
         self.c = client
 
-    async def login(self, username: str, password: str | None = None) -> dict[str, Any]:
-        from app.seed_demo import DEMO_PASSWORD
+    async def login(self, username: str, password: str | None = None, totp_secret: str | None = None) -> dict[str, Any]:
+        """Signs in; completes the 2FA step for demo users that have it (demo.admin) or with `totp_secret`."""
+        import pyotp
+
+        from app.seed_demo import DEMO_PASSWORD, DEMO_TOTP_USERS
 
         self.c.cookies.clear()
-        r = await self.c.post("/api/v1/auth/login", json={"username": username, "password": password or DEMO_PASSWORD})
+        body: dict[str, Any] = {"username": username, "password": password or DEMO_PASSWORD}
+        r = await self.c.post("/api/v1/auth/login", json=body)
+        secret = totp_secret or DEMO_TOTP_USERS.get(username)
+        if r.status_code == 401 and r.json().get("code") == "TotpRequired" and secret:
+            r = await self.c.post("/api/v1/auth/login", json={**body, "totp_code": pyotp.TOTP(secret).now()})
         assert r.status_code == 200, r.text
         return r.json()
 

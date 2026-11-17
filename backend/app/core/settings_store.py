@@ -29,6 +29,23 @@ DEFAULTS: dict[str, Any] = {
     "documents.max_upload_mb": 15,
     "documents.allowed_types": ["application/pdf", "image/jpeg", "image/png"],
     "kyc.aadhaar_full_storage": False,
+    # Password policy (docs/PASSWORD_PROMPT.md Section 5, NIST SP 800-63B): length and screening, no composition
+    # rules, no periodic expiry.
+    "password.min_length": 12,
+    "password.max_length": 128,
+    "password.history_count": 5,
+    "password.forbidden_words": ["club8", "k8"],
+    "password.breach_check": True,
+    "password.temp_expiry_hours": 24,
+    "password.admin_reset_approval_hours": 24,
+    # Roles that must use two-step verification; users in them enrol at their next sign-in. Off by default
+    # (OPEN_QUESTIONS 30); recommended: ["ADMIN", "MANAGEMENT", "FINANCE"].
+    "security.require_2fa_roles": [],
+    # Self-service reset (Section 2)
+    "password.reset_token_minutes": 30,
+    "password.forgot_per_account_per_hour": 3,
+    "password.forgot_per_ip_per_hour": 10,
+    "password.captcha_after_per_ip_per_hour": 3,
 }
 
 

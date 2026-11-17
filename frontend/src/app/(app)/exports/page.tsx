@@ -1,7 +1,10 @@
 "use client";
+import { Download, FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
-import { Card, Field, Input, Select } from "@/components/ui";
+import { PageHeader } from "@/components/crm/Display";
+import { buttonClasses, Card, Field, Input, Select } from "@/components/ui";
 import { qs } from "@/lib/api";
+import { humanize } from "@/lib/format";
 
 const EXPORTS = [
   { id: "leads", label: "Leads", filters: ["status", "date_from", "date_to"] },
@@ -16,23 +19,27 @@ export default function ExportsPage() {
   const [fmt, setFmt] = useState("xlsx");
   const [f, setF] = useState<Record<string, string>>({});
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold">Exports</h1>
-      <p className="text-sm text-muted-foreground">Every export is recorded in the activity log with its filters.</p>
-      <Field label="Format" htmlFor="xf" className="max-w-40"><Select id="xf" value={fmt} onChange={(e) => setFmt(e.target.value)}><option value="xlsx">Excel</option><option value="csv">CSV</option></Select></Field>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title="Exports"
+        description="Every export is recorded in the activity log with its filters."
+        actions={
+          <Field label="Format" htmlFor="xf" className="w-40"><Select id="xf" value={fmt} onChange={(e) => setFmt(e.target.value)}><option value="xlsx">Excel</option><option value="csv">CSV</option></Select></Field>
+        }
+      />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {EXPORTS.map((x) => (
-          <Card key={x.id} title={x.label}>
-            <div className="grid gap-2">
+          <Card key={x.id} title={<span className="flex items-center gap-2"><FileSpreadsheet aria-hidden className="size-4 text-fg-subtle" />{x.label}</span>}>
+            <div className="flex flex-col gap-3">
               {x.filters.map((k) => (
-                <Field key={k} label={k.replaceAll("_", " ")} htmlFor={`${x.id}-${k}`}>
+                <Field key={k} label={humanize(k).replace(/^Q$/, "Search")} htmlFor={`${x.id}-${k}`}>
                   <Input id={`${x.id}-${k}`} type={k.includes("date") || k.includes("from") || k.includes("_to") ? "date" : "text"}
                     value={f[`${x.id}.${k}`] ?? ""} onChange={(e) => setF({ ...f, [`${x.id}.${k}`]: e.target.value })} />
                 </Field>
               ))}
-              <a className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm text-primary-foreground"
+              <a className={buttonClasses({ className: "mt-1" })}
                 href={`/api/v1/exports/${x.id}?${qs({ fmt, ...Object.fromEntries(x.filters.map((k) => [k, f[`${x.id}.${k}`]])) })}`}>
-                Download
+                <Download aria-hidden />Download {fmt === "xlsx" ? "Excel" : "CSV"}
               </a>
             </div>
           </Card>

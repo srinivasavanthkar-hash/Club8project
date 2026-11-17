@@ -29,6 +29,10 @@ resource "azurerm_virtual_network" "vnet" {
   tags                = local.tags
 }
 
+# Egress: the apps subnet has no NSG / UDR / Azure Firewall, so outbound HTTPS is open. The API needs
+# api.pwnedpasswords.com:443 (breached-password range API) in addition to the Azure services it reaches over private
+# endpoints. If egress is ever locked down, allow that FQDN in Azure Firewall (application rule, HTTPS); an NSG
+# cannot filter by FQDN. The app keeps working without it (offline list fallback). See docs/DECISIONS.md D-PW-6.
 resource "azurerm_subnet" "apps" {
   name                 = "snet-apps"
   resource_group_name  = azurerm_resource_group.rg.name
@@ -162,6 +166,7 @@ resource "azurerm_key_vault_secret" "secrets" {
     "appinsights-conn"  = azurerm_application_insights.ai.connection_string
     "pg-app-password"   = random_password.pg_app.result
     "pg-owner-password" = random_password.pg_owner.result
+    "acs-endpoint"      = "https://${azurerm_communication_service.acs.hostname}"
   }
   name         = each.key
   value        = each.value

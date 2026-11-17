@@ -1,0 +1,14 @@
+Hello {{ name }},
+
+{{ what }} for your {{ brand.name }} CRM account {{ username }}.
+
+When: {{ when }} (India time)
+{% if ip %}From: IP address {{ ip }}
+{% endif %}{% if note %}
+{{ note }}
+{% endif %}
+If this wasn't you, contact your administrator immediately.
+
+--
+This is an automatic message from {{ brand.name }} CRM. Please don't reply to it.
+Questions? Contact {{ admin_contact }}.

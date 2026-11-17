@@ -37,6 +37,11 @@ class Unauthorized(DomainError):
     title = "Unauthorized"
 
 
+class TooManyRequests(DomainError):
+    status = 429
+    title = "Too many requests"
+
+
 class Conflict(DomainError):
     status = 409
     title = "Conflict"

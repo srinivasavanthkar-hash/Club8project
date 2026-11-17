@@ -28,8 +28,36 @@ Open http://localhost:3000. All demo users share the password `Demo-Passw0rd!` (
 | 7 | | Upload a PDF ("Other") → **Preview** | Inline viewer opens (short-lived signed URL) |
 | 8 | `demo.manager` | *Profile → Edit* → change comments, reason "Welcome call" → Save. Then the *History* tab (or **Activity log** filtered by member) | Every step above: lead created, status changes, conversion, upload, approval, payments, schedule, ASF raised, entitlement deducted, reservation status changes, email, call, upload, and the edit with **old → new values**. **Verify integrity** shows the hash chain intact |
 
+## Passwords and account access (Phase 1)
+| Step | Sign in as | Clicks | What to show |
+|---|---|---|---|
+| 9a | (anyone) | Sign-in page: type a password, click the eye | Show/hide; Caps Lock hint; hides again after Sign in |
+| 9b | `demo.admin` | **Admin → New user** (username, name, roles) → **Create user** | No password field. Temporary password shown once, with Copy; expires in 24 h |
+| 9c | the new user (2nd browser) | Sign in with the temporary password | Only **Choose a new password** is reachable. Checklist + strength meter. `password1234` is refused as breached |
+| 9d | `demo.admin` | User row → **Reset password…** → reason | Temporary password once; the user's open session ends at once ("Your session ended") |
+| 9e | the user | User menu → **Change password** | "Sign out of all other devices" ticked by default |
+| 9f | `demo.admin` + a 2nd admin | Reset another ADMIN → the 2nd admin approves in "Administrator resets waiting for approval" | Two-person rule; all steps in the activity log |
+| 9g | `demo.admin` | **Reset 2FA…** on a user with 2FA | The user must set up 2FA again (QR code) at next sign-in; password unchanged |
+| 9h | (anyone) | Sign-in → **Forgot password?** → `demo.sales@example.test` → **Send reset link** | The same confirmation for any input. The email appears in Mailpit (http://localhost:8025) |
+| 9i | | Open the link from the email | Token removed from the address bar; checklist + strength meter; set a new password; signed out everywhere; "password changed" email |
+| 9j | | Open the same link again | "This reset link is invalid or has expired" → Request a new link |
+| 9k | `demo.admin` | **Reset password…** → **Email a reset link** | Link sent to the registered address (masked in the message); the user is signed out |
+
+Automated with screenshots: `TOUR=1 python scripts/run_e2e.py passwords --project=desktop` (fresh throwaway
+database; the specs that write data refuse to run against the demo).
+
+`demo.admin` signs in with two-step verification. Add the FICTITIOUS demo key `DEMOADMINTWOFACTORKEY234` to an
+authenticator app ("Enter a set-up key") to get the codes.
+
 ## Automated run against a running stack
 ```bash
 docker compose run --rm api python -m app.demo_cli --base-url http://web:3000
 cd frontend && E2E_BASE_URL=http://localhost:3000 npx playwright test
+```
+
+## Illustrated walkthrough for clients
+`docs/demo-tour/index.html` is the same flow with screenshots, written for the client (open it in a browser). To retake
+the screenshots after UI changes, run against a freshly seeded stack:
+```bash
+TOUR=1 python scripts/run_e2e.py tour --project=desktop   # fresh throwaway database; writes docs/demo-tour/*.png
 ```

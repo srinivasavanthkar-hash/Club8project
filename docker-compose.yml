@@ -26,6 +26,11 @@ services:
     command: azurite-blob --blobHost 0.0.0.0 --loose
     ports: ["10000:10000"]
 
+  # Local / CI mail catcher: every email the CRM sends appears at http://localhost:8025 (nothing leaves the machine)
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    ports: ["8025:8025", "1025:1025"]
+
   clamav:
     image: clamav/clamav:1.4
     ports: ["3310:3310"]
@@ -46,6 +51,21 @@ services:
       CRM_VIRUS_SCAN_PROVIDER: none
       CRM_COOKIE_SECURE: "false"
       CRM_JWT_SIGNING_KEY: local-dev-only-signing-key-change-me-please-0123456789
+      # Local / CI only: the Playwright suites sign in many times a minute from one IP. Azure uses the strict
+      # defaults (10/min per IP, 5/min per account; app/core/config.py).
+      CRM_RATE_LIMIT_LOGIN: "300/minute"
+      CRM_RATE_LIMIT_LOGIN_ACCOUNT: "60/minute"
+      # Only a throwaway CI stack sets this (ci.yml): the Playwright specs that write data refuse to run otherwise,
+      # so they can never write to a demo database started from this file.
+      CRM_E2E_TARGET: "${CRM_E2E_TARGET:-false}"
+      # Email: Mailpit (above); sent by the worker after commit, with retries. Links use the public web address.
+      CRM_EMAIL_PROVIDER: smtp
+      CRM_SMTP_HOST: mailpit
+      CRM_SMTP_PORT: "1025"
+      CRM_EMAIL_DISPATCH: worker
+      CRM_APP_BASE_URL: http://localhost:3000
+      # Designated super-admin for the ADMIN-reset fallback (docs/DECISIONS.md D-PW-3). Empty = no fallback.
+      CRM_SUPER_ADMIN_USERNAME: ""
     depends_on:
       postgres: {condition: service_healthy}
 
@@ -64,6 +84,7 @@ services:
     environment: *backend-env
     depends_on:
       migrate: {condition: service_completed_successfully}
+      mailpit: {condition: service_started}
 
   scheduler:
     build: ./backend
@@ -76,6 +97,9 @@ services:
       context: ./frontend
       args:
         API_INTERNAL_URL: http://api:8000  # rewrites are resolved at build time
+        NEXT_PUBLIC_DEFAULT_BRAND: club8  # app shell theme: club8 | k8
+    environment:
+      CRM_ENV: local  # read per request: shows the DEV ribbon (staging -> STAGING, prod -> none)
     ports: ["3000:3000"]
     depends_on: [api]
 

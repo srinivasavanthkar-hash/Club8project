@@ -17,7 +17,7 @@ async def test_login_lockout_and_audit(api):
     from app.core.db import sessionmaker
 
     async with sessionmaker()() as s:
-        u = await create_user(s, "lock.test", "Lock Test", "Correct-Horse-9", ["MARKETING"])
+        u, _ = await create_user(s, "lock.test", "Lock Test", ["MARKETING"], password="Correct-Horse-9")
         await s.commit()
     for _ in range(5):
         r = await api.c.post("/api/v1/auth/login", json={"username": "lock.test", "password": "wrong"})
