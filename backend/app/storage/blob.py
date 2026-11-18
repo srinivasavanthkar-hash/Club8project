@@ -11,10 +11,13 @@ from __future__ import annotations
 
 from datetime import timedelta
 from functools import lru_cache
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from app.core.config import get_settings
 from app.core.timeutil import now_utc
+
+if TYPE_CHECKING:
+    from azure.storage.blob import UserDelegationKey
 
 
 class BlobStore(Protocol):
@@ -64,7 +67,7 @@ class AzureBlobStore:  # pragma: no cover - needs Azure/Azurite
 
             self.client = BlobServiceClient(s.blob_account_url, credential=DefaultAzureCredential())
             self._azurite = False
-        self._udk = None
+        self._udk: UserDelegationKey | None = None
         self._udk_expiry = now_utc()
         # Browser-facing base URL (Azurite runs as "azurite" inside compose but 127.0.0.1 for the browser)
         self.public_base = s.blob_account_url.rstrip("/")
@@ -111,21 +114,28 @@ class AzureBlobStore:  # pragma: no cover - needs Azure/Azurite
 
         disposition = f'{"inline" if inline else "attachment"}; filename="{filename}"'
         expiry = now_utc() + timedelta(minutes=self.minutes)
-        kwargs = dict(
-            account_name=self.client.account_name,
-            container_name=self.container,
-            blob_name=path,
-            permission=BlobSasPermissions(read=True),
-            expiry=expiry,
-            content_disposition=disposition,
-        )
+        account_name = self.client.account_name
+        if not account_name:
+            raise RuntimeError("Blob storage account name could not be determined from the configured URL")
+        account_key: str | None = None
         if self._azurite:
             s = get_settings()
             raw = s.blob_connection_string.get_secret_value() if s.blob_connection_string else ""
             conn = dict(part.split("=", 1) for part in raw.split(";") if "=" in part)
-            sas = generate_blob_sas(account_key=conn["AccountKey"], **kwargs)
-        else:
-            sas = generate_blob_sas(user_delegation_key=self._udk, **kwargs)
+            account_key = conn["AccountKey"]
+        elif self._udk is None:
+            raise RuntimeError("User delegation key not loaded: call refresh_delegation_key() before read_url()")
+        # Azurite: service SAS signed with the emulator's well-known key. Azure: user-delegation SAS (no account key).
+        sas = generate_blob_sas(
+            account_name=account_name,
+            container_name=self.container,
+            blob_name=path,
+            account_key=account_key,
+            user_delegation_key=None if self._azurite else self._udk,
+            permission=BlobSasPermissions(read=True),
+            expiry=expiry,
+            content_disposition=disposition,
+        )
         return f"{self.public_base}/{self.container}/{path}?{sas}"
 
 

@@ -1,0 +1,47 @@
+name: Weekly dependency audit
+
+# The full dependency audit, every Monday, so newly published advisories and newly available fixes are noticed
+# without waiting for a push. The full npm audit is shown but does not fail the run while picomatch
+# GHSA-fc5q-39xc-vjpf has no fixed version; the last step fails as soon as a fix is published, which is the
+# signal to upgrade and make the full audit blocking again in ci.yml (docs/PROGRESS.md).
+on:
+  schedule:
+    - cron: "30 3 * * 1" # Monday 03:30 UTC = 09:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: npm audit (frontend production dependencies, high or critical)
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
+      - name: npm audit (frontend, all dependencies incl. dev tools; non-blocking)
+        working-directory: frontend
+        continue-on-error: true
+        run: npm audit --audit-level=high
+      - name: Has picomatch published a fix for GHSA-fc5q-39xc-vjpf?
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          patched=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/advisories/GHSA-fc5q-39xc-vjpf | jq -r '[.vulnerabilities[].first_patched_version // empty] | join(", ")')
+          if [ -n "$patched" ]; then
+            echo "::error::picomatch fix available ($patched): upgrade, then make the full npm audit blocking again in ci.yml"
+            exit 1
+          fi
+          echo "No fixed picomatch version yet."
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: pip-audit (backend runtime + dev dependencies)
+        working-directory: backend
+        run: |
+          python -c "import tomllib;d=tomllib.load(open('pyproject.toml','rb'))['project'];print('\n'.join(d['dependencies']+d['optional-dependencies']['dev']))" > req.txt
+          pip install pip-audit==2.10.1
+          pip-audit -r req.txt --progress-spinner off
