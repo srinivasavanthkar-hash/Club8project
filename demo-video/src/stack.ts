@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const LOCAL = path.join(ROOT, ".local");
-const PY = path.join(ROOT, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
+export const PY = path.join(ROOT, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
 export const PORTS = { api: 8002, web: 3002, mailpit: 8027, smtp: 1027 };
 export const BASE = `http://127.0.0.1:${PORTS.web}`;
 export const MAILPIT = `http://127.0.0.1:${PORTS.mailpit}`;
@@ -33,7 +33,9 @@ async function waitFor(url: string, seconds = 180): Promise<void> {
   throw new Error(`Timed out waiting for ${url}`);
 }
 
-export type Stack = { stop: () => void };
+/** `apiEnv`: the API process environment (database, blob storage, email), for helper scripts run against the same
+ * throwaway database (e.g. demo-video/seed_clock.py). */
+export type Stack = { stop: () => void; apiEnv: NodeJS.ProcessEnv };
 export type DbMode = "docker" | "embedded";
 export const DB_MODES: readonly DbMode[] = ["docker", "embedded"];
 
@@ -172,7 +174,7 @@ export async function startStack(opts: { build: boolean; db: DbMode }): Promise<
     await waitFor(`${BASE}/login`);
     const meta = await (await fetch(`${BASE}/api/v1/meta`)).json();
     if (!meta.e2e_target) throw new Error("The recording frontend is not talking to the recording API");
-    return { stop };
+    return { stop, apiEnv };
   } catch (e) {
     stop();
     throw e;

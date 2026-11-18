@@ -1,242 +1,33 @@
 /**
- * Records the Club8 CRM demo video (docs/DEMO_VIDEO_PROMPT.md). See demo-video/README.md.
+ * Records the Club8 CRM demo video (docs/DEMO_VIDEO_PROMPT.md) and the follow-up clips (docs/DEMO_CLIPS_PROMPT.md).
+ * See demo-video/README.md.
  *
  *   npm run record                     full run: fresh crm_video stack, all sections, assemble the MP4
  *   npm run record -- --section 6      re-record one section (earlier sections replay unrecorded to recreate data)
  *   npm run record -- --no-build       reuse the previous recording frontend build
  *   npm run record -- --db embedded    database in embedded PostgreSQL instead of a Docker container (no Docker)
+ *   npm run record -- --clip 2         one follow-up clip (1, 2 or 3), or --clip all; each on a fresh stack
+ *   npm run record -- --clip 2 --dry   run the clip's seed and scenes at full speed without recording (checks)
  *   npm run assemble                   only re-assemble out/clips into the MP4 (e.g. after editing nothing)
  */
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
-import * as OTPAuth from "otpauth";
-import { type Browser, type BrowserContext, type Cookie, type Page, chromium, request } from "playwright";
-import { assemble } from "./assemble";
-import { type CaptionEvent, Director, NAME_SHIM, OVERLAY_SCRIPT, PACE, TOUCH_SCRIPT } from "./overlay";
-import { PHONE, Screencast } from "./screencast";
-import { BASE, DB_MODES, type DbMode, MAILPIT, ROOT, startStack } from "./stack";
-
-export const OUT = path.join(ROOT, "demo-video", "out");
-export const CLIPS = path.join(OUT, "clips");
-const PASSWORD = "Demo-Passw0rd!"; // FICTITIOUS demo password (backend/app/seed_demo.py)
-const DEMO_TOTP_KEY = "DEMOADMINTWOFACTORKEY234"; // FICTITIOUS demo authenticator key (seed_demo.py)
-const ROLES: Record<string, string> = {
-  "demo.sales": "Sales", "demo.manager": "Management", "demo.finance": "Finance", "demo.reservations": "Reservations",
-  "demo.service": "Member services", "demo.admin": "Administrator",
-};
+import { chromium } from "playwright";
+import { PASSWORD, PDF, addDays, apiAs, istMonth, istToday, totp } from "./api";
+import { MAIN_OUTPUT, assemble, clipOutput } from "./assemble";
+import { CLIP_DEFS, writeClipsIndex } from "./clips";
+import { PACE } from "./overlay";
+import { CLIPS, OUT, type Scene, type Section, type Shared, browserOptions, runSection } from "./scene";
+import { DB_MODES, type DbMode, MAILPIT, startStack } from "./stack";
 
 // ---------------------------------------------------------------- fictitious people (title card says so)
 const LEAD = { name: "Ananya Rao", mobile: "9000000001", email: "ananya.rao@example.com", city: "Bengaluru", pan: "ABCDE1234F" };
-
-export type ClipMeta = { id: number; title: string; file: string; duration: number; captions: CaptionEvent[]; phone?: boolean };
-type Shared = { leadUrl?: string; memberUrl?: string; resUrl?: string; checkIn?: string; checkOut?: string };
-type MasterRow = { id: string; code: string };
-
-const totp = () => new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(DEMO_TOTP_KEY), digits: 6, period: 30 }).generate();
-
-/** Session cookies for a role, from a sign-in through the API (the visible sign-ins are in sections 1 and 8). */
-async function sessionCookies(user: string): Promise<Cookie[]> {
-  const ctx = await request.newContext({ baseURL: BASE });
-  let r = await ctx.post("/api/v1/auth/login", { data: { username: user, password: PASSWORD } });
-  if (r.status() === 401) r = await ctx.post("/api/v1/auth/login", { data: { username: user, password: PASSWORD, totp_code: totp() } });
-  if (!r.ok()) throw new Error(`sign-in for ${user} failed: ${r.status()} ${await r.text()}`);
-  const cookies = (await ctx.storageState()).cookies as Cookie[];
-  await ctx.dispose();
-  return cookies;
-}
-
-/** API calls as a role, for set-up the video doesn't show (CSRF double-submit header included). */
-async function apiAs(user: string) {
-  const ctx = await request.newContext({ baseURL: BASE });
-  let r = await ctx.post("/api/v1/auth/login", { data: { username: user, password: PASSWORD } });
-  if (r.status() === 401) r = await ctx.post("/api/v1/auth/login", { data: { username: user, password: PASSWORD, totp_code: totp() } });
-  if (!r.ok()) throw new Error(`sign-in for ${user} failed: ${r.status()} ${await r.text()}`);
-  const csrf = (await ctx.storageState()).cookies.find((c) => c.name === "crm_csrf")?.value ?? "";
-  const call = async <T>(method: "GET" | "POST", p: string, data?: unknown): Promise<T> => {
-    const res = await ctx.fetch(`/api/v1${p}`, { method, data, headers: { "X-CSRF-Token": csrf } });
-    if (!res.ok()) throw new Error(`${method} ${p}: ${res.status()} ${await res.text()}`);
-    return (await res.json()) as T;
-  };
-  const master = async (slug: string, code: string) => (await call<MasterRow[]>("GET", `/admin/master/${slug}`)).find((x) => x.code === code)!;
-  return { call, master, dispose: () => ctx.dispose() };
-}
-
-const addDays = (iso: string, n: number) => new Intl.DateTimeFormat("en-CA").format(new Date(new Date(`${iso}T12:00:00`).getTime() + n * 86_400_000));
 
 function stay(): [string, string] {
   let d = new Date(Date.now() + 21 * 86_400_000);
   if (d.getMonth() === 11 && d.getDate() > 10) d = new Date(d.getFullYear() + 1, 1, 2);
   const iso = (x: Date) => new Intl.DateTimeFormat("en-CA").format(x);
   return [iso(d), iso(new Date(d.getTime() + 4 * 86_400_000))];
-}
-const istMonth = (offsetDays: number) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date(Date.now() + offsetDays * 86_400_000)).slice(0, 7);
-const istToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
-const PDF = Buffer.from("%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n");
-
-// ---------------------------------------------------------------- error guard (the run fails on any of these)
-class Guard {
-  readonly errors: string[] = [];
-  private allowed: { status: number; path: RegExp }[] = [];
-  private responses: { url: string; status: number }[] = [];
-  watch(page: Page): void {
-    page.on("console", (m) => {
-      if (m.type() !== "error") return;
-      const text = m.text();
-      if (/Failed to load resource/.test(text)) return; // judged from the response itself, below
-      this.errors.push(`console: ${text}`);
-    });
-    page.on("pageerror", (e) => this.errors.push(`page error: ${e.message}`));
-    page.on("response", (r) => {
-      const s = r.status();
-      if (s < 400) return;
-      const url = r.url();
-      if (this.allowed.some((a) => a.status === s && a.path.test(url))) return;
-      this.errors.push(`HTTP ${s} ${r.request().method()} ${url}`);
-    });
-    page.on("requestfailed", (r) => {
-      const f = r.failure()?.errorText ?? "";
-      if (/ERR_ABORTED/.test(f)) return; // navigations that replace a pending request
-      this.errors.push(`request failed: ${r.url()} ${f}`);
-    });
-  }
-  /** Declare an expected refusal (e.g. Confirm while the ASF is unpaid) for the duration of `fn`. */
-  async expect<T>(status: number, pathRe: RegExp, fn: () => Promise<T>): Promise<T> {
-    const a = { status, path: pathRe };
-    this.allowed.push(a);
-    try { return await fn(); } finally { this.allowed = this.allowed.filter((x) => x !== a); }
-  }
-  async check(page: Page): Promise<void> {
-    const toasts = await page.locator('[aria-live="polite"].fixed [role="alert"]').allTextContents().catch(() => []);
-    for (const t of toasts) this.errors.push(`error toast: ${t}`);
-    const h1 = (await page.locator("h1").first().textContent({ timeout: 500 }).catch(() => "")) ?? "";
-    if (/Page not found|Something went wrong/.test(h1)) this.errors.push(`error page: ${h1}`);
-  }
-}
-
-// ---------------------------------------------------------------- one clip
-type Ctx = { browser: Browser; shared: Shared; record: boolean };
-type Section = { id: number; title: string; phone?: boolean; card?: string; hold?: number; run?: (s: Scene) => Promise<void> };
-
-class Scene {
-  /** Starts the recording once the section's first screen is settled (set per clip). */
-  begin: () => Promise<void> = async () => undefined;
-  /** Continue recording after navigating to another site (set per clip). */
-  reattach: () => Promise<void> = async () => undefined;
-  /** Hold the picture while a page loads (set per clip). */
-  freeze: () => void = () => undefined;
-  thaw: () => Promise<void> = async () => undefined;
-
-  constructor(readonly page: Page, readonly ctx: BrowserContext, readonly d: Director, readonly guard: Guard, readonly shared: Shared) {}
-
-  /** Switch the signed-in user without showing a sign-in: swap the session cookies and reload. */
-  async signInAs(user: string, opts: { announce?: boolean; path?: string } = {}): Promise<void> {
-    await this.ctx.clearCookies();
-    const cookies = await sessionCookies(user);
-    if (process.env.DEMO_DEBUG) console.log(`    [debug] ${user}: ${cookies.map((c) => `${c.name}@${c.domain}${c.path}`).join(", ")}`);
-    await this.ctx.addCookies(cookies);
-    if (opts.announce !== false) await this.d.caption(`Now signed in as ${ROLES[user]}`);
-    const target = opts.path ?? this.page.url();
-    this.freeze();
-    await this.page.goto(target);
-    await this.d.settle();
-    if (new URL(this.page.url()).pathname.startsWith("/login")) {
-      // seen once in a full run right after the visible 2FA sign-in, not reproducible: sign in again and retry
-      console.warn(`    session for ${user} was not accepted; signing in again`);
-      await this.ctx.clearCookies();
-      await this.ctx.addCookies(await sessionCookies(user));
-      await this.page.goto(target);
-      await this.d.settle();
-      if (new URL(this.page.url()).pathname.startsWith("/login")) throw new Error(`could not sign in as ${user}`);
-    }
-    await this.thaw();
-    if (opts.announce !== false) await this.d.pause(2600);
-  }
-
-  async go(p: string): Promise<void> {
-    this.freeze();
-    await this.page.goto(p);
-    await this.d.settle();
-    await this.thaw();
-  }
-
-  async tab(name: string): Promise<void> {
-    await this.d.click(this.page.getByRole("tab", { name: new RegExp(`^${name}`) }));
-    await this.d.settle();
-  }
-
-  async step(caption: string, ms = PACE.read): Promise<void> {
-    await this.d.caption(caption);
-    await this.d.pause(ms);
-  }
-}
-
-/** Runs a section; `scene.begin()` (called by the section once its first screen is settled) starts the recording. */
-async function runSection(c: Ctx, sec: Section): Promise<ClipMeta | null> {
-  const phone = !!sec.phone;
-  const vp = phone ? PHONE : { width: 1920, height: 1080 };
-  // The screencast captures the browser window (not the emulated viewport): the phone clip gets its own window,
-  // at device pixel ratio 2 so the phone screen stays sharp when it is placed on the 1080p background.
-  const phoneBrowser = phone ? await chromium.launch(browserOptions([`--window-size=${PHONE.width},${PHONE.height}`, "--force-device-scale-factor=2"])) : null;
-  const context = await (phoneBrowser ?? c.browser).newContext({
-    viewport: vp,
-    deviceScaleFactor: phone ? 2 : 1,
-    isMobile: phone,
-    hasTouch: phone,
-    baseURL: BASE,
-    locale: "en-IN",
-    timezoneId: "Asia/Kolkata",
-  });
-  await context.addInitScript(NAME_SHIM); // every page, recorded or not
-  if (phone || sec.card) await context.addInitScript(TOUCH_SCRIPT); // no pointer on the phone or the cards
-  if (c.record) await context.addInitScript(OVERLAY_SCRIPT);
-  const page = await context.newPage();
-  const guard = new Guard();
-  guard.watch(page);
-  const d = new Director(page, { fast: !c.record, touch: phone, externalCaptions: phone });
-  const scene = new Scene(page, context, d, guard, c.shared);
-  const file = path.join(CLIPS, `${String(sec.id).padStart(2, "0")}.mp4`);
-  const cast = c.record ? new Screencast(page, path.join(OUT, "frames", String(sec.id)), phone ? 2 : 1) : null;
-  scene.reattach = async () => { await cast?.reattach(); };
-  scene.freeze = () => cast?.freeze();
-  scene.thaw = async () => { await cast?.thaw(); };
-  scene.begin = async () => {
-    await d.settle();
-    if (!cast) return;
-    await cast.begin();
-    d.t0 = cast.start * 1000;
-  };
-  try {
-    if (sec.card) {
-      await page.goto(pathToFileURL(path.join(ROOT, "demo-video", "cards", sec.card)).href);
-      await page.waitForLoadState("networkidle");
-      await page.evaluate(() => document.fonts.ready);
-      // restart the card's entrance animation once capture is running
-      await scene.begin();
-      await page.evaluate(() => { const el = document.querySelector(".card") as HTMLElement; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; });
-      await page.waitForTimeout(sec.hold ?? 6000);
-    } else {
-      await sec.run!(scene);
-      await d.caption(null);
-      await d.pause(400);
-    }
-    await guard.check(page);
-    d.finish();
-    if (guard.errors.length) throw new Error(`Section ${sec.id} (${sec.title}) had errors:\n  ${guard.errors.join("\n  ")}`);
-    if (!cast) return null;
-    const duration = await cast.end(file);
-    const meta: ClipMeta = { id: sec.id, title: sec.title, file, duration, captions: d.captions, phone };
-    fs.writeFileSync(file.replace(/\.mp4$/, ".json"), JSON.stringify(meta, null, 1));
-    console.log(`    recorded ${sec.title}: ${duration.toFixed(1)} s, ${d.captions.length} captions`);
-    return meta;
-  } catch (e) {
-    await page.screenshot({ path: path.join(OUT, `failed-section-${sec.id}.png`) }).catch(() => undefined);
-    console.error(`    section ${sec.id} failed; screen saved to out/failed-section-${sec.id}.png`);
-    throw e;
-  } finally {
-    await context.close();
-    await phoneBrowser?.close();
-  }
 }
 
 // ---------------------------------------------------------------- the storyboard
@@ -699,19 +490,11 @@ const SECTIONS: Section[] = [
   { id: 12, title: "End", card: "end.html", hold: 8000 },
 ];
 
-/** The newer headless mode includes Chrome's PDF viewer (receipts); the old one shows a blank frame. The window
- * size must equal the viewport, or the screencast frames come out smaller (e.g. 1904×985). */
-function browserOptions(args: string[]) {
-  return { channel: "chromium", args };
-}
-
 // ---------------------------------------------------------------- main
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const only = args.includes("--section") ? Number(args[args.indexOf("--section") + 1]) : null;
-  if (args.includes("--assemble-only")) { await assemble(); return; }
-  const db = (args.includes("--db") ? args[args.indexOf("--db") + 1] : "docker") as DbMode;
-  if (!DB_MODES.includes(db)) throw new Error(`--db must be one of: ${DB_MODES.join(", ")}`);
+const arg = (args: string[], name: string) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
+
+async function recordMainVideo(args: string[], db: DbMode): Promise<void> {
+  const only = arg(args, "--section") !== undefined ? Number(arg(args, "--section")) : null;
   fs.mkdirSync(CLIPS, { recursive: true });
   const stack = await startStack({ build: !args.includes("--no-build"), db });
   const browser = await chromium.launch(browserOptions(["--window-size=1920,1080"]));
@@ -729,7 +512,52 @@ async function main(): Promise<void> {
     await browser.close();
     stack.stop();
   }
-  await assemble();
+  await assemble(MAIN_OUTPUT);
+}
+
+/** Each clip on its own fresh stack (and throwaway database), seeded through the API, then assembled and checked. */
+async function recordClips(args: string[], db: DbMode): Promise<void> {
+  const which = arg(args, "--clip")!;
+  const ids = which === "all" ? Object.keys(CLIP_DEFS).map(Number) : [Number(which)];
+  if (ids.some((n) => !CLIP_DEFS[n])) throw new Error(`--clip must be one of: ${Object.keys(CLIP_DEFS).join(", ")}, all`);
+  const dry = args.includes("--dry");
+  let build = !args.includes("--no-build");
+  const failed: string[] = [];
+  for (const n of ids) {
+    const def = CLIP_DEFS[n]!;
+    const out = clipOutput(n, def.slug, def.sections.length);
+    console.log(`\n######## Clip ${n}: ${def.title}${dry ? " (dry run, not recorded)" : ""}`);
+    const stack = await startStack({ build, db });
+    build = false; // one frontend build per run is enough
+    const browser = await chromium.launch(browserOptions(["--window-size=1920,1080"]));
+    try {
+      console.log("==> Seeding the clip's data through the API");
+      const shared = await def.seed(stack);
+      for (const sec of def.sections) {
+        if (dry && sec.card) continue;
+        console.log(`==> ${dry ? "Running" : "Recording"} ${n}.${sec.id} ${sec.title}`);
+        await runSection({ browser, shared, record: !dry }, sec, out.dir);
+      }
+      if (def.check) await def.check(shared);
+    } finally {
+      await browser.close();
+      stack.stop();
+    }
+    if (dry) continue;
+    const qc = await assemble(out);
+    if (qc.problems.length) failed.push(`clip ${n}: ${qc.problems.join("; ")}`);
+  }
+  if (!dry) writeClipsIndex();
+  if (failed.length) throw new Error(`QC problems:\n  ${failed.join("\n  ")}`);
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  if (args.includes("--assemble-only")) { await assemble(MAIN_OUTPUT); return; }
+  const db = (arg(args, "--db") ?? "docker") as DbMode;
+  if (!DB_MODES.includes(db)) throw new Error(`--db must be one of: ${DB_MODES.join(", ")}`);
+  if (args.includes("--clip")) await recordClips(args, db);
+  else await recordMainVideo(args, db);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

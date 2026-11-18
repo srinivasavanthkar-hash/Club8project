@@ -1,11 +1,12 @@
 /**
  * Post-production with ffmpeg: phone clip on a brand background, 300 ms crossfades, H.264 MP4, captions (SRT),
- * chapters and a quality-check report. Reads the clips and their metadata from out/clips/.
+ * chapters and a quality-check report. Reads the section files and their metadata from one folder (out/clips/ for
+ * the main video, out/clip<n>/ for a follow-up clip).
  */
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
-import type { ClipMeta } from "./record";
+import type { ClipMeta } from "./scene";
 import { OVERLAY_SCRIPT } from "./overlay";
 import { execFileSync } from "node:child_process";
 import { FFMPEG, FFPROBE, PHONE, RGB_TO_TV, TV_TAGS, ffmpeg, probeDuration } from "./screencast";
@@ -14,7 +15,31 @@ import { ROOT } from "./stack";
 const OUT = path.join(ROOT, "demo-video", "out");
 const CLIPS = path.join(OUT, "clips");
 const FADE = 0.3;
-const SECTIONS = 13;
+
+/** What to assemble and where: the section folder and count, the output files, and the QC limits. */
+export type Output = {
+  dir: string; sections: number;
+  mp4: string; srt: string; chapters: string; qcReport: string; qcDir: string;
+  minS: number; maxS: number; maxMB: number;
+};
+/** The main video. 6:30 upper limit: docs/DEMO_VIDEO_PROMPT.md, the same as the voiced main video. */
+export const MAIN_OUTPUT: Output = {
+  dir: CLIPS, sections: 13,
+  mp4: path.join(OUT, "club8-crm-demo.mp4"), srt: path.join(OUT, "club8-crm-demo.srt"), chapters: path.join(OUT, "chapters.txt"),
+  qcReport: path.join(OUT, "qc-report.txt"), qcDir: path.join(OUT, "qc"),
+  minS: 300, maxS: 390, maxMB: 100,
+};
+/** A follow-up clip (docs/DEMO_CLIPS_PROMPT.md): sections in out/clip<n>/, outputs in out/clips/, 2:00-3:15, < 50 MB. */
+export function clipOutput(n: number, slug: string, sections: number): Output {
+  const base = path.join(CLIPS, `club8-crm-clip${n}-${slug}`);
+  return {
+    dir: path.join(OUT, `clip${n}`), sections,
+    mp4: `${base}.mp4`, srt: `${base}.srt`, chapters: path.join(CLIPS, `chapters-clip${n}.txt`),
+    qcReport: path.join(CLIPS, `qc-clip${n}.txt`), qcDir: path.join(OUT, `clip${n}`, "qc"),
+    minS: 120, maxS: 195, maxMB: 50,
+  };
+}
+export type QcResult = { total: number; mb: number; chapters: string[]; problems: string[] };
 
 const ts = (s: number, sep = ",") => {
   const ms = Math.max(0, Math.round(s * 1000));
@@ -81,14 +106,15 @@ async function composePhone(meta: ClipMeta): Promise<string> {
   return out;
 }
 
-export async function assemble(): Promise<void> {
+export async function assemble(o: Output = MAIN_OUTPUT): Promise<QcResult> {
   const metas: ClipMeta[] = [];
-  for (let i = 0; i < SECTIONS; i++) {
-    const f = path.join(CLIPS, `${String(i).padStart(2, "0")}.json`);
-    if (!fs.existsSync(f)) throw new Error(`missing clip ${i}: record it first (npm run record -- --section ${i})`);
+  for (let i = 0; i < o.sections; i++) {
+    const f = path.join(o.dir, `${String(i).padStart(2, "0")}.json`);
+    if (!fs.existsSync(f)) throw new Error(`missing section ${i} in ${path.relative(OUT, o.dir)}: record it first`);
     metas.push(JSON.parse(fs.readFileSync(f, "utf8")) as ClipMeta);
   }
-  console.log("==> Assembling");
+  console.log(`==> Assembling ${path.basename(o.mp4)}`);
+  fs.mkdirSync(path.dirname(o.mp4), { recursive: true });
   const files = await Promise.all(metas.map(async (m) => (m.phone ? composePhone(m) : m.file)));
   const durations = files.map((f) => probeDuration(f));
 
@@ -104,7 +130,7 @@ export async function assemble(): Promise<void> {
     prev = `x${k}`;
   }
   graph.push(`[${prev}]format=yuv420p,setparams=range=tv:colorspace=bt709:color_primaries=bt709:color_trc=bt709[vout]`);
-  const mp4 = path.join(OUT, "club8-crm-demo.mp4");
+  const mp4 = o.mp4;
   ffmpeg([
     ...files.flatMap((f) => ["-i", f]),
     "-filter_complex", graph.join(";"), "-map", "[vout]",
@@ -122,12 +148,12 @@ export async function assemble(): Promise<void> {
       if (e - s < 2.5) short.push(`${(e - s).toFixed(1)} s  ${c.text}`);
     }
   });
-  fs.writeFileSync(path.join(OUT, "club8-crm-demo.srt"), srt.join("\n"));
+  fs.writeFileSync(o.srt, srt.join("\n"));
   const chapters = metas.map((m, k) => `${mmss(starts[k]!)} ${m.title}`);
-  fs.writeFileSync(path.join(OUT, "chapters.txt"), chapters.join("\n") + "\n");
+  fs.writeFileSync(o.chapters, chapters.join("\n") + "\n");
 
   // quality check: a frame every 5 s (and contact sheets to review), length, size
-  const qc = path.join(OUT, "qc");
+  const qc = o.qcDir;
   fs.rmSync(qc, { recursive: true, force: true });
   fs.mkdirSync(qc, { recursive: true });
   ffmpeg(["-i", mp4, "-vf", "fps=1/5", path.join(qc, "f%03d.png")]);
@@ -148,13 +174,16 @@ export async function assemble(): Promise<void> {
     "chapters:", ...chapters.map((c) => `  ${c}`),
     `captions: ${n}, shorter than 2.5 s: ${short.length}`, ...short.map((s) => `  ${s}`),
   ].join("\n");
-  fs.writeFileSync(path.join(OUT, "qc-report.txt"), report + "\n");
+  fs.writeFileSync(o.qcReport, report + "\n");
   console.log(report);
-  // 6:30 upper limit: docs/DEMO_VIDEO_PROMPT.md, the same as the voiced main video (docs/DEMO_VOICEOVER_PROMPT.md)
-  if (total < 300 || total > 390) console.warn(`!! length ${mmss(total)} is outside 5:00-6:30`);
-  if (mb >= 100) console.warn("!! file is 100 MB or larger");
-  if (!fmtOk) console.warn("!! video is not tagged yuv420p, limited range, BT.709");
-  if (!lumaOk) console.warn("!! luma body leaves the limited range 16-235 (full-range video?)");
+  const problems: string[] = [];
+  if (total < o.minS || total > o.maxS) problems.push(`length ${mmss(total)} is outside ${mmss(o.minS)}-${mmss(o.maxS)}`);
+  if (mb >= o.maxMB) problems.push(`file is ${o.maxMB} MB or larger`);
+  if (!fmtOk) problems.push("video is not tagged yuv420p, limited range, BT.709");
+  if (!lumaOk) problems.push("luma body leaves the limited range 16-235 (full-range video?)");
+  if (short.length) problems.push(`${short.length} caption(s) shorter than 2.5 s`);
+  for (const p of problems) console.warn(`!! ${p}`);
+  return { total, mb, chapters, problems };
 }
 
 /** Filter converting a clip to limited-range BT.709 yuv420p from whatever it is (clips recorded before the explicit

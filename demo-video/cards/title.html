@@ -31,5 +31,10 @@
     <h1>Club8 CRM<span>from street lead to confirmed holiday</span></h1>
     <p>Demo with fictitious data</p>
   </div>
+  <script>
+    // follow-up clips: title.html?sub=Reservation%20rules (the main video uses the default subtitle above)
+    const sub = new URLSearchParams(location.search).get("sub");
+    if (sub) document.querySelector("h1 span").textContent = sub;
+  </script>
 </body>
 </html>

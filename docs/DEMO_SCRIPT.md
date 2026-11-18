@@ -50,6 +50,48 @@ database; the specs that write data refuse to run against the demo).
 `demo.admin` signs in with two-step verification. Add the FICTITIOUS demo key `DEMOADMINTWOFACTORKEY234` to an
 authenticator app ("Enter a set-up key") to get the codes.
 
+## Optional chapters: the follow-up clips
+
+The same steps as the three follow-up clips (`docs/DEMO_CLIPS_PROMPT.md`, recorded with
+`npm run record -- --clip <1|2|3>` in `demo-video/`). The clips' members (Kavya, Rohan, Meera, Arjun, Neel) and the
+extra administrators exist only in each recording's throwaway database. For a live demo, set up equivalent
+FICTITIOUS members first (the table in `DEMO_CLIPS_PROMPT.md` section 1), or play the clip.
+
+### 10. Reservation rules
+
+| Step | Signed in as | Click | Expect |
+|---|---|---|---|
+| 10a | `demo.reservations` | Kavya's record | Header: 2 nights left this year; ASF of the year paid |
+| 10b | | Reservations → **New reservation**: Goa, Demo Beach Resort, 4 nights in December | Calculation: 2 nights from this year + 2 borrowed from next year; next year's ASF raised now. **Submit request** |
+| 10c | | Entitlement tab | Next year: 2 nights on hold (borrowed); this year: 0 left while the request is open |
+| 10d | | **New reservation** with check-in in 3 days | Amber "Outside the booking window"; an override reason is required |
+| 10e | | Same form: Adults 3 | "Occupancy check" for a Studio; choose One-Bedroom (nights recalculated) or tick an upgrade charge |
+| 10f | | Same form: Occupancy **Gift** | Lead guest name, contact and the member's email/call reference appear and are required. **Discard** |
+| 10g | | Kavya's confirmed stay → Reschedule a week later, with a reason | Date history keeps the original dates; Reschedules 1 (2 allowed); nights adjusted, not deducted twice |
+| 10h | | The 4-night request → reason "No availability at property" + explanation → **Decline** | Next year's ASF withdrawn; Kavya back to 2 nights left this year, nothing borrowed |
+
+### 11. Money
+
+| Step | Signed in as | Click | Expect |
+|---|---|---|---|
+| 11a | `demo.finance` | Kavya → Finance → **Record payment**: type Booking fee, Reservation ID of her December stay | The reservation shows it under "Linked payments" |
+| 11b | | Payment ledger → **Correct** on the booking fee, with a reason | A reversal entry next to the original; nothing edited or deleted |
+| 11c | | Finance dashboard | Overdue EMIs (days overdue), reservations waiting on ASF, members in default notice |
+| 11d | | Rohan (EMI more than 30 days overdue) → **Issue default notice** | Notice PDF with the 14-day deadline; status Default notice |
+| 11e | `demo.manager` | Meera (notice deadline passed, nothing paid) → **Terminate membership…**: reason + type the membership number | Status Terminated; payments forfeited; reservations blocked |
+| 11f | `demo.finance` | Arjun (K8) → a receipt; then a Club8 receipt | Each brand's logo and company details (K8's legal details are marked pending confirmation) |
+
+### 12. Control and admin
+
+| Step | Signed in as | Click | Expect |
+|---|---|---|---|
+| 12a | `demo.manager` | Neel's profile → PAN **Reveal** | "This view will be logged"; the full number shows, then hides itself after 30 seconds. Member services cannot reveal (no `kyc.view_full`) |
+| 12b | `demo.admin` (2FA) | Activity log → Action `KYC_VIEW` → **Export Excel** | Neel's reveal with who and when; an .xlsx download |
+| 12c | | Admin → Role permissions | Which roles hold e.g. `payment.correct`, `member.terminate`, `kyc.view_full`. Don't save changes |
+| 12d | | Admin → Master data & rates → ASF rates → **Add entry**: Studio rate 10% higher from next year | Refused: "exceeds the 5% annual cap… an override reason is required" (and the override permission). **Close** |
+| 12e | | Two-step verification policy → tick Finance + reason → Save; then sign in as `demo.finance` | Finance must set up 2FA (QR code) before using the CRM. Only on a throwaway database |
+| 12f | `demo.admin`, then a 2nd admin | Reset password of a third administrator → the 2nd admin approves in "Administrator resets waiting for approval" | The approver must be neither the requester nor the account being reset; with an email on file the reset link is emailed and nobody sees a password |
+
 ## Automated run against a running stack
 ```bash
 docker compose run --rm api python -m app.demo_cli --base-url http://web:3000
