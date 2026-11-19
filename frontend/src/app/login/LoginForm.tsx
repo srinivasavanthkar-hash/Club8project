@@ -58,7 +58,9 @@ export function LoginForm() {
       {params.get("reason") === "session-ended" && !error && (
         <Alert kind="info" className="mb-4">Your session ended because your password or two-step verification was changed. Sign in again.</Alert>
       )}
-      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+      {/* method="post": if someone submits before the page has hydrated, the browser must never put the password
+          in the address bar (and so in history and access logs) as a GET would. */}
+      <form method="post" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <Field label="Username" htmlFor="username" error={formState.errors.username?.message}>
           <Input id="username" autoComplete="username" autoFocus {...register("username")} />
         </Field>

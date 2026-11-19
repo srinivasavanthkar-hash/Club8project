@@ -54,7 +54,7 @@ export default function NewLeadPage() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-24 sm:pb-0">
       <PageHeader title="New street lead" description="Capture the prospect now; details can be completed at follow-up." />
-      <form ref={formRef} onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      <form method="post" ref={formRef} onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         <Card title="Prospect">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Prospect name" htmlFor="n" required error={errors.prospect_name?.message} className="sm:col-span-2">

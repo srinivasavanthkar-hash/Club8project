@@ -96,7 +96,7 @@ export default function ResetPasswordPage() {
           <p className="mt-1 text-base text-fg-muted">For <span className="font-mono">{info?.username}</span>. Use a long passphrase: a few unrelated words.</p>
         </div>
       </div>
-      <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+      <form method="post" onSubmit={submit} className="flex flex-col gap-4" noValidate>
         <input type="text" name="username" autoComplete="username" value={info?.username ?? ""} readOnly hidden />
         <Field label="New password" htmlFor="rp-new" required error={problems.length ? problems.map((p) => p.message).join(" ") : undefined}>
           <PasswordInput id="rp-new" autoComplete="new-password" value={next} onChange={(e) => { setNext(e.target.value); setProblems([]); }} />

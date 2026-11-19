@@ -2,7 +2,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Fragment, Suspense, useState } from "react";
+import { Fragment, useState } from "react";
+import { ClientSuspense } from "@/components/crm/ClientSuspense";
 import { Mono, PageHeader } from "@/components/crm/Display";
 import { FilterBar } from "@/components/crm/FilterBar";
 import { PageSkeleton, TableSkeleton } from "@/components/crm/States";
@@ -111,5 +112,5 @@ function Activity() {
 }
 
 export default function ActivityPage() {
-  return <Suspense fallback={<PageSkeleton />}><Activity /></Suspense>;
+  return <ClientSuspense fallback={<PageSkeleton />}><Activity /></ClientSuspense>;
 }

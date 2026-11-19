@@ -1,7 +1,8 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, use } from "react";
+import { use } from "react";
+import { ClientSuspense } from "@/components/crm/ClientSuspense";
 import { MemberHeader } from "@/components/crm/MemberHeader";
 import { ErrorState, PageSkeleton } from "@/components/crm/States";
 import { CorrespondenceTab } from "@/components/member/CorrespondenceTab";
@@ -60,8 +61,8 @@ function MemberRecord({ id }: { id: string }) {
 export default function MemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   return (
-    <Suspense fallback={<PageSkeleton variant="record" />}>
+    <ClientSuspense fallback={<PageSkeleton variant="record" />}>
       <MemberRecord id={id} />
-    </Suspense>
+    </ClientSuspense>
   );
 }
