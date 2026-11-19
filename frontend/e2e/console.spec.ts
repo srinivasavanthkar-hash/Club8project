@@ -44,12 +44,10 @@ test.describe("no console errors", () => {
 
   test("a member record loads without console errors", async ({ page }) => {
     await signIn(page, "demo.manager");
-    await page.goto("/members");
-    const first = page.getByRole("link", { name: /^MSMC8-|^K8-/ }).first();
-    await first.waitFor();
-    const href = await first.getAttribute("href");
+    const list = (await (await page.request.get("/api/v1/members?page_size=1")).json()) as { items: { id: string }[] };
+    test.skip(list.items.length === 0, "no members on this stack (run_e2e.py --scenario adds them)");
     const problems = collect(page);
-    await page.goto(href!); // a full page load: the record is server-rendered, then hydrated
+    await page.goto(`/members/${list.items[0]!.id}`); // a full page load: the record is server-rendered, then hydrated
     await page.waitForLoadState("networkidle");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(problems).toEqual([]);
