@@ -49,3 +49,15 @@ def format_inr(amount: Decimal) -> str:
             groups.insert(0, head)
         whole = ",".join([*groups, tail])
     return f"{sign}₹{whole}.{frac}"
+
+
+def format_money(amount: Decimal, currency: str = "INR") -> str:
+    """INR with ₹ and Indian grouping (₹2,55,000.00); any other currency by its code (USD 2,550.00).
+
+    Currencies are never added together, so each amount is shown in its own currency.
+    """
+    if currency == "INR":
+        return format_inr(amount)
+    amount = money(amount)
+    sign = "-" if amount < 0 else ""
+    return f"{sign}{currency} {abs(amount):,.2f}"

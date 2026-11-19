@@ -9,7 +9,7 @@ development-only values.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -100,7 +100,19 @@ class Settings(BaseSettings):
     captcha_site_key: str | None = None
     captcha_secret_key: SecretStr | None = None
 
+    # PDF engine for receipts, notices, vouchers and letters. weasyprint = the real engine (needs Pango; the api and
+    # worker refuse to start without it). test_stub = backend tests only: a marked "TEST STUB - NOT A REAL DOCUMENT"
+    # PDF, refused in staging and production. There is no plain-text fallback.
+    pdf_engine: Literal["weasyprint", "test_stub"] = "weasyprint"
+
     otel_enabled: bool = False
+
+    @model_validator(mode="after")
+    def _no_pdf_stub_in_staging_or_prod(self) -> "Settings":
+        if self.pdf_engine == "test_stub" and self.env in ("staging", "prod"):
+            raise ValueError("CRM_PDF_ENGINE=test_stub is for backend tests only and is refused in staging and prod")
+        return self
+
     applicationinsights_connection_string: SecretStr | None = None
 
 

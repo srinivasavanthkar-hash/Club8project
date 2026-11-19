@@ -24,12 +24,14 @@ from app.core.config import get_settings
 from app.core.context import RequestContext, set_context
 from app.core.db import job_engine, sessionmaker
 from app.core.timeutil import today_ist
+from app.correspondence.pdf import require_engine
 from app.email.dispatch import install as install_email_dispatch
 
 log = logging.getLogger("crm.jobs")
 dramatiq.set_broker(RedisBroker(url=get_settings().redis_url))  # type: ignore[no-untyped-call]
 install_session_hooks()
 install_email_dispatch()  # emails queued by jobs are sent after their commit
+require_engine("worker")  # jobs may generate letters: no PDF engine, no start
 
 
 def _run(coro_fn: Callable[[], Coroutine[Any, Any, Any]]) -> Any:
