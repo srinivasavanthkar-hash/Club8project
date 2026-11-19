@@ -6,7 +6,7 @@
     python scripts/run_e2e.py --no-build ...        # reuse the previous e2e frontend build
 
 Needs Docker: the API runs from the backend Docker image, which carries the PDF engine (WeasyPrint + Pango); the
-API refuses to start without it (docs/DECISIONS.md D-PDF-1).
+API refuses to start without it (docs/DECISIONS.md D-PDF-1, D-PDF-2).
 
 What it does (and undoes):
 1. On a private Docker network: a throwaway PostgreSQL 16 (data on tmpfs, 127.0.0.1:5436) with a fresh database
