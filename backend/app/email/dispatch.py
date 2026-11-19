@@ -137,9 +137,22 @@ def _after_commit(session: Session) -> None:
         return
     loop = asyncio.get_running_loop()
     for job in jobs:
-        task = loop.create_task(deliver(job))
+        task = loop.create_task(_deliver_tracked(job))
         _TASKS.add(task)
-        task.add_done_callback(_TASKS.discard)
+
+
+async def _deliver_tracked(job: dict[str, Any]) -> bool:
+    """Inline send that removes its own task from `_TASKS` when it ends.
+
+    Not a done-callback: under coverage tracing (CI) a finished task's callback was once never run, so
+    the set never emptied and `drain()` looped forever (18-11-2026).
+    """
+    try:
+        return await deliver(job)
+    finally:
+        task = asyncio.current_task()
+        if task is not None:
+            _TASKS.discard(task)
 
 
 def _after_rollback(session: Session) -> None:
@@ -153,6 +166,14 @@ def install() -> None:
 
 
 async def drain() -> None:
-    """Tests: wait for inline sends to finish."""
-    while _TASKS:
-        await asyncio.gather(*list(_TASKS), return_exceptions=True)
+    """Tests: wait for inline sends to finish.
+
+    Only unfinished tasks are awaited; finished ones still in the set are dropped, so a task that ended without
+    removing itself can never make this loop forever.
+    """
+    while True:
+        pending = {t for t in _TASKS if not t.done()}
+        _TASKS.intersection_update(pending)
+        if not pending:
+            return
+        await asyncio.gather(*pending, return_exceptions=True)

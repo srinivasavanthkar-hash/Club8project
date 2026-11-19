@@ -73,6 +73,11 @@ Still outside this repository: `docs/BUILD_PROMPT.md` Section 3.1 (the file was 
 * Telemetry scrubbing of URLs (reset tokens appear in URLs only from Phase 2).
 * Demo users get `@example.test` addresses; e2e forgot → Mailpit → reset → login, expired link.
 
+## CI incidents
+| Date | What happened | Fix |
+|---|---|---|
+| 18-11-2026 | First CI run on `master`: the backend Tests step hung for hours in `test_password_reset_email.py` (admin option A). Only under coverage tracing (with or without greenlet support): a finished inline email task's done-callback never ran, so `dispatch.drain()` (tests only; Docker and Azure send through the worker) looped forever | Email tasks remove themselves from the set when they end (no done-callback); `drain()` skips finished tasks; regression test `tests/unit/test_email_drain.py`; `pytest-timeout` 5 min per test and `timeout-minutes` on every CI job |
+
 ## Before go-live (added 17-11-2026)
 | Task | Done | Notes |
 |---|---|---|
