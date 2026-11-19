@@ -27,7 +27,8 @@ export async function mockApi(page: Page, rec: Recording) {
   await page.context().addCookies([{ name: "crm_csrf", value: "visual-test", url: "http://127.0.0.1:3000" }, { name: "crm_csrf", value: "visual-test", url: "http://localhost:3000" }]);
   await page.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
-    if (route.request().method() !== "GET" && !url.pathname.endsWith("/reservations/quote")) {
+    const replayed = url.pathname.endsWith("/reservations/quote") || url.pathname.endsWith("/admin/letter-templates/preview");
+    if (route.request().method() !== "GET" && !replayed) {
       return route.fulfill({ status: 204 });
     }
     const exact = rec.responses[`${route.request().method()} ${keyOf(url)}`];

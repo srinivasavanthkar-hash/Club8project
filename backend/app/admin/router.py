@@ -54,12 +54,15 @@ async def preview_letter_template(data: TemplatePreviewIn, user: CurrentUser, se
     from jinja2 import TemplateError
 
     from app.admin.models import Company
+    from app.core.config import get_settings
     from app.correspondence.letters import compose
     from app.correspondence.samples import sample_context
 
-    company = (
-        await session.execute(select(Company).where(Company.is_active.is_(True)).order_by(Company.sort_order).limit(1))
-    ).scalar_one_or_none()
+    # the default brand's letterhead (CRM_DEFAULT_BRAND), else the first active company
+    active = select(Company).where(Company.is_active.is_(True)).order_by(Company.sort_order)
+    companies = list((await session.execute(active)).scalars())
+    brand = get_settings().default_brand.upper()
+    company = next((c for c in companies if c.code.upper() == brand), companies[0] if companies else None)
     try:
         html = compose(data.body_html, data.code, sample_context(data.code, company))
     except TemplateError as e:

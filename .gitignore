@@ -13,6 +13,7 @@ node_modules/
 .next-e2e/
 frontend/test-results/
 frontend/playwright-report/
+frontend/playwright-report-visual/
 *.tsbuildinfo
 .env
 .env.*
