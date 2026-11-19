@@ -245,7 +245,7 @@ const inr = (v: number) => `₹${v.toLocaleString("en-IN", { minimumFractionDigi
 async function pickReservation(s: Scene, dlg: ReturnType<Scene["page"]["getByRole"]>, reservationId: string): Promise<void> {
   const { d } = s;
   const api = await apiAs("demo.finance");
-  const r = await api.call<{ reservation_number: string }>("GET", `/reservations/${reservationId}`);
+  const { reservation: r } = await api.call<{ reservation: { reservation_number: string } }>("GET", `/reservations/${reservationId}`);
   await api.dispose();
   const box = dlg.getByRole("combobox", { name: "Reservation" });
   await d.click(box);
@@ -545,15 +545,22 @@ const clip3: ClipDef = {
         await d.settle();
         await d.click(page.getByRole("button", { name: "Add entry" }));
         const dlg = page.getByRole("dialog", { name: /^Add to / });
-        await d.fill(dlg.getByLabel("New entry JSON"), JSON.stringify(s.shared.asfDraft, null, 2));
-        await d.pause(2500);
+        const draft = s.shared.asfDraft as { amount: string; effective_from: string };
+        // the form: the unit type chosen by name from the list, the amount, the first day (no JSON)
+        const unit = dlg.getByRole("combobox", { name: "Unit type" });
+        await d.click(unit);
+        await d.type(unit, "Studio");
+        await d.click(dlg.getByRole("option", { name: /Studio/ }).first());
+        await d.type(dlg.getByLabel("Annual amount (before GST)", { exact: true }), draft.amount);
+        await d.fill(dlg.getByLabel("Effective from", { exact: true }), draft.effective_from);
+        await d.pause(1500);
         await guard.expect(422, /\/admin\/master\/asf-rates/, async () => {
-          await d.click(dlg.getByRole("button", { name: "Add", exact: true }));
+          await d.click(dlg.getByRole("button", { name: "Add entry", exact: true }));
           await dlg.getByText(/exceeds the \d+% annual cap/).waitFor(); // the refusal itself (the field label also says "cap")
           await d.settle();
           await d.star(dlg, 4500);
         });
-        await d.click(dlg.getByRole("button", { name: "Close", exact: true }).last()); // the footer button (the corner icon is also "Close")
+        await d.click(dlg.getByRole("button", { name: "Cancel", exact: true }));
         await d.pause(800);
       },
     },
