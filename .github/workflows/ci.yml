@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, master]
+    branches: [main, master, "fix/**", "feature/**"] # phase branches are checked before they are merged
   workflow_dispatch:
 
 permissions:
