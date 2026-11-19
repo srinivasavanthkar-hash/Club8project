@@ -15,7 +15,6 @@
   },
   "devDependencies": {
     "@types/node": "22.10.2",
-    "azurite": "3.33.0",
     "tsx": "4.23.15",
     "typescript": "5.7.2"
   }

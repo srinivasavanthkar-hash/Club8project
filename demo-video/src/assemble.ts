@@ -29,14 +29,15 @@ export const MAIN_OUTPUT: Output = {
   qcReport: path.join(OUT, "qc-report.txt"), qcDir: path.join(OUT, "qc"),
   minS: 300, maxS: 390, maxMB: 100,
 };
-/** A follow-up clip (docs/DEMO_CLIPS_PROMPT.md): sections in out/clip<n>/, outputs in out/clips/, 2:00-3:15, < 50 MB. */
+/** A follow-up clip (docs/DEMO_CLIPS_PROMPT.md): sections in out/clip<n>/, outputs in out/clips/, 1:30-3:15
+ * (minimum lowered from 2:00 on 18-11-2026, docs/NEXT_PHASE_PROMPT.md Phase 1), < 50 MB. */
 export function clipOutput(n: number, slug: string, sections: number): Output {
   const base = path.join(CLIPS, `club8-crm-clip${n}-${slug}`);
   return {
     dir: path.join(OUT, `clip${n}`), sections,
     mp4: `${base}.mp4`, srt: `${base}.srt`, chapters: path.join(CLIPS, `chapters-clip${n}.txt`),
     qcReport: path.join(CLIPS, `qc-clip${n}.txt`), qcDir: path.join(OUT, `clip${n}`, "qc"),
-    minS: 120, maxS: 195, maxMB: 50,
+    minS: 90, maxS: 195, maxMB: 50,
   };
 }
 export type QcResult = { total: number; mb: number; chapters: string[]; problems: string[] };
@@ -141,11 +142,13 @@ export async function assemble(o: Output = MAIN_OUTPUT): Promise<QcResult> {
   const srt: string[] = [];
   let n = 0;
   const short: string[] = [];
+  const unpunctuated: string[] = [];
   metas.forEach((m, k) => {
     for (const c of m.captions) {
       const s = starts[k]! + c.start, e = starts[k]! + Math.min(c.end, durations[k]!);
       srt.push(String(++n), `${ts(s)} --> ${ts(e)}`, c.text, "");
       if (e - s < 2.5) short.push(`${(e - s).toFixed(1)} s  ${c.text}`);
+      if (!/[.!?…:]$/.test(c.text.trim())) unpunctuated.push(c.text);
     }
   });
   fs.writeFileSync(o.srt, srt.join("\n"));
@@ -173,6 +176,7 @@ export async function assemble(o: Output = MAIN_OUTPUT): Promise<QcResult> {
       `peaks ${luma.min}-${luma.max} (single pixels at sharp edges, H.264 overshoot, clipped by players)`,
     "chapters:", ...chapters.map((c) => `  ${c}`),
     `captions: ${n}, shorter than 2.5 s: ${short.length}`, ...short.map((s) => `  ${s}`),
+    `captions without closing punctuation: ${unpunctuated.length}`, ...unpunctuated.map((s) => `  ${s}`),
   ].join("\n");
   fs.writeFileSync(o.qcReport, report + "\n");
   console.log(report);
@@ -182,6 +186,7 @@ export async function assemble(o: Output = MAIN_OUTPUT): Promise<QcResult> {
   if (!fmtOk) problems.push("video is not tagged yuv420p, limited range, BT.709");
   if (!lumaOk) problems.push("luma body leaves the limited range 16-235 (full-range video?)");
   if (short.length) problems.push(`${short.length} caption(s) shorter than 2.5 s`);
+  if (unpunctuated.length) problems.push(`${unpunctuated.length} caption(s) without a full stop or other closing punctuation`);
   for (const p of problems) console.warn(`!! ${p}`);
   return { total, mb, chapters, problems };
 }

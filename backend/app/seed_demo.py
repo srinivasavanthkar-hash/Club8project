@@ -181,6 +181,17 @@ async def seed_demo(session: AsyncSession) -> None:
                 effective_from=date(2026, 1, 1),
             )
         )
+        # an upgrade costs more: a Studio (T0) member staying in a One-Bedroom (T1) uses 1.5 nights per night. More
+        # specific than the two category rows above, so it wins over them (demo clip 1).
+        session.add(
+            m.DeductionMatrix(
+                purchased_category="PREMIUM",
+                purchased_unit_type="T0",
+                booked_unit_type="T1",
+                multiplier=Decimal("1.5"),
+                effective_from=date(2026, 1, 1),
+            )
+        )
     roles = {r.code: r for r in (await session.execute(select(Role))).scalars()}
     for username, name, rcodes in DEMO_USERS:
         if (await session.execute(select(User).where(User.username == username))).scalar_one_or_none() is None:

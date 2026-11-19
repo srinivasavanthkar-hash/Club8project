@@ -1,13 +1,16 @@
 /**
  * The recording stack: a throwaway database `crm_video` (never the developers' `crm_local`), its own API, a
- * separately built frontend and its own Mailpit. Started before recording, stopped afterwards.
+ * separately built frontend, its own Mailpit and Azurite. Started before recording, removed afterwards.
  *
- *   Database 127.0.0.1:5433          (--db docker, the default: a throwaway postgres:16-alpine container, data on
- *                                     tmpfs, removed at the end; --db embedded: the scratch pgserver in
- *                                     .local/club8-crm-pgserver-scratch, no Docker; never crm_local's server)
- *   API      http://127.0.0.1:8002   (CRM_E2E_TARGET=true, local rate limits for many quick sign-ins)
- *   Web      http://127.0.0.1:3002   (built into frontend/.next-video; CRM_ENV unset, so no DEV badge, as in prod)
- *   Mailpit  http://127.0.0.1:8027   (SMTP 1027)
+ * Needs Docker. Everything except the frontend runs in containers on a private network `club8-crm-video`:
+ *   Database 127.0.0.1:5433          postgres:16-alpine, data on tmpfs, removed at the end
+ *   API      http://127.0.0.1:8002   the backend Docker image (WeasyPrint + Pango: the real branded PDFs; the API
+ *                                    refuses to start without a PDF engine), CRM_E2E_TARGET=true, local rate limits
+ *   Mailpit  http://127.0.0.1:8027   (SMTP 1027), the same image as docker-compose
+ *   Azurite  http://127.0.0.1:10000  documents, the same image as docker-compose
+ *   Web      http://127.0.0.1:3002   on this machine (built into frontend/.next-video; CRM_ENV unset, so no DEV
+ *                                    badge, as in prod)
+ * There is no worker: emails are sent by the API itself (CRM_EMAIL_DISPATCH=inline), as in the e2e runner.
  */
 import { type ChildProcess, execFileSync, spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -17,9 +20,17 @@ import { fileURLToPath } from "node:url";
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const LOCAL = path.join(ROOT, ".local");
 export const PY = path.join(ROOT, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
-export const PORTS = { api: 8002, web: 3002, mailpit: 8027, smtp: 1027 };
+export const PORTS = { api: 8002, web: 3002, mailpit: 8027, smtp: 1027, azurite: 10000, db: 5433 };
 export const BASE = `http://127.0.0.1:${PORTS.web}`;
 export const MAILPIT = `http://127.0.0.1:${PORTS.mailpit}`;
+
+const NET = "club8-crm-video";
+const C = { db: "club8-crm-video-db", mail: "club8-crm-video-mailpit", blob: "club8-crm-video-azurite", api: "club8-crm-video-api" };
+const IMAGES = { db: "postgres:16-alpine", mail: "axllent/mailpit:v1.32.0", blob: "mcr.microsoft.com/azure-storage/azurite:3.33.0", api: "club8-crm-backend:video" };
+// Development-only credentials for a database that lives for one recording; published on 127.0.0.1 only.
+const VIDEO_DB = { user: "crm_owner", password: "crm_video_dev" };
+// Azurite's published, well-known development key (not a secret), as in docker-compose.yml
+const AZURITE_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
 
 async function waitFor(url: string, seconds = 180): Promise<void> {
   const end = Date.now() + seconds * 1000;
@@ -33,135 +44,134 @@ async function waitFor(url: string, seconds = 180): Promise<void> {
   throw new Error(`Timed out waiting for ${url}`);
 }
 
-/** `apiEnv`: the API process environment (database, blob storage, email), for helper scripts run against the same
- * throwaway database (e.g. demo-video/seed_clock.py). */
-export type Stack = { stop: () => void; apiEnv: NodeJS.ProcessEnv };
-export type DbMode = "docker" | "embedded";
-export const DB_MODES: readonly DbMode[] = ["docker", "embedded"];
+/** `exec`: runs a command inside the API container (same image, environment and database as the API), e.g.
+ * demo-video/seed_clock.py, which generates a PDF and therefore needs the PDF engine. Returns stdout. */
+export type Stack = { stop: () => void; exec: (args: string[]) => string };
 
-// ---------------------------------------------------------------- throwaway PostgreSQL container (--db docker)
-// Development-only credentials for a container that lives for one recording; it listens on 127.0.0.1 only.
-const VIDEO_DB = { container: "club8-crm-video-db", image: "postgres:16-alpine", port: 5433, user: "crm_owner", password: "crm_video_dev" };
-
-function docker(args: string[]): { ok: boolean; out: string } {
-  const r = spawnSync("docker", args, { encoding: "utf8", windowsHide: true });
-  return { ok: r.status === 0, out: `${r.stdout ?? ""}${r.stderr ?? ""}`.trim() || (r.error?.message ?? "") };
+function docker(args: string[]): { ok: boolean; out: string; stdout: string } {
+  const r = spawnSync("docker", args, { encoding: "utf8", windowsHide: true, maxBuffer: 1 << 26 });
+  return { ok: r.status === 0, stdout: r.stdout ?? "", out: `${r.stdout ?? ""}${r.stderr ?? ""}`.trim() || (r.error?.message ?? "") };
+}
+function must(args: string[], what: string): string {
+  const r = docker(args);
+  if (!r.ok) throw new Error(`${what} failed:\n${r.out}`);
+  return r.stdout;
 }
 
-/** Removes the recording database container, if there is one (idempotent; safe in an exit handler). */
-function removeVideoDb(): void {
-  docker(["rm", "--force", "--volumes", VIDEO_DB.container]);
-}
-
-/** Starts the container and waits for its health check; returns the admin (asyncpg) URL. */
-async function startDockerDb(): Promise<string> {
-  if (!docker(["version", "--format", "{{.Server.Version}}"]).ok) {
-    throw new Error("Docker is not running: start Docker Desktop, or record with --db embedded");
+/** Removes the recording containers and network, if any (idempotent; safe in an exit handler). The API log is kept. */
+function removeAll(): void {
+  if (docker(["inspect", C.api]).ok) {
+    try { fs.writeFileSync(path.join(LOCAL, "video-api.log"), docker(["logs", C.api]).out); } catch { /* best effort */ }
   }
-  removeVideoDb(); // left behind by a run that was killed before it could clean up
-  const { container, image, port, user, password } = VIDEO_DB;
-  const run = docker([
-    "run", "--detach", "--name", container,
-    "--env", `POSTGRES_USER=${user}`, "--env", `POSTGRES_PASSWORD=${password}`, "--env", "POSTGRES_DB=postgres",
-    "--publish", `127.0.0.1:${port}:5432`,
-    // data on tmpfs: no volume, nothing survives the container
-    "--tmpfs", "/var/lib/postgresql/data",
-    // over TCP: during first-time setup the image runs a temporary server on the Unix socket only, which a plain
-    // pg_isready would already report as ready just before that server restarts
-    "--health-cmd", `pg_isready -h 127.0.0.1 -U ${user} -d postgres`,
-    "--health-interval", "1s", "--health-timeout", "3s", "--health-retries", "90",
-    image,
-  ]);
-  if (!run.ok) throw new Error(`Could not start the ${image} container on 127.0.0.1:${port}:\n${run.out}`);
+  docker(["rm", "--force", "--volumes", C.api, C.blob, C.mail, C.db]);
+  docker(["network", "rm", NET]);
+}
+
+async function waitHealthy(container: string): Promise<void> {
   const deadline = Date.now() + 120_000;
   for (;;) {
     const s = docker(["inspect", "--format", "{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{end}}", container]);
     const [state, health] = s.ok ? s.out.split(/\s+/) : ["missing", ""];
-    if (state === "running" && health === "healthy") break;
-    if (state !== "running" && state !== "created" || health === "unhealthy" || Date.now() > deadline) {
-      const logs = docker(["logs", "--tail", "40", container]).out;
-      throw new Error(`The recording database did not become healthy (${state}${health ? `, ${health}` : ""}):\n${logs}`);
+    if (state === "running" && health === "healthy") return;
+    if ((state !== "running" && state !== "created") || health === "unhealthy" || Date.now() > deadline) {
+      throw new Error(`${container} did not become healthy (${state}${health ? `, ${health}` : ""}):\n${docker(["logs", "--tail", "40", container]).out}`);
     }
     await new Promise((r) => setTimeout(r, 500));
   }
-  return `postgresql+asyncpg://${user}:${password}@127.0.0.1:${port}/postgres`;
 }
 
-export async function startStack(opts: { build: boolean; db: DbMode }): Promise<Stack> {
+export async function startStack(opts: { build: boolean }): Promise<Stack> {
   fs.mkdirSync(LOCAL, { recursive: true });
-  // Git Bash puts Git's own MinGW folders on PATH; their glib/pango DLLs clash with WeasyPrint's (receipts, vouchers)
-  // and crash the API mid-request. Drop them for the processes we start.
-  const env: NodeJS.ProcessEnv = { ...process.env };
-  const pathKey = Object.keys(env).find((k) => k.toUpperCase() === "PATH") ?? "PATH";
-  env[pathKey] = (env[pathKey] ?? "").split(path.delimiter).filter((p) => !/[\\/]Git[\\/](mingw64|usr)[\\/]/i.test(p) && !/^\/(mingw64|usr)\//.test(p)).join(path.delimiter);
-
+  if (!docker(["version", "--format", "{{.Server.Version}}"]).ok) {
+    throw new Error("Docker is not running: start Docker Desktop (the recording stack runs in containers)");
+  }
   const procs: ChildProcess[] = [];
   let stopped = false;
   const stop = () => {
     if (stopped) return;
     stopped = true;
     for (const p of procs.reverse()) { try { p.kill(); } catch { /* gone */ } }
-    if (opts.db === "docker") removeVideoDb();
+    removeAll();
   };
-  // also on Ctrl+C or a crash: the exit handler runs synchronously, so the container never outlives the run
+  // also on Ctrl+C or a crash: the exit handler runs synchronously, so no container outlives the run
   process.once("exit", stop);
   for (const sig of ["SIGINT", "SIGTERM"] as const) process.once(sig, () => process.exit(130));
 
   try {
-    console.log(`==> Fresh database crm_video (migrations + DEMO seed; ${opts.db === "docker" ? `${VIDEO_DB.image} container on :${VIDEO_DB.port}` : "embedded PostgreSQL"})`);
-    // embedded: local_db.py puts crm_video on the scratch server (.local/club8-crm-pgserver-scratch) and refuses
-    // crm_local's folder; docker: the container started here
-    const dbArgs = [path.join(ROOT, "scripts", "local_db.py"), "--name", "crm_video"];
-    if (opts.db === "docker") dbArgs.push("--admin-url", await startDockerDb());
-    const out = execFileSync(PY, dbArgs, { env, encoding: "utf8" });
-    const dbUrl = out.trim().split(/\r?\n/).pop()!;
+    removeAll(); // left behind by a run that was killed before it could clean up
+    must(["network", "create", NET], "Creating the recording network");
 
-    const mailpit = path.join(LOCAL, "mailpit", process.platform === "win32" ? "mailpit.exe" : "mailpit");
-    procs.push(spawn(mailpit, ["--smtp", `127.0.0.1:${PORTS.smtp}`, "--listen", `127.0.0.1:${PORTS.mailpit}`], { stdio: "ignore" }));
+    console.log(`==> Fresh database crm_video (migrations + DEMO seed; ${IMAGES.db} on :${PORTS.db})`);
+    must([
+      "run", "--detach", "--name", C.db, "--network", NET, "--network-alias", "db",
+      "--env", `POSTGRES_USER=${VIDEO_DB.user}`, "--env", `POSTGRES_PASSWORD=${VIDEO_DB.password}`, "--env", "POSTGRES_DB=postgres",
+      "--publish", `127.0.0.1:${PORTS.db}:5432`,
+      "--tmpfs", "/var/lib/postgresql/data", // no volume: nothing survives the container
+      // over TCP: during first-time setup the image runs a temporary server on the Unix socket only
+      "--health-cmd", `pg_isready -h 127.0.0.1 -U ${VIDEO_DB.user} -d postgres`,
+      "--health-interval", "1s", "--health-timeout", "3s", "--health-retries", "90",
+      IMAGES.db,
+    ], `Starting ${IMAGES.db}`);
+    await waitHealthy(C.db);
+    // scripts/local_db.py (host Python) runs the migrations and the DEMO seed; neither makes a PDF
+    const adminUrl = `postgresql+asyncpg://${VIDEO_DB.user}:${VIDEO_DB.password}@127.0.0.1:${PORTS.db}/postgres`;
+    const out = execFileSync(PY, [path.join(ROOT, "scripts", "local_db.py"), "--name", "crm_video", "--admin-url", adminUrl], { encoding: "utf8" });
+    const dbUrl = out.trim().split(/\r?\n/).pop()!.replace(`127.0.0.1:${PORTS.db}`, "db:5432");
+
+    must(["run", "--detach", "--name", C.mail, "--network", NET, "--network-alias", "mailpit",
+      "--publish", `127.0.0.1:${PORTS.mailpit}:8025`, "--publish", `127.0.0.1:${PORTS.smtp}:1025`, IMAGES.mail], "Starting Mailpit");
+    // Documents need a real blob endpoint the browser can open (the in-memory store hands out memory:// links).
+    must(["run", "--detach", "--name", C.blob, "--network", NET, "--network-alias", "azurite",
+      "--publish", `127.0.0.1:${PORTS.azurite}:10000`, IMAGES.blob,
+      "azurite-blob", "--blobHost", "0.0.0.0", "--loose", "--skipApiVersionCheck"], "Starting Azurite");
     await waitFor(`${MAILPIT}/api/v1/info`);
+    await waitFor(`http://127.0.0.1:${PORTS.azurite}/devstoreaccount1?comp=list`);
 
-    // Documents (receipts, vouchers, uploads) need a real blob endpoint the browser can open: the in-memory store
-    // hands out memory:// links. Azurite (same version as docker-compose), fresh workspace per run.
-    const azuriteDir = path.join(LOCAL, "azurite-video");
-    fs.rmSync(azuriteDir, { recursive: true, force: true });
-    fs.mkdirSync(azuriteDir, { recursive: true });
-    const azurite = path.join(ROOT, "demo-video", "node_modules", "azurite", "dist", "src", "blob", "main.js");
-    procs.push(spawn(process.execPath, [azurite, "--blobHost", "127.0.0.1", "--blobPort", "10000", "--location", azuriteDir, "--loose", "--skipApiVersionCheck", "--silent"], { stdio: "ignore" }));
-    await waitFor("http://127.0.0.1:10000/devstoreaccount1?comp=list");
-
-    const apiEnv = {
-      ...env,
+    console.log("==> Backend image (WeasyPrint + Pango)");
+    must(["build", "--quiet", "--tag", IMAGES.api, path.join(ROOT, "backend")], "Building the backend image");
+    const apiEnv: Record<string, string> = {
       CRM_DATABASE_URL: dbUrl,
       CRM_ENV: "local",
       CRM_E2E_TARGET: "true",
       CRM_BLOB_PROVIDER: "azurite",
-      CRM_BLOB_ACCOUNT_URL: "http://127.0.0.1:10000/devstoreaccount1",
-      // Azurite's published, well-known development key (not a secret), as in docker-compose.yml
-      CRM_BLOB_CONNECTION_STRING:
-        "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;",
+      // links handed to the browser use the published address; the API itself talks to azurite:10000
+      CRM_BLOB_ACCOUNT_URL: `http://127.0.0.1:${PORTS.azurite}/devstoreaccount1`,
+      CRM_BLOB_CONNECTION_STRING: `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=${AZURITE_KEY};BlobEndpoint=http://azurite:10000/devstoreaccount1;`,
       CRM_VIRUS_SCAN_PROVIDER: "none",
       CRM_COOKIE_SECURE: "false",
       CRM_RATE_LIMIT_LOGIN: "300/minute",
       CRM_RATE_LIMIT_LOGIN_ACCOUNT: "60/minute",
       CRM_EMAIL_PROVIDER: "smtp",
-      CRM_SMTP_PORT: String(PORTS.smtp),
+      CRM_SMTP_HOST: "mailpit",
+      CRM_SMTP_PORT: "1025",
       CRM_EMAIL_DISPATCH: "inline",
       CRM_APP_BASE_URL: BASE,
+      PYTHONPATH: "/app",
     };
-    console.log(`==> API on :${PORTS.api}`);
-    const apiLog = fs.openSync(path.join(LOCAL, "video-api.log"), "w");
-    procs.push(spawn(PY, ["-m", "uvicorn", "app.main:app", "--port", String(PORTS.api)], { cwd: path.join(ROOT, "backend"), env: apiEnv, stdio: ["ignore", apiLog, apiLog] }));
+    console.log(`==> API on :${PORTS.api} (backend image)`);
+    must([
+      "run", "--detach", "--name", C.api, "--network", NET, "--publish", `127.0.0.1:${PORTS.api}:8000`,
+      // seed_clock.py (recording-only helper) runs inside this container: read-only, never part of the image
+      "--volume", `${path.join(ROOT, "demo-video")}:/demo-video:ro`,
+      ...Object.entries(apiEnv).flatMap(([k, v]) => ["--env", `${k}=${v}`]),
+      IMAGES.api, "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000",
+    ], "Starting the API");
     await waitFor(`http://127.0.0.1:${PORTS.api}/healthz`);
+    const exec = (args: string[]): string => {
+      const r = docker(["exec", "--workdir", "/app", C.api, ...args]);
+      if (!r.ok) throw new Error(`${args.join(" ")} failed in the API container:\n${r.out.slice(-3000)}`);
+      return r.stdout;
+    };
+
     console.log("==> Section 14 scenario (so the dashboard has content and 9001 exists)");
     try {
-      execFileSync(PY, ["-m", "app.demo_cli", "--base-url", `http://127.0.0.1:${PORTS.api}`], { cwd: path.join(ROOT, "backend"), env: { ...apiEnv, PYTHONPATH: "." }, encoding: "utf8", stdio: "pipe" });
+      exec(["python", "-m", "app.demo_cli", "--base-url", "http://127.0.0.1:8000"]);
     } catch (e) {
-      const err = e as { stdout?: string; stderr?: string };
-      throw new Error(`Section 14 scenario failed:\n${(err.stdout ?? "").slice(-1500)}\n${(err.stderr ?? "").slice(-3000)}`);
+      throw new Error(`Section 14 scenario failed:\n${(e as Error).message}`);
     }
 
     // CRM_ENV deliberately absent: the environment badge reads it per request and shows nothing when unset (prod).
-    const { CRM_ENV: _ignored, ...webBase } = env;
+    const { CRM_ENV: _ignored, ...webBase } = process.env;
     const webEnv = { ...webBase, NEXT_DIST_DIR: ".next-video", API_INTERNAL_URL: `http://127.0.0.1:${PORTS.api}`, NEXT_TELEMETRY_DISABLED: "1" };
     const next = [path.join(ROOT, "frontend", "node_modules", "next", "dist", "bin", "next")];
     if (opts.build || !fs.existsSync(path.join(ROOT, "frontend", ".next-video"))) {
@@ -174,7 +184,7 @@ export async function startStack(opts: { build: boolean; db: DbMode }): Promise<
     await waitFor(`${BASE}/login`);
     const meta = await (await fetch(`${BASE}/api/v1/meta`)).json();
     if (!meta.e2e_target) throw new Error("The recording frontend is not talking to the recording API");
-    return { stop, apiEnv };
+    return { stop, exec };
   } catch (e) {
     stop();
     throw e;

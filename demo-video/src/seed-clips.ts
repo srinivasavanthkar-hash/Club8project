@@ -5,11 +5,9 @@
  * Two states need help from the app itself (demo-video/seed_clock.py): the nightly overdue job (Rohan) and one
  * default notice dated in the past (Meera; approved option A, only that call sees the earlier date).
  */
-import { execFileSync } from "node:child_process";
-import path from "node:path";
 import { type Api, PASSWORDS, PDF, TOTP_KEYS, addDays, apiAs, istToday, totpFor } from "./api";
 import type { Shared } from "./scene";
-import { PY, ROOT, type Stack } from "./stack";
+import type { Stack } from "./stack";
 
 type Member = { id: string; membership_number: string; version: number; status: string };
 type Quote = { entitlement_nights: string; plan: { year: number; nights: string; kind: string }[]; blocking: string[]; window_warnings: string[]; asf: { membership_year: number; new: boolean }[] };
@@ -270,11 +268,10 @@ export async function requireIntactActivityLog(when: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------- the app's own clock-dependent steps
-/** demo-video/seed_clock.py against this run's database (see its docstring for the safeguards). */
+/** demo-video/seed_clock.py against this run's database (see its docstring for the safeguards), inside the API
+ * container: the notice it issues is a real PDF, which needs the PDF engine. */
 export function seedClock(stack: Stack, args: string[]): string {
-  return execFileSync(PY, [path.join(ROOT, "demo-video", "seed_clock.py"), ...args], {
-    cwd: path.join(ROOT, "backend"), env: { ...stack.apiEnv, PYTHONPATH: "." }, encoding: "utf8",
-  }).trim();
+  return stack.exec(["python", "/demo-video/seed_clock.py", ...args]).trim();
 }
 
 /** The activity log's hash chain, checked by the app itself (POST /activity-log/verify) as an administrator. */

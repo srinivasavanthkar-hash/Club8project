@@ -5,7 +5,6 @@
  *   npm run record                     full run: fresh crm_video stack, all sections, assemble the MP4
  *   npm run record -- --section 6      re-record one section (earlier sections replay unrecorded to recreate data)
  *   npm run record -- --no-build       reuse the previous recording frontend build
- *   npm run record -- --db embedded    database in embedded PostgreSQL instead of a Docker container (no Docker)
  *   npm run record -- --clip 2         one follow-up clip (1, 2 or 3), or --clip all; each on a fresh stack
  *   npm run record -- --clip 2 --dry   run the clip's seed and scenes at full speed without recording (checks)
  *   npm run assemble                   only re-assemble out/clips into the MP4 (e.g. after editing nothing)
@@ -18,7 +17,7 @@ import { MAIN_OUTPUT, assemble, clipOutput } from "./assemble";
 import { CLIP_DEFS, writeClipsIndex } from "./clips";
 import { PACE } from "./overlay";
 import { CLIPS, OUT, type Scene, type Section, type Shared, browserOptions, runSection } from "./scene";
-import { DB_MODES, type DbMode, MAILPIT, startStack } from "./stack";
+import { MAILPIT, startStack } from "./stack";
 
 // ---------------------------------------------------------------- fictitious people (title card says so)
 const LEAD = { name: "Ananya Rao", mobile: "9000000001", email: "ananya.rao@example.com", city: "Bengaluru", pan: "ABCDE1234F" };
@@ -493,10 +492,10 @@ const SECTIONS: Section[] = [
 // ---------------------------------------------------------------- main
 const arg = (args: string[], name: string) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
 
-async function recordMainVideo(args: string[], db: DbMode): Promise<void> {
+async function recordMainVideo(args: string[]): Promise<void> {
   const only = arg(args, "--section") !== undefined ? Number(arg(args, "--section")) : null;
   fs.mkdirSync(CLIPS, { recursive: true });
-  const stack = await startStack({ build: !args.includes("--no-build"), db });
+  const stack = await startStack({ build: !args.includes("--no-build") });
   const browser = await chromium.launch(browserOptions(["--window-size=1920,1080"]));
   try {
     const shared: Shared = {};
@@ -516,7 +515,7 @@ async function recordMainVideo(args: string[], db: DbMode): Promise<void> {
 }
 
 /** Each clip on its own fresh stack (and throwaway database), seeded through the API, then assembled and checked. */
-async function recordClips(args: string[], db: DbMode): Promise<void> {
+async function recordClips(args: string[]): Promise<void> {
   const which = arg(args, "--clip")!;
   const ids = which === "all" ? Object.keys(CLIP_DEFS).map(Number) : [Number(which)];
   if (ids.some((n) => !CLIP_DEFS[n])) throw new Error(`--clip must be one of: ${Object.keys(CLIP_DEFS).join(", ")}, all`);
@@ -527,7 +526,7 @@ async function recordClips(args: string[], db: DbMode): Promise<void> {
     const def = CLIP_DEFS[n]!;
     const out = clipOutput(n, def.slug, def.sections.length);
     console.log(`\n######## Clip ${n}: ${def.title}${dry ? " (dry run, not recorded)" : ""}`);
-    const stack = await startStack({ build, db });
+    const stack = await startStack({ build });
     build = false; // one frontend build per run is enough
     const browser = await chromium.launch(browserOptions(["--window-size=1920,1080"]));
     try {
@@ -554,10 +553,9 @@ async function recordClips(args: string[], db: DbMode): Promise<void> {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   if (args.includes("--assemble-only")) { await assemble(MAIN_OUTPUT); return; }
-  const db = (arg(args, "--db") ?? "docker") as DbMode;
-  if (!DB_MODES.includes(db)) throw new Error(`--db must be one of: ${DB_MODES.join(", ")}`);
-  if (args.includes("--clip")) await recordClips(args, db);
-  else await recordMainVideo(args, db);
+  if (args.includes("--db")) throw new Error("--db was removed: the recording stack always runs in Docker (README)");
+  if (args.includes("--clip")) await recordClips(args);
+  else await recordMainVideo(args);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
