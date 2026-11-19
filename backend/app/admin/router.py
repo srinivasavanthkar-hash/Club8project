@@ -34,6 +34,39 @@ def _guard(slug: str, user: User, write: bool) -> None:
         raise Forbidden(f"Missing permission: {need}", code="PermissionDenied")
 
 
+@router.get("/master-forms")
+async def master_forms(user: CurrentUser) -> dict[str, Any]:
+    """How to draw the form and the list of every master table (labels, field types, related tables, choices)."""
+    from app.admin.forms import all_forms
+
+    return all_forms()
+
+
+class TemplatePreviewIn(BaseModel):
+    code: str = Field(max_length=40)
+    body_html: str = Field(max_length=100_000)
+
+
+@router.post("/letter-templates/preview")
+async def preview_letter_template(data: TemplatePreviewIn, user: CurrentUser, session: SessionDep) -> dict[str, str]:
+    """The letter as it would print, filled with FICTITIOUS sample data (nothing is saved or logged)."""
+    _guard("letter-templates", user, write=True)
+    from jinja2 import TemplateError
+
+    from app.admin.models import Company
+    from app.correspondence.letters import compose
+    from app.correspondence.samples import sample_context
+
+    company = (
+        await session.execute(select(Company).where(Company.is_active.is_(True)).order_by(Company.sort_order).limit(1))
+    ).scalar_one_or_none()
+    try:
+        html = compose(data.body_html, data.code, sample_context(data.code, company))
+    except TemplateError as e:
+        raise DomainError(f"The letter text has an error: {e}", code="TemplateError") from e
+    return {"html": html}
+
+
 @router.get("/master/{slug}")
 async def list_master(
     slug: str, user: CurrentUser, session: SessionDep, include_inactive: bool = Query(False)
