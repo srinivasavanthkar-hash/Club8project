@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .coverage
+*.egg-info/
 coverage.xml
 htmlcov/
 node_modules/
