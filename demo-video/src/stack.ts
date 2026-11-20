@@ -176,7 +176,13 @@ export async function startStack(opts: { build: boolean }): Promise<Stack> {
     const next = [path.join(ROOT, "frontend", "node_modules", "next", "dist", "bin", "next")];
     if (opts.build || !fs.existsSync(path.join(ROOT, "frontend", ".next-video"))) {
       console.log("==> Frontend build (.next-video)");
-      execFileSync(process.execPath, [...next, "build"], { cwd: path.join(ROOT, "frontend"), env: webEnv, stdio: "ignore" });
+      // next build rewrites two tracked files to point at its distDir: put them back so git stays clean
+      const kept = ["tsconfig.json", "next-env.d.ts"].map((f) => path.join(ROOT, "frontend", f)).map((f) => [f, fs.readFileSync(f)] as const);
+      try {
+        execFileSync(process.execPath, [...next, "build"], { cwd: path.join(ROOT, "frontend"), env: webEnv, stdio: "ignore" });
+      } finally {
+        for (const [f, content] of kept) fs.writeFileSync(f, content);
+      }
     }
     console.log(`==> Frontend on :${PORTS.web}`);
     const webLog = fs.openSync(path.join(LOCAL, "video-web.log"), "w");

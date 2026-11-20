@@ -170,7 +170,13 @@ def main() -> int:
                 raise SystemExit(f"Section 14 scenario failed:\n{r.stdout[-1500:]}\n{r.stderr[-3000:]}")
         if not args.no_build or not (ROOT / "frontend" / ".next-e2e").exists():
             print("==> Frontend build (.next-e2e)")
-            subprocess.run([*next_bin, "build"], cwd=ROOT / "frontend", env=web_env, check=True)
+            # next build rewrites two tracked files to point at its distDir: put them back so git stays clean
+            kept = {f: f.read_bytes() for f in (ROOT / "frontend" / n for n in ("tsconfig.json", "next-env.d.ts"))}
+            try:
+                subprocess.run([*next_bin, "build"], cwd=ROOT / "frontend", env=web_env, check=True)
+            finally:
+                for f, content in kept.items():
+                    f.write_bytes(content)
         print(f"==> Frontend on :{args.web_port}")
         web_log = open(LOCAL / "e2e-web.log", "wb")  # closed when the process exits
         procs.append(
