@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
     <section className={card} aria-labelledby="fp-title">
       <h1 id="fp-title" className="text-2xl font-semibold">Forgot your password?</h1>
       <p className="mt-1 text-base text-fg-muted">Enter your username or registered email address. We’ll email you a link to set a new password.</p>
-      <form onSubmit={submit} className="mt-6 flex flex-col gap-4" noValidate>
+      <form method="post" onSubmit={submit} className="mt-6 flex flex-col gap-4" noValidate>
         <Field label="Username or email" htmlFor="fp-id" required>
           <Input id="fp-id" autoComplete="username" autoFocus value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
         </Field>

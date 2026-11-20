@@ -130,7 +130,10 @@ const clip1: ClipDef = {
         await occupancy.waitFor({ state: "detached" });
         await page.locator('[aria-busy="true"]').first().waitFor({ state: "detached" });
         await d.settle();
-        await d.star(page.getByRole("region", { name: "Entitlement calculation" }), 4000);
+        const calc = page.getByRole("region", { name: "Entitlement calculation" });
+        await calc.getByText(/1\.5/).first().waitFor(); // the DEMO matrix: an upgrade costs 1.5 nights per night
+        await d.caption("An upgrade costs more: each night in a one-bedroom uses 1.5 of her studio nights.");
+        await d.star(calc, 5000);
         await d.caption("Gifted stays need the guest's details and the member's message.");
         await d.pause(1200);
         await d.select(page.getByLabel("Occupancy", { exact: true }), "Gift");
@@ -199,6 +202,7 @@ const clip1: ClipDef = {
           await s.thaw();
           await d.caption(`Kavya has 2 nights left in ${dt.year} again, and nothing borrowed from ${dt.nextYear}.`);
           await d.star(left, 4500);
+          await s.tab("Entitlement");
         } else {
           await page.getByRole("heading", { name: /^MSMC8-/ }).waitFor();
           await s.thaw();
@@ -208,6 +212,13 @@ const clip1: ClipDef = {
           await d.caption(`Kavya has 2 nights left in ${dt.year} again, and nothing borrowed from ${dt.nextYear}.`);
           await d.star(row, 4500);
         }
+        // and the borrowed year is whole again
+        const next = page.getByRole("row", { name: new RegExp(`^${dt.nextYear}\\b`) });
+        await next.waitFor();
+        await d.settle();
+        await d.caption(`${dt.nextYear} is back to its full 7 nights.`);
+        await d.star(next, 4500);
+        await d.pause(1000);
       },
     },
     endCard(7),
@@ -230,6 +241,18 @@ const clip1: ClipDef = {
 // ---------------------------------------------------------------- clip 2: money
 const inr = (v: number) => `₹${v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+/** Chooses the member's reservation in the payment dialog's searchable list (by its number). */
+async function pickReservation(s: Scene, dlg: ReturnType<Scene["page"]["getByRole"]>, reservationId: string): Promise<void> {
+  const { d } = s;
+  const api = await apiAs("demo.finance");
+  const { reservation: r } = await api.call<{ reservation: { reservation_number: string } }>("GET", `/reservations/${reservationId}`);
+  await api.dispose();
+  const box = dlg.getByRole("combobox", { name: "Reservation" });
+  await d.click(box);
+  await d.type(box, r.reservation_number);
+  await d.click(dlg.getByRole("option", { name: new RegExp(r.reservation_number) }));
+}
+
 let docShots = 0;
 /** Open a document (receipt, notice) in the app's preview and give the PDF viewer time to render it. The preview is a
  * narrow side panel, so the recording opens the PDF fitted to the panel's width without the thumbnail strip (Chrome PDF
@@ -246,9 +269,10 @@ async function openDoc(s: Scene, link: ReturnType<Scene["page"]["getByRole"]>, r
   });
   try {
     await d.click(link);
-    await page.getByTestId("doc-preview").waitFor();
+    // the app's viewer shows a loading state until the document has loaded (never an empty box)
+    await page.locator('[data-testid="doc-viewer"][data-state="ready"]').waitFor({ timeout: 30_000 });
     const debug = !!process.env.DEMO_DEBUG_DOCS;
-    await page.waitForTimeout(d.mode.fast && !debug ? 0 : 6500); // Chrome's PDF viewer renders the document
+    await page.waitForTimeout(d.mode.fast && !debug ? 0 : 2500); // Chrome's PDF viewer paints the first page
     if (debug) await page.screenshot({ path: path.join(CLIPS, "..", `debug-doc-${++docShots}.png`) });
     await d.pause(readMs);
     await page.keyboard.press("Escape");
@@ -279,7 +303,7 @@ const clip2: ClipDef = {
         await d.type(dlg.getByLabel("Amount", { exact: true }), "2500");
         await d.select(dlg.getByLabel("Method", { exact: true }), "UPI");
         await d.type(dlg.getByLabel("Transaction / approval reference", { exact: true }), "DEMO-UPI-BKF-01");
-        await d.fill(dlg.getByLabel("Reservation ID", { exact: true }), s.shared.kavyaStays.stayB);
+        await pickReservation(s, dlg, s.shared.kavyaStays.stayB);
         await d.click(dlg.getByRole("button", { name: /Save payment/ }));
         await page.getByRole("cell", { name: "BOOKING_FEE" }).first().waitFor();
         await d.settle();
@@ -310,8 +334,24 @@ const clip2: ClipDef = {
         await ledger.getByRole("row").filter({ hasText: /reversal/i }).first().waitFor();
         await d.settle();
         await d.scrollTo(ledger, "start");
-        await d.star(ledger, 5500);
-        await d.pause(2000);
+        await d.star(ledger, 4500);
+        // then the correct fee, on the same stay
+        await d.caption("Then the correct fee is recorded: ₹2,000.00, on the same stay.");
+        await d.pause(1200);
+        await d.click(page.getByRole("button", { name: "Record payment" }));
+        const pay = page.getByRole("dialog", { name: "Record payment" });
+        await d.select(pay.getByLabel("Payment type", { exact: true }), "Booking fee");
+        await d.type(pay.getByLabel("Amount", { exact: true }), "2000");
+        await d.select(pay.getByLabel("Method", { exact: true }), "UPI");
+        await d.type(pay.getByLabel("Transaction / approval reference", { exact: true }), "DEMO-UPI-BKF-02");
+        await pickReservation(s, pay, s.shared.kavyaStays.stayB);
+        await d.click(pay.getByRole("button", { name: /Save payment/ }));
+        const corrected = ledger.getByRole("row").filter({ hasText: "BOOKING_FEE" }).filter({ hasText: "2,000.00" }).filter({ hasNotText: /reversal/i }).first();
+        await corrected.waitFor();
+        await d.settle();
+        await d.scrollTo(ledger, "start");
+        await d.star(corrected, 5000);
+        await d.pause(1500);
       },
     },
     {
@@ -505,15 +545,22 @@ const clip3: ClipDef = {
         await d.settle();
         await d.click(page.getByRole("button", { name: "Add entry" }));
         const dlg = page.getByRole("dialog", { name: /^Add to / });
-        await d.fill(dlg.getByLabel("New entry JSON"), JSON.stringify(s.shared.asfDraft, null, 2));
-        await d.pause(2500);
+        const draft = s.shared.asfDraft as { amount: string; effective_from: string };
+        // the form: the unit type chosen by name from the list, the amount, the first day (no JSON)
+        const unit = dlg.getByRole("combobox", { name: "Unit type" });
+        await d.click(unit);
+        await d.type(unit, "Studio");
+        await d.click(dlg.getByRole("option", { name: /Studio/ }).first());
+        await d.type(dlg.getByLabel("Annual amount (before GST)", { exact: true }), draft.amount);
+        await d.fill(dlg.getByLabel("Effective from", { exact: true }), draft.effective_from);
+        await d.pause(1500);
         await guard.expect(422, /\/admin\/master\/asf-rates/, async () => {
-          await d.click(dlg.getByRole("button", { name: "Add", exact: true }));
+          await d.click(dlg.getByRole("button", { name: "Add entry", exact: true }));
           await dlg.getByText(/exceeds the \d+% annual cap/).waitFor(); // the refusal itself (the field label also says "cap")
           await d.settle();
           await d.star(dlg, 4500);
         });
-        await d.click(dlg.getByRole("button", { name: "Close", exact: true }).last()); // the footer button (the corner icon is also "Close")
+        await d.click(dlg.getByRole("button", { name: "Cancel", exact: true }));
         await d.pause(800);
       },
     },

@@ -98,7 +98,7 @@ export default function ChangePasswordPage() {
       {forced && me?.temp_password_expires_at && (
         <Alert kind="warning" className="mb-4">The temporary password expires on {formatDateTime(me.temp_password_expires_at)}.</Alert>
       )}
-      <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+      <form method="post" onSubmit={submit} className="flex flex-col gap-4" noValidate>
         {/* hidden username so password managers save the new password against the right account */}
         <input type="text" name="username" autoComplete="username" value={me?.username ?? ""} readOnly hidden />
         <Field label={forced ? "Temporary password" : "Current password"} htmlFor="cp-current" error={currentError} required>

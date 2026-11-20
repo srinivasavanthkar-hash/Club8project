@@ -15,30 +15,28 @@ npm ci                                 # once
 npm run record                         # fresh stack, all sections, then assembles the MP4 (about 15 minutes)
 npm run record -- --no-build           # reuse the previous recording build of the frontend (faster)
 npm run record -- --section 6          # re-record one section only (see below)
-npm run record -- --db embedded        # no Docker: the database in embedded PostgreSQL (see "Database" below)
 npm run record -- --clip all           # the three follow-up clips (see "Follow-up clips" below)
 npm run assemble                       # only re-join the existing clips (out/clips) into the MP4
 ```
-The flags combine, e.g. `npm run record -- --section 6 --no-build --db embedded`.
+The flags combine, e.g. `npm run record -- --section 6 --no-build`.
 
-### Database
+### The recording stack (Docker)
 
-The recording always starts from a fresh `crm_video` database, in one of two places:
+Every run starts from a fresh `crm_video` database and its own containers on a private Docker network
+`club8-crm-video`: a throwaway `postgres:16-alpine` (`club8-crm-video-db`, `127.0.0.1:5433`, data on tmpfs, no
+volume), Mailpit and Azurite (the same images as docker-compose), and **the API from the backend Docker image**
+(`club8-crm-backend:video`, built at the start of the run). The image carries the PDF engine (WeasyPrint + Pango), so
+receipts, notices and vouchers in the recordings are the real branded PDFs; the API refuses to start without a PDF
+engine. Only the frontend runs on this machine. (`--db embedded` was removed on 19-11-2026: without Docker there is
+no PDF engine on Windows.)
 
-| `--db` | Where | Needs |
-|---|---|---|
-| `docker` (default) | a throwaway `postgres:16-alpine` container, `club8-crm-video-db`, on `127.0.0.1:5433`. Its data is on tmpfs (no volume), so nothing survives the run | Docker running |
-| `embedded` | the scratch embedded PostgreSQL 16 (pgserver) in `.local/club8-crm-pgserver-scratch`, shared with the e2e runner and tests; only the `crm_video` database is replaced. Never `crm_local`'s server: `scripts/local_db.py` refuses its folder for any other database | nothing extra (for machines without Docker) |
-
-With Docker, the run waits for the container's health check (`pg_isready` over TCP, polled every second, up to two
-minutes) instead of a fixed timeout, and removes the container at the end: also when a section fails, the run
-is interrupted with Ctrl+C, or the script crashes. A container left by a run that was killed outright (e.g. the
-terminal closed) is removed at the start of the next run. To remove one by hand: `docker rm -f club8-crm-video-db`.
-
-The scratch embedded server stays running between runs. If it was not shut down cleanly (computer restarted
-mid-run), its next start runs crash recovery, which can take longer than pgserver's 10-second start timeout: the
-run then fails with "Timeout starting server". Wait a minute and run again, or use `--db docker`. It holds only
-throwaway databases, so deleting `.local/club8-crm-pgserver-scratch` (with the server stopped) is always safe.
+The run waits for the database's health check (`pg_isready` over TCP, polled every second, up to two minutes)
+instead of a fixed timeout, and removes the containers and the network at the end: also when a section fails, the
+run is interrupted with Ctrl+C, or the script crashes. Containers left by a run that was killed outright (e.g. the
+terminal closed) are removed at the start of the next run. The API log is saved to `.local/video-api.log`. To remove
+everything by hand: `docker rm -f club8-crm-video-api club8-crm-video-azurite club8-crm-video-mailpit
+club8-crm-video-db` and `docker network rm club8-crm-video`. Stop the docker-compose demo stack first if it is
+running: both publish Azurite on port 10000.
 
 Outputs in `demo-video/out/`:
 
@@ -61,20 +59,15 @@ Outputs in `demo-video/out/`:
   - SHA-256 `401dffcf14c301082e1fc03b0bc876b92ea676bfc521fc56e80a1537d137034f`, checked against the release's
     `checksums.sha256` and GitHub's asset digest. Unzip so that
     `.local/ffmpeg/ffmpeg-n8.1.3-27-g8dca1586f4-win64-gpl-8.1/bin/ffmpeg.exe` exists.
-- **Mailpit** in `.local/mailpit/` (v1.32.0, see the main README), for the forgot-password email in section 10.
-- **Docker** (Docker Desktop) for the default database; or `--db embedded` with `pgserver` in `.venv`.
-- **Azurite** comes with this package (`npm ci`), the same version as docker-compose (3.33.0). Newer Azurite
-  (3.36+) needs Node 21 or later; this package runs on the Node 20 the frontend uses.
+- **Docker** (Docker Desktop): database, API (backend image), Mailpit and Azurite run in containers (see above).
 - Playwright's Chromium: the same Playwright version as the frontend (1.65.1), so one browser download serves both
   (`npx playwright install chromium`).
-- PDFs (receipts, vouchers, notices) are made by the recording API on this machine. WeasyPrint needs the native
-  Pango/GTK libraries; without them (the usual case on Windows) the app falls back to a plain-text PDF with the same
-  details but no logo or layout (`backend/app/correspondence/pdf.py`), and the recordings show that. Docker and Azure
-  have the libraries and produce the branded PDFs. Clip 2's captions therefore speak of company details, not logos.
+- PDFs (receipts, vouchers, notices) are made by the recording API in the backend image: the same branded PDFs
+  as Docker and Azure, with the logo, ₹ and plain labels.
 
 ## How it works
 
-- **Recording stack** (`src/stack.ts`): a fresh database `crm_video` (in Docker or embedded, see "Database";
+- **Recording stack** (`src/stack.ts`): a fresh database `crm_video` (in Docker, see "The recording stack";
   `scripts/local_db.py` runs the migrations and DEMO seed, then the Section 14
   scenario runs so the dashboard has content), its own API on :8002, a separately built frontend on :3002
   (`frontend/.next-video`), Mailpit on :8027 and Azurite on :10000 for documents. The developers' `crm_local` is
@@ -121,14 +114,14 @@ npm run record -- --clip all           # all three, one after the other
 npm run record -- --clip 2 --dry       # seed and run the clip's scenes at full speed without recording (a check)
 ```
 
-Each clip runs on **its own fresh stack and throwaway database** (`--db docker` or `--db embedded` as above), seeded
+Each clip runs on **its own fresh stack and throwaway database** (Docker, as above), seeded
 through the API, and the database is removed afterwards, also when the run fails. `--no-build` reuses the frontend
 build. Outputs in `demo-video/out/clips/`: `club8-crm-clip<n>-<slug>.mp4` and `.srt`, `chapters-clip<n>.txt`,
 `qc-clip<n>.txt`, and `clips-index.md` (the clips, their lengths and what each answers, ready to paste into a message).
 The clips' section files are in `out/clip<n>/` (the main video's stay in `out/clips/NN.mp4`).
 
 QC per clip: the main video's checks (format, limited range, captions at least 2.5 s, no console errors or error
-toasts, no DEV badge), a length of 2:00–3:15 and under 50 MB, and a numbers check after the scenes: clip 1 Kavya's
+toasts, no DEV badge), a length of 1:30–3:15 and under 50 MB, every caption ending with a full stop (or ?, !, …, :), and a numbers check after the scenes: clip 1 Kavya's
 balances after borrowing, rescheduling and declining; clip 2 Rohan's notice amount against his schedule and Meera
 terminated; clips 2 and 3 the activity log's hash chain (verified by the app itself).
 

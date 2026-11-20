@@ -10,9 +10,10 @@ import { useToast } from "@/components/crm/Toast";
 import { DocLink } from "@/components/member/DocLink";
 import { ErrorText, useCan, useMaster } from "@/components/providers";
 import { Alert, Button, Card, Dialog, Empty, Field, Input, PrefixInput, Select, Textarea } from "@/components/ui";
-import { api } from "@/lib/api";
+import { api, type Page } from "@/lib/api";
 import { addMoney, daysFromToday, formatDate, formatMoney, formatRelativeDays, humanize, subMoney, todayIso } from "@/lib/format";
-import type { Member, Payment } from "@/lib/types";
+import { SearchSelect } from "@/components/crm/SearchSelect";
+import type { Member, Payment, Reservation } from "@/lib/types";
 
 type Schedule = { id: string; emi_amount: string; emi_count: number; generation_warning: string | null; instalments: { id: string; number: number; due_date: string; amount_due: string; amount_paid: string; status: string; version: number }[] } | null;
 type AsfYear = { membership_year: number; status: string; receipt_numbers: string[]; charge: { id: string; base_amount: string; gst_amount: string; gst_rate: string; total_amount: string; currency: string; reason: string; raised_on: string } | null };
@@ -85,12 +86,39 @@ function PaymentDialog({ member, open, onClose, preset }: { member: Member; open
           <Field label="Card last 4 (optional)" htmlFor="p4" hint="Never enter full card numbers"><Input id="p4" maxLength={4} inputMode="numeric" className="w-28 font-mono" value={v.card_last4} onChange={set("card_last4")} /></Field>
         )}
         {["BOOKING_FEE", "UPGRADE_CHARGE", "ADDITIONAL_NIGHTS"].includes(v.payment_type_code) && (
-          <Field label="Reservation ID" htmlFor="prs"><Input id="prs" value={v.reservation_id} onChange={set("reservation_id")} /></Field>
+          <Field label="Reservation" htmlFor="prs" className="md:col-span-2" hint="Type a reservation number, resort or status to search">
+            <ReservationPicker memberId={member.id} value={v.reservation_id} onChange={(id) => setV({ ...v, reservation_id: id })} />
+          </Field>
         )}
         <Field label="Remarks" htmlFor="prm" className="md:col-span-2"><Textarea id="prm" rows={2} value={v.remarks} onChange={set("remarks")} /></Field>
       </div>
       <div className="mt-4"><ErrorText error={save.error} /></div>
     </Dialog>
+  );
+}
+
+/** The member's reservations by number, resort, dates and status (newest stay first); "none" is allowed. */
+function ReservationPicker({ memberId, value, onChange }: { memberId: string; value: string; onChange: (id: string) => void }) {
+  const list = useQuery({ queryKey: ["reservations", memberId], queryFn: () => api.get<Page<Reservation>>("/reservations", { member_id: memberId, page_size: 100 }) });
+  const properties = useMaster("properties");
+  const name = (pid: string) => String(properties.data?.find((p) => p.id === pid)?.name ?? "Resort");
+  const options = [...(list.data?.items ?? [])]
+    .sort((a, b) => b.check_in.localeCompare(a.check_in))
+    .map((r) => ({
+      value: r.id,
+      label: `${r.reservation_number} · ${name(r.property_id)}`,
+      description: `${formatDate(r.check_in)} to ${formatDate(r.check_out)} · ${r.nights} night${r.nights === 1 ? "" : "s"} · ${humanize(r.status)}`,
+    }));
+  return (
+    <SearchSelect
+      id="prs"
+      options={options}
+      value={value}
+      onChange={onChange}
+      noneLabel="None (not linked to a reservation)"
+      placeholder={list.isLoading ? "Loading reservations…" : "Search reservations…"}
+      emptyText={list.data && !list.data.items.length ? "This member has no reservations" : "No reservation matches"}
+    />
   );
 }
 

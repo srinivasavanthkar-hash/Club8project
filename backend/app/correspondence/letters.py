@@ -19,14 +19,15 @@ from app.admin.models import LetterTemplate
 from app.auth.models import User
 from app.core.config import get_settings
 from app.core.errors import RuleViolation
-from app.core.money import format_inr
+from app.core.money import format_inr, format_money
 from app.core.timeutil import fmt_date
 from app.correspondence import documents
 from app.correspondence.models import Document
 from app.correspondence.pdf import html_to_pdf
 
 _env = SandboxedEnvironment(autoescape=True)
-_env.filters["inr"] = format_inr
+_env.filters["inr"] = format_inr  # kept: admin-edited templates may still use it
+_env.filters["money"] = format_money
 _env.filters["ddmmyyyy"] = lambda d: fmt_date(d) if d else ""
 
 # Fallback templates used only when the letter_templates row is missing (seeded rows are editable). The brand
@@ -88,7 +89,8 @@ non-refundable under the agreement.</p>""",
 {% if r.guest_name %}<br>Lead guest: {{ r.guest_name }}{% endif %}</p>""",
 }
 
-DEFAULT_TEMPLATES = {
+# Defaults from the company-branding change until the Phase 1 fixes (raw payment-type codes, ₹ for every currency).
+_V3_TEMPLATES = {
     "RECEIPT": """<h1>Payment Receipt <span class="ref">{{ p.receipt_number }}</span></h1>
 <p>Date: <span class="ref">{{ p.payment_date|ddmmyyyy }}</span><br>Member: <span class="ref">{{ m.membership_number }}</span> - {{ name }}</p>
 <table class="amounts"><tr><th>Description</th><td>{{ p.payment_type_code }}{% if p.asf_year %} (membership year {{ p.asf_year }}){% endif %}</td></tr>
@@ -132,10 +134,37 @@ non-refundable under the agreement.</p>""",
 <p>This is a computer-generated letter.</p>""",
 }
 
-# Earlier default bodies (they printed the company header themselves). Migration 0002 swaps rows still identical
-# to one of these for the new defaults; admin-edited templates are left alone.
+# Current defaults: the payment type's name (Down payment, Membership EMI, Annual Subscription Fee ...), never its
+# code, and every amount in its own currency (₹ with Indian grouping for INR; e.g. "USD 2,550.00" otherwise).
+DEFAULT_TEMPLATES = {
+    **_V3_TEMPLATES,
+    "RECEIPT": """<h1>Payment Receipt <span class="ref">{{ p.receipt_number }}</span></h1>
+<p>Date: <span class="ref">{{ p.payment_date|ddmmyyyy }}</span><br>Member: <span class="ref">{{ m.membership_number }}</span> - {{ name }}</p>
+<table class="amounts"><tr><th>Description</th><td>{{ payment_type }}{% if p.asf_year %} (membership year {{ p.asf_year }}){% endif %}</td></tr>
+<tr><th>Amount</th><td>{{ p.base_amount|money(p.currency) }}</td></tr>
+{% if p.gst_amount > 0 %}<tr><th>GST @ {{ p.gst_rate.normalize() }}%</th><td>{{ p.gst_amount|money(p.currency) }}</td></tr>{% endif %}
+<tr class="total"><th>Total ({{ p.currency }})</th><td>{{ p.total_amount|money(p.currency) }}</td></tr>
+<tr><th>Method</th><td>{{ method }}{% if p.card_last4 %} ending {{ p.card_last4 }}{% endif %}</td></tr>
+<tr><th>Reference</th><td>{{ p.transaction_ref or p.cheque_number or '' }}</td></tr></table>
+<p>This is a computer-generated receipt.</p>""",
+    "DEFAULT_NOTICE": """<h1>Notice of Default</h1><p>Date: {{ notice.issued_on|ddmmyyyy }}</p>
+<p>To: {{ name }}<br>Membership No: <span class="ref">{{ m.membership_number }}</span><br>{{ m.address_line1 }}, {{ m.city }}</p>
+<p>Under the Default clause of your Membership Agreement, the following amount is overdue:
+{{ notice.amount_overdue|money(m.currency) }}.</p>
+<p>Please pay the full overdue amount on or before {{ notice.deadline|ddmmyyyy }} (within {{ days }} days).
+If payment is not received by then, the Company may terminate the membership. Payments made are
+non-refundable under the agreement.</p>""",
+}
+
+# Earlier default bodies. Migrations 0002 and 0006 swap rows still identical to one of these for the current
+# defaults; admin-edited templates are left alone.
 PREVIOUS_DEFAULT_TEMPLATES: dict[str, list[str]] = {
-    code: [_ORIGINAL_TEMPLATES[code], _RESTYLED_TEMPLATES[code]] for code in _ORIGINAL_TEMPLATES
+    code: [
+        old
+        for old in (_ORIGINAL_TEMPLATES.get(code), _RESTYLED_TEMPLATES.get(code), _V3_TEMPLATES[code])
+        if old is not None and old != DEFAULT_TEMPLATES[code]
+    ]
+    for code in _V3_TEMPLATES
 }
 
 
@@ -243,6 +272,11 @@ async def render(session: AsyncSession, code: str, ctx: dict[str, Any]) -> str:
     source = tpl.body_html if tpl else DEFAULT_TEMPLATES.get(code)
     if source is None:
         raise RuleViolation(f"No letter template {code}", code="NoTemplate")
+    return compose(source, code, ctx)
+
+
+def compose(source: str, code: str, ctx: dict[str, Any]) -> str:
+    """The full HTML document for one template body: print styles, brand header, body (sandboxed Jinja2)."""
     body = _env.from_string(source).render(**ctx)
     company = ctx.get("company")
     css = LETTER_CSS.replace("__PRIMARY__", _colour(getattr(company, "primary_colour", None), "#111111")).replace(

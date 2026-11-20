@@ -7,7 +7,7 @@ export type Problem = {
   status: number;
   detail: string;
   code: string;
-  errors?: { loc: (string | number)[]; msg: string }[];
+  errors?: { loc: (string | number)[]; msg: string; type?: string }[];
   matches?: { ref: string; kind: string; reasons: string[] }[];
   blockers?: string[];
   warnings?: string[];

@@ -110,7 +110,7 @@ export default function SetupTwoFactorPage() {
           {forced && !error && <p className="text-base text-fg-muted">Preparing…</p>}
         </div>
       ) : (
-        <form onSubmit={confirm} className="flex flex-col gap-4" noValidate>
+        <form method="post" onSubmit={confirm} className="flex flex-col gap-4" noValidate>
           <ol className="flex list-decimal flex-col gap-3 pl-5 text-base">
             <li>Open an authenticator app (for example Microsoft Authenticator or Google Authenticator).</li>
             <li>

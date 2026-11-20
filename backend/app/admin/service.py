@@ -141,11 +141,42 @@ async def _close_previous(session: AsyncSession, model: type[Any], data: dict[st
         row.effective_to = data["effective_from"] - timedelta(days=1)
 
 
+def _check(slug: str, row: dict[str, Any]) -> None:
+    """Plain-language checks on the whole row (new values over the current ones on an update)."""
+
+    def bad(msg: str, code: str) -> None:
+        raise RuleViolation(msg, code=code)
+
+    ef, et = row.get("effective_from"), row.get("effective_to")
+    if ef is not None and et is not None and et < ef:
+        bad("'Effective to' must be on or after 'Effective from'.", "EffectiveDates")
+    if slug == "season-calendar" and row.get("start_date") and row.get("end_date"):
+        if row["end_date"] < row["start_date"]:
+            bad("The last day must be on or after the first day.", "SeasonDates")
+    if slug == "cancellation-tiers":
+        if row.get("max_days") is not None and row.get("min_days") is not None and row["max_days"] < row["min_days"]:
+            bad("'To' days must be the same as or more than 'From' days.", "TierBounds")
+        if row.get("credit_percent") is not None and not (0 <= Decimal(str(row["credit_percent"])) <= 100):
+            bad("Nights credited back must be between 0 and 100%.", "TierPercent")
+    if slug == "tax-rates" and row.get("rate_percent") is not None:
+        if not (0 <= Decimal(str(row["rate_percent"])) <= 100):
+            bad("The rate must be between 0 and 100%.", "TaxPercent")
+    if slug == "deduction-matrix" and row.get("multiplier") is not None and Decimal(str(row["multiplier"])) <= 0:
+        bad("Nights deducted per night stayed must be more than 0.", "Multiplier")
+    if slug == "asf-rates" and row.get("amount") is not None and Decimal(str(row["amount"])) < 0:
+        bad("The ASF amount cannot be negative.", "AsfAmount")
+    for col in ("primary_colour", "accent_colour"):
+        v = row.get(col)
+        if v and not (len(v) == 7 and v.startswith("#") and all(c in "0123456789abcdefABCDEF" for c in v[1:])):
+            bad("Colours are written as # and six hex digits, e.g. #393186.", "Colour")
+
+
 async def create_item(
     session: AsyncSession, slug: str, payload: dict[str, Any], user: User, override_reason: str | None = None
 ) -> tuple[Any, list[str]]:
     model = MASTER[slug]
     data = schema_for(slug)(**payload).model_dump(exclude_unset=False)
+    _check(slug, data)
     warnings: list[str] = []
     if slug == "asf-rates":
         warnings = await _asf_checks(
@@ -153,9 +184,6 @@ async def create_item(
         )
     elif slug == "tax-rates":
         await _close_previous(session, model, data, ["code"])
-    elif slug == "cancellation-tiers":
-        if data.get("max_days") is not None and data["max_days"] < data["min_days"]:
-            raise RuleViolation("max_days must be >= min_days", code="TierBounds")
     elif slug == "deduction-matrix":
         await _close_previous(
             session,
@@ -197,6 +225,7 @@ async def update_item(
     if expected_version is not None and obj.version != expected_version:
         raise Conflict("Record was modified by someone else", code="VersionConflict")
     data = schema_for(slug, partial=True)(**payload).model_dump(exclude_unset=True)
+    _check(slug, to_dict(obj) | data)
     if slug == "asf-rates" and {"amount", "effective_from"} & data.keys():
         raise RuleViolation(
             "ASF rates are effective-dated: add a new rate instead of editing amounts", code="RateImmutable"

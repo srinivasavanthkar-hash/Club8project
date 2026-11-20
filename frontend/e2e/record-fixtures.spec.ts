@@ -13,7 +13,8 @@ test("record API fixtures from the demo stack", async ({ page }) => {
     const url = new URL(res.url());
     const method = res.request().method();
     const isQuote = url.pathname.endsWith("/reservations/quote");
-    if (!url.pathname.startsWith("/api/v1/") || (method !== "GET" && !isQuote) || !res.ok()) return;
+    const isPreview = url.pathname.endsWith("/admin/letter-templates/preview"); // fictitious sample data only
+    if (!url.pathname.startsWith("/api/v1/") || (method !== "GET" && !isQuote && !isPreview) || !res.ok()) return;
     try { rec.responses[`${method} ${keyOf(url)}`] = await res.json(); } catch { /* not JSON */ }
   });
   await page.goto("/login");
@@ -39,6 +40,19 @@ test("record API fixtures from the demo stack", async ({ page }) => {
   await visit(`/reservations/${rec.ids.reservation}`);
   await visit("/activity");
   await visit("/finance");
+  // Admin > Master data: the ASF rates form and the receipt template's preview (fictitious sample data)
+  await visit("/admin");
+  await page.getByRole("tab", { name: "Master data & rates" }).click();
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Add entry" }).click();
+  await page.waitForLoadState("networkidle");
+  await page.keyboard.press("Escape");
+  await page.getByRole("navigation", { name: "Master data tables" }).getByRole("button", { name: "Letter templates" }).click();
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("row").filter({ hasText: "RECEIPT" }).getByRole("button", { name: /Edit/ }).click();
+  await page.getByRole("button", { name: "Preview with sample data" }).click();
+  await page.getByTestId("letter-preview").waitFor();
+  await page.waitForTimeout(500);
   // never keep auth/session data in the recording
   for (const k of Object.keys(rec.responses)) if (k.includes("/auth/") && !k.includes("/auth/me")) delete rec.responses[k];
   fs.mkdirSync(require("node:path").dirname(FIXTURE_FILE), { recursive: true });

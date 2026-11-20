@@ -1,5 +1,6 @@
 import logging
 import sys
+import time
 
 from fastapi import APIRouter, FastAPI
 from fastapi.responses import JSONResponse
@@ -16,6 +17,7 @@ from app.core.errors import install_handlers
 from app.core.logscrub import install as install_log_scrubber
 from app.core.middleware import CsrfMiddleware, RequestContextMiddleware, SecurityHeadersMiddleware
 from app.core.ratelimit import limiter
+from app.correspondence.pdf import engine_status, require_engine
 from app.correspondence.router import router as correspondence_router
 from app.dashboard import router as dashboard_router
 from app.email.dispatch import install as install_email_dispatch
@@ -100,10 +102,18 @@ def create_app() -> FastAPI:
     if settings.env in ("staging", "prod") and not settings.app_base_url.startswith("https://"):
         raise RuntimeError("CRM_APP_BASE_URL must be the public https:// address (links in emails are built from it)")
     install_email_dispatch()
+    require_engine("api")  # no PDF engine, no start (receipts are created inside the payment transaction)
+    pdf_check: dict[str, float | str] = {"at": time.monotonic(), "status": engine_status()[0]}
 
     @app.get("/healthz", include_in_schema=False)
-    async def healthz() -> dict[str, str]:
-        return {"status": "ok"}
+    async def healthz() -> JSONResponse:
+        if time.monotonic() - float(pdf_check["at"]) > 300:  # re-checked at most every 5 minutes
+            pdf_check.update(at=time.monotonic(), status=engine_status()[0])
+        pdf = str(pdf_check["status"])  # ok | test_stub | error
+        return JSONResponse(
+            {"status": "error" if pdf == "error" else "ok", "pdf_engine": pdf},
+            status_code=503 if pdf == "error" else 200,
+        )
 
     @app.get("/api/v1/meta", include_in_schema=False)
     async def meta() -> dict[str, bool]:

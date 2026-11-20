@@ -85,7 +85,7 @@ export class Scene {
     const cookies = await sessionCookies(user);
     if (process.env.DEMO_DEBUG) console.log(`    [debug] ${user}: ${cookies.map((c) => `${c.name}@${c.domain}${c.path}`).join(", ")}`);
     await this.ctx.addCookies(cookies);
-    if (opts.announce !== false) await this.d.caption(`Now signed in as ${ROLES[user]}`);
+    if (opts.announce !== false) await this.d.caption(`Now signed in as ${ROLES[user]}.`);
     const target = opts.path ?? this.page.url();
     this.freeze();
     await this.page.goto(target);

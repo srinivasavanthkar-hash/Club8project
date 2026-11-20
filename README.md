@@ -33,6 +33,11 @@ If port 5432 is already taken (e.g. by a system PostgreSQL), put `CRM_PG_HOST_PO
 `docker-compose.yml` (git-ignored); only tools on the host use that port, the services talk to `postgres:5432` inside.
 
 ## Run locally without Docker (Windows/macOS/Linux)
+The API and the worker need the PDF engine (WeasyPrint with Pango) and **refuse to start without it**: receipts,
+notices, vouchers and letters are never produced as plain text. Docker images include it. On a machine without
+Pango (e.g. Windows without GTK) run the backend with Docker (above); the frontend and the database can still run
+directly. Backend *tests* use a marked test stub instead (`CRM_PDF_ENGINE=test_stub`, set in `tests/conftest.py`;
+refused in staging and prod).
 ```bash
 python -m venv .venv && .venv/Scripts/pip install -e "backend[dev]" pgserver   # (bin/ on macOS/Linux)
 python scripts/local_db.py --name crm_local        # embedded PostgreSQL 16: DROPS and re-creates crm_local (DEMO data); prints the URL
@@ -52,10 +57,13 @@ cd frontend && npm ci && npm run build && npm start   # http://localhost:3000, p
 cd backend
 ruff check app tests alembic && mypy app
 pytest --cov=app                 # unit + integration (real PostgreSQL via testcontainers, or pgserver, or CRM_TEST_DATABASE_URL)
+sh ../scripts/test-pdf-render.sh # PDF rendering tests with the real engine, in the backend image (skipped above without Pango;
+                                 # CI installs Pango and fails if they cannot run)
 cd ../frontend
 npm run lint && npm run typecheck && npm test   # lint includes the design-token check
 npm run check:contrast           # WCAG AA contrast of the colour tokens
-cd .. && python scripts/run_e2e.py   # Playwright on a THROWAWAY stack (fresh crm_e2e database, :8001/:3001):
+cd .. && python scripts/run_e2e.py   # Playwright on a THROWAWAY stack (Docker: fresh crm_e2e database and the API from
+                                     # the backend image; frontend on the host, :8001/:3001):
                                      # Section 14 demo, passwords, axe a11y, visual regression. Specs that write data
                                      # refuse to run against any stack that isn't flagged CRM_E2E_TARGET (the demo).
 ```

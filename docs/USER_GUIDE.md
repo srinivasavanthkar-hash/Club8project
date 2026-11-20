@@ -83,8 +83,21 @@ your name, the time, and the old and new values.
     and must set up 2FA again at next sign-in. The password is not changed.
   * The **Sign-in** column shows 2FA status, "Must change password" and "Locked". Every action is in the activity
     log with your reason.
-* **Admin → Master data & rates**: add rates as **new effective-dated rows** (the previous row is closed
-  automatically). ASF increases above 5% need an override reason and the special permission.
+* **Admin → Master data & rates**: every table (companies, ASF and tax rates, the night-deduction matrix,
+  cancellation tiers, the season calendar, properties, letter templates …) has its own form. Pick related records by
+  **name** from a searchable list (never type an ID), choose dates with the date picker and tick yes/no boxes; the
+  form explains any problem next to the field ("The last day must be on or after the first day."). Lists show names,
+  dates as DD-MM-YYYY and amounts in ₹. **Edit** changes a row; **Disable** hides it from new choices while keeping
+  it on old records.
+  * Rates are **effective-dated**: add a new row from a later date; the previous row is closed automatically and
+    the current row is highlighted. ASF amounts cannot be edited (add a new rate). ASF increases above 5% need an
+    override reason and the special permission.
+  * In the **night-deduction matrix**, "Any" matches every value and the most specific row wins (e.g. "Purchased
+    Studio, booked One-Bedroom: 1.5 nights per night").
+  * **Letter templates**: edit the wording in the large text box and press **Preview with sample data** to see the
+    letter with its letterhead, filled with fictitious sample details. The logo, company name and address are added
+    automatically.
+  * Administrators also see **Advanced (JSON)** at the bottom of a form, folded away: a fallback for unusual cases.
 
 ## Finance
 * *Member → Finance*: totals per payment type and currency (GST shown separately), the ASF status per membership
@@ -92,7 +105,12 @@ your name, the time, and the old and new values.
 * **Generate EMI schedule** uses the application's EMI details. If EMI × count ≠ balance, the last instalment is
   adjusted and a warning is shown. Editing an instalment requires a reason.
 * **Record payment**: choose the type and method (Cash is disabled), enter the reference, and a PDF receipt is
-  produced. EMI payments are applied to the oldest instalments first; any overpayment is kept as credit.
+  produced (with the brand's logo, the payment type by name, e.g. "Down payment", and ₹ amounts). EMI payments are
+  applied to the oldest instalments first; any overpayment is kept as credit. For a **booking fee**, upgrade charge
+  or additional nights, choose the stay from the **Reservation** list (type its number, resort or month to search).
+* **Opening a document** (receipt, notice, voucher) shows "Opening…" until it appears. If it takes too long, use
+  **Download**; if it cannot be produced, the message says why (e.g. "PDF engine unavailable": tell your
+  administrator). The CRM never issues a plain-text receipt.
 * **Pay ASF** appears on each raised ASF year. ASF is paid in full (base + 5% GST) in one payment.
 * **Correct**: never edit a payment. Use *Correct* to post a reversal or a signed adjustment with a reason.
 * **Issue default notice** (members with overdue EMIs): a PDF notice with a 14-day deadline is generated and filed.

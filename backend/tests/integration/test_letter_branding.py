@@ -28,6 +28,9 @@ async def test_receipts_use_the_record_company_logo_and_legal_name(api: Any, mon
     assert club8_html, "the Club8 down payment should generate a receipt"
     assert 'data-logo="club8/club8-logo.png"' in club8_html[-1]
     assert "Multiple Sales and Marketing LLP, promoter of CLUB8 Holidays" in club8_html[-1]
+    # the payment type's name and ₹ with Indian grouping, never the raw code
+    assert "<td>Down payment</td>" in club8_html[-1] and "DOWN_PAYMENT" not in club8_html[-1]
+    assert "₹" in club8_html[-1]
 
     rendered.clear()
     ok(await api.post("/api/v1/members", json=await member_payload(api, company_id=k8["id"])), 201)

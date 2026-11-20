@@ -27,10 +27,28 @@ _PATTERNS = [
 ]
 
 
+# Query strings can carry personal data (member search ?q=<name or phone>, a pre-hydration form submitted as GET):
+# never logged. Any "METHOD url?query" (an access-log request line, httpx's "HTTP Request: GET https://...?...")
+# keeps its path and loses the query.
+_REQUEST_LINE_QUERY = re.compile(r"\b(?P<k>(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+[^\s?\"']+\?)[^\s\"']*")
+# Loggers whose arguments include the request path on its own (uvicorn: client, method, full_path, version, status).
+_ACCESS_LOGGERS = {"uvicorn.access", "gunicorn.access"}
+
+
+def _is_access_logger(name: str) -> bool:
+    return any(name == n or name.startswith(n + ".") for n in _ACCESS_LOGGERS)
+
+
+def strip_query(url: str) -> str:
+    """Path (or URL) without its query string: '/api/v1/members?q=x' -> '/api/v1/members?[REDACTED]'."""
+    path, sep, _ = url.partition("?")
+    return f"{path}?{REDACTED}" if sep else url
+
+
 def scrub(text: str) -> str:
     for p in _PATTERNS:
         text = p.sub(lambda m: m.group("k") + REDACTED, text)
-    return text
+    return _REQUEST_LINE_QUERY.sub(lambda m: m.group("k") + REDACTED, text)
 
 
 def _scrub_value(v: Any) -> Any:
@@ -52,6 +70,8 @@ _installed = False
 
 def _scrub_record(record: logging.LogRecord) -> None:
     # Scrub the arguments in place, keeping their shape: some formatters (uvicorn's access log) unpack them.
+    if _is_access_logger(record.name) and isinstance(record.args, tuple):
+        record.args = tuple(strip_query(a) if isinstance(a, str) and a.startswith("/") else a for a in record.args)
     if isinstance(record.args, tuple):
         record.args = tuple(_scrub_value(a) for a in record.args)
     elif isinstance(record.args, dict):

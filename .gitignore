@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .coverage
+*.egg-info/
 coverage.xml
 htmlcov/
 node_modules/
@@ -12,6 +13,7 @@ node_modules/
 .next-e2e/
 frontend/test-results/
 frontend/playwright-report/
+frontend/playwright-report-visual/
 *.tsbuildinfo
 .env
 .env.*

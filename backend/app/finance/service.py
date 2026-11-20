@@ -63,6 +63,12 @@ async def gst_rate_for(session: AsyncSession, tax_code: str, on: date) -> Decima
     return Decimal(row.rate_percent)
 
 
+async def _payment_type_name(session: AsyncSession, code: str) -> str:
+    """The name printed on receipts (Down payment, Membership EMI ...); the code only if the type is missing."""
+    name = (await session.execute(select(PaymentType.name).where(PaymentType.code == code))).scalar_one_or_none()
+    return name or code
+
+
 def _member_name(m: Member) -> str:
     return m.applicants[0].full_name if m.applicants else ""
 
@@ -75,7 +81,14 @@ async def _receipt_doc(
         session,
         code="RECEIPT",
         doc_type_code="PAYMENT_RECEIPT",
-        ctx={"company": company, "m": member, "p": p, "method": method.name, "name": _member_name(member)},
+        ctx={
+            "company": company,
+            "m": member,
+            "p": p,
+            "payment_type": await _payment_type_name(session, p.payment_type_code),
+            "method": method.name,
+            "name": _member_name(member),
+        },
         member_id=member.id,
         file_name=f"receipt-{p.receipt_number}.pdf",
         user=user,
@@ -101,7 +114,10 @@ async def record_payment(
     if data.card_last4 and not pm.allows_card_last4:
         raise RuleViolation("Card last 4 digits only apply to card payments", code="CardLast4")
     if pt.requires_reservation and data.reservation_id is None:
-        raise RuleViolation(f"{pt.code} must be linked to a reservation", code="ReservationRequired")
+        raise RuleViolation(
+            f"A {pt.name.lower()} must be linked to a reservation: choose one of the member's reservations",
+            code="ReservationRequired",
+        )
     if data.currency != member.currency and pt.code in EMI_TYPES | {"DOWN_PAYMENT"}:
         raise RuleViolation("Membership payments must be in the membership currency", code="Currency")
 

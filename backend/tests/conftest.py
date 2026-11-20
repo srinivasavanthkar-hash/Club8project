@@ -24,6 +24,8 @@ os.environ.setdefault("CRM_PASSWORD_BREACH_API_ENABLED", "false")
 # Emails are kept in app.email.sender.OUTBOX and sent in-process after commit.
 os.environ.setdefault("CRM_EMAIL_PROVIDER", "memory")
 os.environ.setdefault("CRM_EMAIL_DISPATCH", "inline")
+# Marked stub PDFs for the suite; the rendering tests (tests/integration/test_pdf_render.py) use the real engine.
+os.environ.setdefault("CRM_PDF_ENGINE", "test_stub")
 os.environ.setdefault("CRM_APP_BASE_URL", "https://crm.club8.example")
 
 from hypothesis import HealthCheck, settings

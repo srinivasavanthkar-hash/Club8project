@@ -120,6 +120,7 @@ export type Reservation = {
   id: string;
   reservation_number: string;
   member_id: string;
+  property_id: string;
   status: string;
   check_in: string;
   check_out: string;

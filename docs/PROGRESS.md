@@ -73,6 +73,18 @@ Still outside this repository: `docs/BUILD_PROMPT.md` Section 3.1 (the file was 
 * Telemetry scrubbing of URLs (reset tokens appear in URLs only from Phase 2).
 * Demo users get `@example.test` addresses; e2e forgot → Mailpit → reset → login, expired link.
 
+## Next phase, Phase 1: fixes (docs/NEXT_PHASE_PROMPT.md, branch `fix/pdf-and-forms`, 19-11-2026)
+| Item | Done | Notes |
+|---|---|---|
+| 1. Branded PDFs, no silent fallback | ✓ | WeasyPrint only; api/worker refuse to start without it; "PDF engine unavailable" (503); `/healthz` `pdf_engine`; test stub marked "TEST STUB – NOT A REAL DOCUMENT", refused in staging/prod; payment-type names, currency-aware amounts; migration 0006 (admin-edited templates untouched); render tests per document type (CI with Pango, `scripts/test-pdf-render.sh` locally). D-PDF-1…3 |
+| 2. Document viewer | ✓ | Loading state, then the document, or a clear error with Try again / Download; never an empty box |
+| 3. Booking fee reservation | ✓ | Searchable list of the member's reservations (number, resort, dates, status), "none" allowed. D-MD-2 |
+| 4. Master data forms | ✓ | One schema-driven form for all 25 tables (no JSON), plain-language checks, names in lists, letter-template preview with fictitious data, Advanced (JSON) for admins only. D-MD-1 |
+| 5. Hydration error #418 | ✓ | Suspense content streamed without the user's permissions; `ClientSuspense`. `e2e/console.spec.ts` (8 pages, non-Indian time zone). Also: password and personal-data forms use POST. D-UI-1 |
+| 6. Demo data and clips | ✓ | DEMO matrix upgrade 1.5 nights per night (D-DEMO-1); clip 1 shows the cost and the restored 2027 balance; clip 2 the corrected ₹2,000 entry; caption full stop; recorder runs the API from the backend image (`--db embedded` removed). Re-recorded: main 6:12, clips 2:32 / 2:26 / 1:59, all QC passed |
+| 7. egg-info | ✓ | `*.egg-info/` ignored, tracked folder removed |
+| Visual references | ✓ | Made and compared only in Playwright's official Linux image (`scripts/visual.sh`, CI step); a missing reference fails; 24 Linux references; Windows references removed |
+
 ## CI incidents
 | Date | What happened | Fix |
 |---|---|---|

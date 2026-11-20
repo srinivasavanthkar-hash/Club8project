@@ -386,7 +386,7 @@ export function MemberForm({
         <p className="mt-4 flex items-center gap-1 px-2 text-xs text-fg-subtle"><Kbd>Ctrl</Kbd><Kbd>S</Kbd> to save</p>
       </nav>
 
-      <form ref={formRef} onSubmit={submit} className="flex min-w-0 flex-col gap-4" noValidate>
+      <form method="post" ref={formRef} onSubmit={submit} className="flex min-w-0 flex-col gap-4" noValidate>
         {submitted && errorPaths.length > 0 && (
           <div ref={summaryRef} tabIndex={-1} role="alert" className="rounded-lg border border-danger/40 bg-danger-subtle p-4 outline-none">
             <p className="flex items-center gap-2 font-semibold text-fg"><AlertTriangle aria-hidden className="size-4 text-danger" />
