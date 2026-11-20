@@ -175,9 +175,19 @@ test("Section 14 demo: lead → member → finance → reservation → correspon
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByText("CONFIRMED", { exact: true }).first()).toBeVisible();
   await page.goto(`${memberUrl}?tab=entitlement`);
-  const yearRow = page.getByRole("row", { name: new RegExp(`^${ci.slice(0, 4)}\\b`) });
-  await expect(yearRow.getByRole("cell").nth(4)).toHaveText("4.0"); // used once
-  await expect(yearRow.getByRole("cell").last()).toHaveText("3.0"); // remaining
+  // Oldest nights first: a stay in the purchase year uses that year's nights; a stay pushed into next year by stay()
+  // (from late November) uses the purchase year's unused nights, shown as saved and used later.
+  const yearRow = (y: string) => page.getByRole("row", { name: new RegExp(`^${y}\\b`) });
+  const firstYear = istToday(0).slice(0, 4);
+  const bookedYear = ci.slice(0, 4);
+  if (bookedYear === firstYear) {
+    await expect(yearRow(firstYear).getByRole("cell").nth(4)).toHaveText("4.0"); // used once
+  } else {
+    await expect(yearRow(firstYear).getByRole("cell").nth(5)).toHaveText("4.0"); // saved & used later
+    await expect(yearRow(bookedYear).getByRole("cell").nth(3)).toHaveText("4.0"); // saved-in
+    await expect(yearRow(bookedYear).getByRole("cell").nth(4)).toHaveText("0.0"); // its own nights untouched
+  }
+  await expect(yearRow(firstYear).getByRole("cell").last()).toHaveText("3.0"); // remaining
   // second booking in the same year: no new ASF
   await page.goto(`${memberUrl}?tab=reservations`);
   await page.getByRole("button", { name: "New reservation" }).click();
