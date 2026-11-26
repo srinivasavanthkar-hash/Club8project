@@ -358,10 +358,10 @@ export function MemberForm({
   const applicantBlock = (prefix: "applicant1" | "applicant2", kyc: typeof kyc1) => (
     <>
       <p className="col-span-full -mb-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">{prefix === "applicant1" ? "1st" : "2nd"} applicant</p>
-      <Field label={`${prefix === "applicant1" ? "1st" : "2nd"} Applicant Name`} htmlFor={`${prefix}-name`} required error={e[prefix]?.full_name?.message} className="sm:col-span-2 lg:col-span-3">
+      <Field label={`${prefix === "applicant1" ? "1st" : "2nd"} Applicant Name`} htmlFor={`${prefix}-name`} required error={e[prefix]?.full_name?.message} className="sm:col-span-2 lg:col-span-2">
         <Input id={`${prefix}-name`} autoCapitalize="words" {...register(`${prefix}.full_name` as const)} />
       </Field>
-      <Field label="D.O.B" htmlFor={`${prefix}-dob`} required error={e[prefix]?.dob?.message} className="lg:col-span-1">
+      <Field label="D.O.B" htmlFor={`${prefix}-dob`} required error={e[prefix]?.dob?.message} className="lg:col-span-2">
         <FormDateField id={`${prefix}-dob`} control={form.control} name={`${prefix}.dob` as const} max={todayIso()} />
       </Field>
       <Field label="Mobile (+91)" htmlFor={`${prefix}-mobile`} required={prefix === "applicant1"} error={e[prefix]?.mobile?.message} className="lg:col-span-2">
@@ -519,7 +519,7 @@ export function MemberForm({
           >
             <Input id="mnum" inputMode="numeric" className="font-mono" {...register("membership_number")} />
           </Field>
-          <Field label="Purchase Date" htmlFor="pdate" required error={e.purchase_date?.message} className="lg:col-span-1"><FormDateField id="pdate" control={form.control} name="purchase_date" /></Field>
+          <Field label="Purchase Date" htmlFor="pdate" required error={e.purchase_date?.message} className="lg:col-span-2"><FormDateField id="pdate" control={form.control} name="purchase_date" /></Field>
           <Field label="Tenure (Years)" htmlFor="tenure" required error={e.tenure_years?.message} className="lg:col-span-1"><Input id="tenure" type="number" min={1} {...register("tenure_years")} /></Field>
           <Field label="Start Year / First Year of Use" htmlFor="fy" required error={e.first_year_of_use?.message} className="lg:col-span-2"><Input id="fy" type="number" {...register("first_year_of_use")} /></Field>
           <Field label="Last Year of Use" htmlFor="ly" hint="Calculated: first year + tenure − 1" tag={auto("First year of use + tenure − 1")} className="lg:col-span-1">

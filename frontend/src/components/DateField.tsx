@@ -227,7 +227,7 @@ function Calendar({ selected, min, max, start, onPick, onClose }: {
       aria-modal="false"
       aria-label="Choose date"
       onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onClose(); } }}
-      className="absolute left-0 z-30 mt-1 w-72 rounded-md border border-border bg-surface-raised p-3 shadow-dialog"
+      className="absolute left-0 z-30 mt-1 w-80 rounded-md border border-border bg-surface-raised p-3 shadow-dialog"
     >
       <div className="mb-2 flex items-center gap-1">
         <Button size="sm" variant="ghost" aria-label="Previous month" onClick={() => move(addMonths(focus, -1))}><ChevronLeft aria-hidden className="size-4" /></Button>
