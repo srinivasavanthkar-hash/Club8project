@@ -16,6 +16,7 @@ import { api } from "@/lib/api";
 import { formatDate, formatDateTime, formatNights, humanize } from "@/lib/format";
 import type { Reservation } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/DateField";
 
 type Detail = {
   reservation: Reservation;
@@ -166,8 +167,8 @@ export default function ReservationPage({ params }: { params: Promise<{ id: stri
           {can("reservation.update") && ["REQUESTED", "APPROVED", "CONFIRMED", "RESCHEDULED"].includes(r.status) && (
             <Card title="Reschedule" description="The original dates are kept in the date history.">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Field label="New check-in" htmlFor="nci"><Input id="nci" type="date" value={rs.check_in} onChange={(e) => setRs({ ...rs, check_in: e.target.value })} /></Field>
-                <Field label="New check-out" htmlFor="nco"><Input id="nco" type="date" value={rs.check_out} onChange={(e) => setRs({ ...rs, check_out: e.target.value })} /></Field>
+                <Field label="New check-in" htmlFor="nci"><DateField id="nci" value={rs.check_in} onChange={(v) => setRs({ ...rs, check_in: v })} /></Field>
+                <Field label="New check-out" htmlFor="nco"><DateField id="nco" value={rs.check_out} min={rs.check_in || undefined} onChange={(v) => setRs({ ...rs, check_out: v })} /></Field>
                 <Field label="Reason" htmlFor="nr"><Input id="nr" value={rs.reason} onChange={(e) => setRs({ ...rs, reason: e.target.value })} /></Field>
                 {r.reschedule_count >= 2 && <Field label="Override reason (3rd+ reschedule)" htmlFor="no"><Input id="no" value={rs.override_reason} onChange={(e) => setRs({ ...rs, override_reason: e.target.value })} /></Field>}
               </div>

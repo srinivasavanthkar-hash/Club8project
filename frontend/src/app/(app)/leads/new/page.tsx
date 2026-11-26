@@ -11,6 +11,7 @@ import { api, ApiError } from "@/lib/api";
 import type { Lead } from "@/lib/types";
 import { useSaveShortcut } from "@/lib/useShortcut";
 import { mobileSchema, optionalMobile } from "@/lib/validation";
+import { FormDateField } from "@/components/DateField";
 
 const schema = z.object({
   prospect_name: z.string().trim().min(2, "Name is required"),
@@ -34,7 +35,7 @@ export default function NewLeadPage() {
   const staff = useStaff();
   const [err, setErr] = useState<unknown>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<V>({
+  const { register, control, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<V>({
     resolver: zodResolver(schema),
     defaultValues: { whatsapp_same_as_mobile: true, email: "" },
     mode: "onTouched",
@@ -82,7 +83,7 @@ export default function NewLeadPage() {
             <Field label="Assigned salesperson" htmlFor="s">
               <Select id="s" {...register("salesperson_id")}><option value="">Select…</option>{staff.data?.map((u) => <option key={u.id} value={u.id}>{u.full_name}</option>)}</Select>
             </Field>
-            <Field label="Follow-up date" htmlFor="f"><Input id="f" type="date" {...register("follow_up_date")} /></Field>
+            <Field label="Follow-up date" htmlFor="f"><FormDateField id="f" control={control} name="follow_up_date" /></Field>
             <Field label="Note" htmlFor="note" className="sm:col-span-2"><Textarea id="note" rows={3} {...register("note")} /></Field>
           </div>
         </Card>

@@ -14,6 +14,7 @@ import { Alert, Button, buttonClasses, Empty, Field, Input, Select } from "@/com
 import { api, qs, type Page } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/DateField";
 
 type Row = { seq: number; occurred_at: string; username: string | null; action: string; entity_type: string | null; entity_ref: string | null; summary: string; changes: Record<string, [unknown, unknown]> | null; ip: string | null };
 
@@ -55,8 +56,8 @@ function Activity() {
         search={<Field label="Action" htmlFor="aa"><Input id="aa" data-list-filter value={f.action} onChange={set("action")} placeholder="e.g. PAYMENT" className="font-mono" /></Field>}
       >
         <Field label="User" htmlFor="au"><Select id="au" value={f.user_id} onChange={set("user_id")}><option value="">Anyone</option>{staff.data?.map((u) => <option key={u.id} value={u.id}>{u.full_name}</option>)}</Select></Field>
-        <Field label="From" htmlFor="af"><Input id="af" type="date" value={f.date_from} onChange={set("date_from")} /></Field>
-        <Field label="To" htmlFor="at"><Input id="at" type="date" value={f.date_to} onChange={set("date_to")} /></Field>
+        <Field label="From" htmlFor="af"><DateField id="af" value={f.date_from} onChange={(v) => { setF({ ...f, date_from: v }); setPage(1); }} /></Field>
+        <Field label="To" htmlFor="at"><DateField id="at" value={f.date_to} onChange={(v) => { setF({ ...f, date_to: v }); setPage(1); }} /></Field>
         <Field label="Entity" htmlFor="ae"><Input id="ae" value={f.entity_type} onChange={set("entity_type")} placeholder="e.g. members" className="font-mono" /></Field>
         <Field label="Member ID" htmlFor="am"><Input id="am" value={f.member_id} onChange={set("member_id")} className="font-mono" /></Field>
       </FilterBar>

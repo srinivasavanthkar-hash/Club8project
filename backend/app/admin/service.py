@@ -19,7 +19,7 @@ from app.auth.policy import policy_problems, remember
 from app.auth.recovery import TemporaryPassword, issue_temporary_password
 from app.core.errors import Conflict, NotFound, OverrideRequired, RuleViolation
 from app.core.security import hash_password
-from app.core.settings_store import get_setting
+from app.core.settings_store import SETTING_CHOICES, get_setting
 from app.finance.domain import asf_rate_cap_check
 
 # slug -> model. Every table here is editable in the admin UI (permission admin.masterdata or admin.rates).
@@ -165,6 +165,10 @@ def _check(slug: str, row: dict[str, Any]) -> None:
         bad("Nights deducted per night stayed must be more than 0.", "Multiplier")
     if slug == "asf-rates" and row.get("amount") is not None and Decimal(str(row["amount"])) < 0:
         bad("The ASF amount cannot be negative.", "AsfAmount")
+    if slug == "settings" and row.get("key") in SETTING_CHOICES:
+        allowed = SETTING_CHOICES[row["key"]]
+        if row.get("value") not in [v for v, _ in allowed]:
+            bad(f"Choose one of: {', '.join(lbl for _, lbl in allowed)}.", "SettingChoice")
     for col in ("primary_colour", "accent_colour"):
         v = row.get(col)
         if v and not (len(v) == 7 and v.startswith("#") and all(c in "0123456789abcdefABCDEF" for c in v[1:])):

@@ -82,3 +82,22 @@ async def test_letter_template_preview_uses_fictitious_data(api: Any) -> None:
     assert 'data-logo="club8/club8-logo.png"' in html  # the real letterhead around the sample letter
     r = await api.post("/api/v1/admin/letter-templates/preview", json={"code": "RECEIPT", "body_html": "{% if %}"})
     assert r.status_code == 400 and r.json()["detail"].startswith("The letter text has an error")
+
+
+async def test_week_start_setting_is_a_choice_and_readable_by_all_staff(api: Any) -> None:
+    await api.login("demo.sales")  # any signed-in user: every date field needs it
+    assert ok(await api.get("/api/v1/ui-settings")) == {"week_start": "MONDAY"}
+
+    await api.login("demo.manager")
+    forms = ok(await api.get("/api/v1/admin/master-forms"))
+    value = {f["name"]: f for f in forms["settings"]["fields"]}["value"]
+    assert value["setting_choices"]["ui.week_start"] == [
+        {"value": "MONDAY", "label": "Monday"},
+        {"value": "SUNDAY", "label": "Sunday"},
+    ]
+    row = next(r for r in ok(await api.get("/api/v1/admin/master/settings")) if r["key"] == "ui.week_start")
+    r = await api.patch(f"/api/v1/admin/master/settings/{row['id']}", json={"value": "FRIDAY"})
+    assert r.status_code == 422 and r.json()["detail"] == "Choose one of: Monday, Sunday."
+    ok(await api.patch(f"/api/v1/admin/master/settings/{row['id']}", json={"value": "SUNDAY"}))
+    await api.login("demo.sales")
+    assert ok(await api.get("/api/v1/ui-settings")) == {"week_start": "SUNDAY"}

@@ -16,6 +16,7 @@ import { daysFromToday, formatDate, formatPhoneMasked, formatRelativeDays, human
 import type { Lead } from "@/lib/types";
 import { useListState } from "@/lib/useListState";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/DateField";
 
 const STATUSES = ["NEW", "CONTACTED", "PRESENTATION_SCHEDULED", "ATTENDED", "NOT_INTERESTED", "CONVERTED"];
 const OPEN_STATUSES = new Set(["NEW", "CONTACTED", "PRESENTATION_SCHEDULED", "ATTENDED"]);
@@ -120,8 +121,8 @@ export default function LeadsPage() {
             <option value="">Anyone</option>{staff.data?.map((u) => <option key={u.id} value={u.id}>{u.full_name}</option>)}
           </Select>
         </Field>
-        <Field label="From" htmlFor="lf"><Input id="lf" type="date" value={s.filters.date_from} onChange={(e) => s.update({ date_from: e.target.value })} /></Field>
-        <Field label="To" htmlFor="lt"><Input id="lt" type="date" value={s.filters.date_to} onChange={(e) => s.update({ date_to: e.target.value })} /></Field>
+        <Field label="From" htmlFor="lf"><DateField id="lf" value={s.filters.date_from} onChange={(v) => s.update({ date_from: v })} /></Field>
+        <Field label="To" htmlFor="lt"><DateField id="lt" value={s.filters.date_to} onChange={(v) => s.update({ date_to: v })} /></Field>
         <div className="flex items-end">
           <Checkbox label="Follow-up due" checked={s.filters.follow_up_due} onChange={(e) => s.update({ follow_up_due: e.target.checked })} />
         </div>

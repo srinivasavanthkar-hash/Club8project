@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/crm/Display";
 import { buttonClasses, Card, Field, Input, Select } from "@/components/ui";
 import { qs } from "@/lib/api";
 import { humanize } from "@/lib/format";
+import { DateField } from "@/components/DateField";
 
 const EXPORTS = [
   { id: "leads", label: "Leads", filters: ["status", "date_from", "date_to"] },
@@ -33,8 +34,9 @@ export default function ExportsPage() {
             <div className="flex flex-col gap-3">
               {x.filters.map((k) => (
                 <Field key={k} label={humanize(k).replace(/^Q$/, "Search")} htmlFor={`${x.id}-${k}`}>
-                  <Input id={`${x.id}-${k}`} type={k.includes("date") || k.includes("from") || k.includes("_to") ? "date" : "text"}
-                    value={f[`${x.id}.${k}`] ?? ""} onChange={(e) => setF({ ...f, [`${x.id}.${k}`]: e.target.value })} />
+                  {k.includes("date") || k.includes("from") || k.includes("_to")
+                    ? <DateField id={`${x.id}-${k}`} value={f[`${x.id}.${k}`] ?? ""} onChange={(v) => setF({ ...f, [`${x.id}.${k}`]: v })} />
+                    : <Input id={`${x.id}-${k}`} value={f[`${x.id}.${k}`] ?? ""} onChange={(e) => setF({ ...f, [`${x.id}.${k}`]: e.target.value })} />}
                 </Field>
               ))}
               <a className={buttonClasses({ className: "mt-1" })}

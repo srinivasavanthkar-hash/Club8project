@@ -16,6 +16,7 @@ import {
   settingKind, toValues, validate, type Values,
 } from "@/lib/masterForm";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/DateField";
 
 export function useMasterForms() {
   return useQuery({ queryKey: ["master-forms"], queryFn: () => api.get<Record<string, FormSpec>>("/admin/master-forms"), staleTime: 30 * 60_000 });
@@ -35,8 +36,9 @@ function isCurrent(r: Row) {
   return String(r.effective_from) <= today && (!r.effective_to || String(r.effective_to) >= today);
 }
 
-function FieldInput({ f, value, onChange, refs, original, locked, error }: {
+function FieldInput({ f, value, onChange, refs, original, locked, error, settingKey = "" }: {
   f: FieldSpec; value: string | boolean; onChange: (v: string | boolean) => void; refs: RefRows; original?: unknown; locked: boolean; error?: string;
+  settingKey?: string;
 }) {
   const id = `mf-${f.name}`;
   const hint = locked ? f.locked_on_edit : f.help;
@@ -67,7 +69,7 @@ function FieldInput({ f, value, onChange, refs, original, locked, error }: {
       );
       break;
     case "date":
-      control = <Input id={id} type="date" value={s} disabled={locked} onChange={(e) => onChange(e.target.value)} />;
+      control = <DateField id={id} value={s} disabled={locked} onChange={(v) => onChange(v)} />;
       break;
     case "int": case "decimal":
       control = <Input id={id} inputMode={f.kind === "int" ? "numeric" : "decimal"} className="text-right tabular-nums" value={s} disabled={locked} onChange={(e) => onChange(e.target.value)} />;
@@ -85,7 +87,10 @@ function FieldInput({ f, value, onChange, refs, original, locked, error }: {
       break;
     case "setting_value": {
       const k = settingKind(original);
-      control = k === "text_list"
+      const fixed = f.setting_choices?.[settingKey];
+      control = fixed
+        ? <Select id={id} value={s} disabled={locked} onChange={(e) => onChange(e.target.value)}>{fixed.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</Select>
+        : k === "text_list"
         ? <Textarea id={id} rows={3} value={s} disabled={locked} onChange={(e) => onChange(e.target.value)} />
         : <Input id={id} inputMode={k === "number" ? "numeric" : undefined} value={s} disabled={locked} onChange={(e) => onChange(e.target.value)} />;
       break;
@@ -183,7 +188,7 @@ function MasterFormDrawer({ spec, label, row, onClose }: { spec: FormSpec; label
               </div>
             ) : (
               <div key={f.name} className={cn((["textarea", "str_list", "ref"].includes(f.kind) || f.name === "description") && "md:col-span-2")}>
-                <FieldInput f={f} value={values[f.name] ?? ""} onChange={set(f.name)} refs={refs} original={row?.[f.name]}
+                <FieldInput f={f} value={values[f.name] ?? ""} onChange={set(f.name)} refs={refs} original={row?.[f.name]} settingKey={String(row?.key ?? values.key ?? "")}
                   locked={editing && !!f.locked_on_edit} error={errors[f.name]} />
               </div>
             ))}

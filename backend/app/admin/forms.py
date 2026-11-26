@@ -14,6 +14,7 @@ from sqlalchemy import Boolean, Date, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 
 from app.admin.service import MASTER, RATE_TABLES, SYSTEM_COLS
+from app.core.settings_store import SETTING_CHOICES
 
 # Labels used wherever the column appears (a table may override).
 LABELS = {
@@ -264,6 +265,9 @@ def field_spec(slug: str, col: Any) -> dict[str, Any]:
         spec["kind"] = "letter"
     if name == "value" and slug == "settings":
         spec["kind"] = "setting_value"
+        spec["setting_choices"] = {
+            k: [{"value": v, "label": lbl} for v, lbl in opts] for k, opts in SETTING_CHOICES.items()
+        }
     if name == "multiplier":
         spec["min_exclusive"] = 0
     if name in ("rate_percent", "credit_percent"):

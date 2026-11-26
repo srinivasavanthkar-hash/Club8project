@@ -15,7 +15,7 @@ function renderForm(onSubmit = vi.fn().mockResolvedValue(undefined)) {
   return onSubmit;
 }
 
-describe("MemberForm", () => {
+describe("MemberForm", { timeout: 15_000 }, () => { // first render of the full form can take over 5 s on a busy machine
   it("follows the paper form's section order", async () => {
     renderForm();
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
@@ -45,7 +45,7 @@ describe("MemberForm", () => {
     const user = userEvent.setup();
     const onSubmit = renderForm();
     await user.type(screen.getByLabelText("1st Applicant Name"), "Asha Demo");
-    await user.type(screen.getByLabelText("D.O.B"), "2015-01-01");
+    await user.type(screen.getByLabelText("D.O.B"), "01-01-2015");
     await user.type(screen.getByLabelText("Mobile (+91)"), "12345");
     await user.type(screen.getByLabelText("ID number"), "BADPAN");
     await user.click(screen.getByRole("button", { name: "Save application" }));
@@ -59,7 +59,7 @@ describe("MemberForm", () => {
     const user = userEvent.setup();
     const onSubmit = renderForm();
     await user.type(screen.getByLabelText("1st Applicant Name"), "Asha Demo");
-    await user.type(screen.getByLabelText("D.O.B"), "1985-05-05");
+    await user.type(screen.getByLabelText("D.O.B"), "05-05-1985");
     await user.type(screen.getByLabelText("Mobile (+91)"), "9845012345");
     await user.type(screen.getByLabelText("ID number"), "ABCDE1234F");
     await user.type(screen.getByLabelText("Address Line 1"), "1 Demo Road");

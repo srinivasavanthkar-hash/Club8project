@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { formatDateTime, formatPhone, humanize } from "@/lib/format";
 import type { Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/DateField";
 
 type Email = { id: string; direction: string; sent_at: string; sender: string; to: string[]; subject: string; body_text: string };
 type Thread = { id: string; subject: string; emails: Email[] };
@@ -162,7 +163,7 @@ export function CorrespondenceTab({ member }: { member: Member }) {
             <Field label="Outcome" htmlFor="co"><Select id="co" value={call.outcome_id} onChange={(e) => setCall({ ...call, outcome_id: e.target.value })}><option value="">—</option>{outcomes.data?.filter((r) => r.kind === "CALL_OUTCOME").map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</Select></Field>
             <Field label="Summary" htmlFor="cs" className="md:col-span-2" required><Textarea id="cs" value={call.summary} onChange={(e) => setCall({ ...call, summary: e.target.value })} /></Field>
             <Field label="Next action" htmlFor="cna"><Input id="cna" value={call.next_action} onChange={(e) => setCall({ ...call, next_action: e.target.value })} /></Field>
-            <Field label="Next action date" htmlFor="cnd"><Input id="cnd" type="date" value={call.next_action_date} onChange={(e) => setCall({ ...call, next_action_date: e.target.value })} /></Field>
+            <Field label="Next action date" htmlFor="cnd"><DateField id="cnd" value={call.next_action_date} onChange={(v) => setCall({ ...call, next_action_date: v })} /></Field>
             <div className="md:col-span-2"><Button onClick={() => addCall.mutate()} disabled={!call.summary || addCall.isPending}><Phone aria-hidden />Add call</Button></div>
             <div className="md:col-span-2"><ErrorText error={addCall.error} /></div>
           </div>

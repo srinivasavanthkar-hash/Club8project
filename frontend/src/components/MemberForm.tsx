@@ -15,6 +15,7 @@ import { brandOfCompany } from "@/lib/brand";
 import { useSaveShortcut } from "@/lib/useShortcut";
 import { cn } from "@/lib/utils";
 import { aadhaarSchema, isAdult, mobileSchema, moneySchema, optionalMobile, panSchema, pinSchema } from "@/lib/validation";
+import { FormDateField, FormMonthField } from "@/components/DateField";
 
 export const INDIAN_STATES = [
   "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chandigarh", "Chhattisgarh",
@@ -314,7 +315,7 @@ export function MemberForm({
         <Input id={`${prefix}-name`} autoCapitalize="words" {...register(`${prefix}.full_name` as const)} />
       </Field>
       <Field label="D.O.B" htmlFor={`${prefix}-dob`} required error={e[prefix]?.dob?.message} className="lg:col-span-1">
-        <Input id={`${prefix}-dob`} type="date" {...register(`${prefix}.dob` as const)} />
+        <FormDateField id={`${prefix}-dob`} control={form.control} name={`${prefix}.dob` as const} max={todayIso()} />
       </Field>
       <Field label="Mobile (+91)" htmlFor={`${prefix}-mobile`} required={prefix === "applicant1"} error={e[prefix]?.mobile?.message} className="lg:col-span-2">
         <Input id={`${prefix}-mobile`} type="tel" inputMode="tel" {...register(`${prefix}.mobile` as const)} />
@@ -339,7 +340,7 @@ export function MemberForm({
                 {e[prefix]?.kyc?.[i]?.value && <p role="alert" className="mt-1 text-xs font-medium text-danger">{e[prefix].kyc[i].value.message}</p>}
               </div>
               <div>
-                <Input aria-label="Expiry (passport)" type="date" title="Passport expiry" {...register(`${prefix}.kyc.${i}.expiry_date` as const)} />
+                <FormDateField id={`${prefix}-kyc-${i}-expiry`} aria-label="Expiry (passport)" title="Passport expiry" control={form.control} name={`${prefix}.kyc.${i}.expiry_date` as const} />
                 {e[prefix]?.kyc?.[i]?.expiry_date && <p role="alert" className="mt-1 text-xs font-medium text-danger">{e[prefix].kyc[i].expiry_date.message}</p>}
               </div>
               <Button type="button" variant="ghost" size="sm" onClick={() => kyc.remove(i)} aria-label={`Remove ID ${i + 1}`}><Trash2 aria-hidden /></Button>
@@ -450,7 +451,7 @@ export function MemberForm({
           <Field label="Membership Number" htmlFor="mnum" hint="Leave blank to auto-assign" error={e.membership_number?.message} className="lg:col-span-2">
             <Input id="mnum" inputMode="numeric" className="font-mono" {...register("membership_number")} />
           </Field>
-          <Field label="Purchase Date" htmlFor="pdate" required error={e.purchase_date?.message} className="lg:col-span-1"><Input id="pdate" type="date" {...register("purchase_date")} /></Field>
+          <Field label="Purchase Date" htmlFor="pdate" required error={e.purchase_date?.message} className="lg:col-span-1"><FormDateField id="pdate" control={form.control} name="purchase_date" /></Field>
           <Field label="Tenure (Years)" htmlFor="tenure" required error={e.tenure_years?.message} className="lg:col-span-1"><Input id="tenure" type="number" min={1} {...register("tenure_years")} /></Field>
           <Field label="Start Year / First Year of Use" htmlFor="fy" required error={e.first_year_of_use?.message} className="lg:col-span-2"><Input id="fy" type="number" {...register("first_year_of_use")} /></Field>
           <Field label="Last Year of Use" htmlFor="ly" hint="Calculated: first year + tenure − 1" tag={auto("First year of use + tenure − 1")} className="lg:col-span-1">
@@ -516,7 +517,7 @@ export function MemberForm({
               </Field>
               {/* the "EMI amount, number and starting month" rule reports on emi_amount, so re-check it when these change */}
               <Field label="No. of EMIs" htmlFor="emin" className="lg:col-span-1"><Input id="emin" type="number" min={1} {...register("emi_count", { deps: ["emi_amount"] })} /></Field>
-              <Field label="Starting From (MM/YYYY)" htmlFor="emis" className="lg:col-span-2"><Input id="emis" type="month" {...register("emi_start", { deps: ["emi_amount"] })} /></Field>
+              <Field label="Starting From (MM/YYYY)" htmlFor="emis" className="lg:col-span-2"><FormMonthField id="emis" control={form.control} name="emi_start" rules={{ deps: ["emi_amount"] }} /></Field>
             </>
           )}
           {watch("balance_mode") === "OTHER" && (
@@ -549,7 +550,7 @@ export function MemberForm({
           <Field label="Team Manager" htmlFor="tm" className="sm:col-span-1 lg:col-span-2">
             <Select id="tm" {...register("team_manager_id")}><option value="">Select…</option>{opts(staff.data?.map((s) => ({ id: s.id, name: s.full_name })))}</Select>
           </Field>
-          <Field label="Agreement signed date" htmlFor="asd" className="lg:col-span-2"><Input id="asd" type="date" {...register("agreement_signed_date")} /></Field>
+          <Field label="Agreement signed date" htmlFor="asd" className="lg:col-span-2"><FormDateField id="asd" control={form.control} name="agreement_signed_date" /></Field>
           <fieldset className="col-span-full flex flex-wrap gap-x-6 gap-y-1">
             <legend className="mb-1 text-sm font-medium text-fg">Agreement signatures</legend>
             <Checkbox label="1st Applicant signed" {...register("agreement_signed_applicant1")} />

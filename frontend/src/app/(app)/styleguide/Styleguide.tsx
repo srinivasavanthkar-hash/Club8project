@@ -15,6 +15,7 @@ import { useMe } from "@/components/providers";
 import { Alert, AutoTag, Button, Card, Checkbox, Empty, Field, Input, Kbd, PrefixInput, Select, Skeleton, Tabs, Textarea } from "@/components/ui";
 import { BRANDS, type BrandId, DEFAULT_BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/DateField";
 
 /* Brand palettes as documented in docs/DESIGN_SYSTEM.md (hex values shown as text for reference only). */
 const BRAND_SWATCHES: Record<BrandId, { token: string; cls: string; fg?: string; hex: string; ratio: string }[]> = {
@@ -55,6 +56,12 @@ const GROUPS: [string, string[]][] = [
   ["ASF per year", ["NOT_YET_DUE", "RAISED", "PAID"]],
   ["Other", ["OPEN", "CURED", "CLEAN", "INFECTED", "HELD", "INACTIVE"]],
 ];
+
+/** Date field demo: Field passes its aria attributes through to the input. */
+function StyleguideDate(props: { "aria-describedby"?: string; "aria-invalid"?: boolean; "aria-required"?: boolean }) {
+  const [v, setV] = useState("");
+  return <DateField id="sg-6" value={v} onChange={setV} {...props} />;
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return <Card title={title}><div className="flex flex-col gap-4">{children}</div></Card>;
@@ -184,7 +191,7 @@ export function Styleguide({ production }: { production: boolean }) {
           <Field label="Purchase Price" htmlFor="sg-3" hint="= ₹2,50,000.00"><PrefixInput prefix="₹" id="sg-3" className="text-right" defaultValue="250000" /></Field>
           <Field label="Balance" htmlFor="sg-4" tag={<AutoTag explain="Total purchase price − down payment" />}><Input id="sg-4" readOnly value="₹2,00,000.00" className="text-right font-semibold" /></Field>
           <Field label="Season" htmlFor="sg-5"><Select id="sg-5"><option>Red (RED)</option><option>White (WHITE)</option></Select></Field>
-          <Field label="Check-in" htmlFor="sg-6"><Input id="sg-6" type="date" /></Field>
+          <Field label="Check-in" htmlFor="sg-6"><StyleguideDate /></Field>
           <Field label="Note" htmlFor="sg-7" className="sm:col-span-2"><Textarea id="sg-7" rows={2} /></Field>
           <div className="flex items-end"><Checkbox label="WhatsApp same as mobile" defaultChecked /></div>
         </div>

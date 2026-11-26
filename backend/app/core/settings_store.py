@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.admin.models import SystemSetting
 
 DEFAULTS: dict[str, Any] = {
+    "ui.week_start": "MONDAY",  # first day of the week in date pickers: MONDAY | SUNDAY
     "booking.min_working_days": 7,
     "booking.max_months": 12,
     "booking.weekend_days": [6],  # date.weekday(): Sunday
@@ -48,6 +49,11 @@ DEFAULTS: dict[str, Any] = {
     "password.forgot_per_account_per_hour": 3,
     "password.forgot_per_ip_per_hour": 10,
     "password.captcha_after_per_ip_per_hour": 3,
+}
+
+# Settings that take one of a fixed set of values: the Admin form shows a dropdown and the server refuses others.
+SETTING_CHOICES: dict[str, list[tuple[str, str]]] = {
+    "ui.week_start": [("MONDAY", "Monday"), ("SUNDAY", "Sunday")],
 }
 
 

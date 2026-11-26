@@ -21,6 +21,8 @@ export type FieldSpec = {
   max?: number;
   min_exclusive?: number;
   locked_on_edit?: string;
+  /** Business settings with a fixed set of values (by setting key): shown as a dropdown. */
+  setting_choices?: Record<string, { value: string; label: string }[]>;
   /** Column default: a new entry starts with it. */
   default?: string | number | boolean;
 };
@@ -202,6 +204,10 @@ export function cellText(f: FieldSpec, row: Row, refs: RefRows): string {
   if (f.kind === "bool") return x ? "Yes" : "No";
   if (f.kind === "date") return formatDate(String(x));
   if (f.kind === "choice") return f.choices?.find((c) => c.value === x)?.label ?? String(x);
+  if (f.kind === "setting_value" && typeof row.key === "string") {
+    const label = f.setting_choices?.[row.key]?.find((c) => c.value === x)?.label;
+    if (label) return label;
+  }
   if (f.name === "amount" && typeof row.currency === "string") return formatMoney(String(x), row.currency);
   if (f.name === "rate_percent" || f.name === "credit_percent") return `${Number(x)}%`;
   if (f.name === "multiplier") return `× ${Number(x)}`;

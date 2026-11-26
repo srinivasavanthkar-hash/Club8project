@@ -28,6 +28,7 @@ from app.leads.router import router as leads_router
 from app.members.router import router as members_router
 from app.reservations.router import router as reservations_router
 from app.search.router import router as search_router
+from app.ui_settings import router as ui_settings_router
 
 
 async def _record_rate_limit(path: str) -> None:
@@ -93,6 +94,7 @@ def create_app() -> FastAPI:
         exports_router,
         search_router,
         dashboard_router,
+        ui_settings_router,
     ):
         api.include_router(r)
     app.include_router(api)

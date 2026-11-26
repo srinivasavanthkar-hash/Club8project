@@ -9,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { BrandIcon, BrandLogo } from "@/components/crm/BrandMark";
 import { GlobalSearch } from "@/components/crm/GlobalSearch";
+import { UiSettingsProvider } from "@/components/DateField";
 import { useCan, useMe } from "@/components/providers";
 import { Kbd } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -288,7 +289,7 @@ export function AppShell({ children, env = "" }: { children: React.ReactNode; en
           </div>
         </header>
         <main id="main" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-page flex-1 px-4 py-5 outline-none sm:px-6 sm:py-6">
-          {children}
+          <UiSettingsProvider>{children}</UiSettingsProvider>
         </main>
       </div>
     </div>

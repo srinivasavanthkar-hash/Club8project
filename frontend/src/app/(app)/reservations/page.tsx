@@ -7,12 +7,13 @@ import { Mono, PageHeader, SeasonChip } from "@/components/crm/Display";
 import { FilterBar } from "@/components/crm/FilterBar";
 import { StatusBadge } from "@/components/crm/StatusBadge";
 import { SavedSearches } from "@/components/SavedSearches";
-import { Field, Input, Select } from "@/components/ui";
+import { Field, Select } from "@/components/ui";
 import { api, type Page } from "@/lib/api";
 import { formatDate, formatNights, formatRelativeDays, humanize } from "@/lib/format";
 import type { Reservation } from "@/lib/types";
 import { useListState } from "@/lib/useListState";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/DateField";
 
 const STATUSES = ["REQUESTED", "APPROVED", "CONFIRMED", "RESCHEDULED", "DECLINED", "CANCELLED"];
 
@@ -59,8 +60,8 @@ export default function ReservationsPage() {
         }
         footer={<SavedSearches saved={s.saved} onApply={s.apply} onSave={s.saveAs} />}
       >
-        <Field label="Check-in from" htmlFor="rf"><Input id="rf" type="date" value={s.filters.check_in_from} onChange={(e) => s.update({ check_in_from: e.target.value })} /></Field>
-        <Field label="Check-in to" htmlFor="rt"><Input id="rt" type="date" value={s.filters.check_in_to} onChange={(e) => s.update({ check_in_to: e.target.value })} /></Field>
+        <Field label="Check-in from" htmlFor="rf"><DateField id="rf" value={s.filters.check_in_from} onChange={(v) => s.update({ check_in_from: v })} /></Field>
+        <Field label="Check-in to" htmlFor="rt"><DateField id="rt" value={s.filters.check_in_to} onChange={(v) => s.update({ check_in_to: v })} /></Field>
       </FilterBar>
       <DataTable caption="Reservations" columns={columns} data={data?.items ?? []} total={data?.total ?? 0} page={s.page} pageSize={25} loading={isLoading}
         sort={s.sort} onSort={s.setSort} onPage={s.setPage} onRowClick={(r) => router.push(`/reservations/${r.id}`)}
