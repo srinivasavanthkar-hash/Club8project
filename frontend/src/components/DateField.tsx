@@ -163,7 +163,7 @@ export function DateField({
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-r-md text-fg-subtle hover:text-fg disabled:cursor-not-allowed"
+        className="absolute right-0 top-0 flex h-9 w-9 items-center justify-center rounded-r-md text-fg-subtle hover:text-fg disabled:cursor-not-allowed touch:h-11"
       >
         <CalendarDays aria-hidden className="size-4" />
       </button>
@@ -325,7 +325,7 @@ export function MonthField({
       />
       <button ref={button} type="button" disabled={disabled} aria-label="Choose month" aria-haspopup="dialog" aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-r-md text-fg-subtle hover:text-fg disabled:cursor-not-allowed">
+        className="absolute right-0 top-0 flex h-9 w-9 items-center justify-center rounded-r-md text-fg-subtle hover:text-fg disabled:cursor-not-allowed touch:h-11">
         <CalendarDays aria-hidden className="size-4" />
       </button>
       {problem && <p id={errId} className="mt-1 text-xs font-medium text-danger">{problem}</p>}
