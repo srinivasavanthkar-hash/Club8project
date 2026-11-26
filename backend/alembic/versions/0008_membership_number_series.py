@@ -11,6 +11,8 @@ Revises: 0007
 Create Date: 2026-11-26
 """
 
+import os
+
 import sqlalchemy as sa
 
 from alembic import op
@@ -95,6 +97,11 @@ def upgrade() -> None:
         """
     )
     op.execute("CREATE INDEX IF NOT EXISTS ix_members_number_series_id ON members (number_series_id)")
+    # The runtime application role (0001) only has grants on the tables that existed then.
+    app_role = os.environ.get("CRM_APP_DB_ROLE", "crm_app")
+    if op.get_bind().execute(sa.text("SELECT 1 FROM pg_roles WHERE rolname = :r"), {"r": app_role}).first():
+        role = '"' + app_role.replace('"', "") + '"'
+        op.execute(f"GRANT SELECT, INSERT, UPDATE, DELETE ON membership_number_series TO {role}")
 
 
 def downgrade() -> None:

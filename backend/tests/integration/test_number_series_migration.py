@@ -134,3 +134,53 @@ async def test_numbers_survive_the_upgrade_and_the_downgrade(admin_url: str) -> 
         async with admin.connect() as c:
             await c.execute(text(f'DROP DATABASE "{dbname}" WITH (FORCE)'))
         await admin.dispose()
+
+
+async def test_the_app_role_can_use_every_table(admin_url: str) -> None:
+    """The API runs as a restricted role (crm_app; the migrations run as the owner). Every table a migration adds
+    must be granted to it, or the API fails with "permission denied" in Docker and Azure while tests run as the owner.
+    Append-only audit tables stay insert-only."""
+    from alembic.config import Config
+
+    from alembic import command
+
+    dbname = f"crm_grants_{uuid.uuid4().hex[:8]}"
+    admin = create_async_engine(admin_url, isolation_level="AUTOCOMMIT")
+    async with admin.connect() as c:
+        await c.execute(text(f'CREATE DATABASE "{dbname}"'))
+        if not (await c.execute(text("SELECT 1 FROM pg_roles WHERE rolname = 'crm_app'"))).first():
+            await c.execute(text("CREATE ROLE crm_app NOLOGIN"))
+    eng = create_async_engine(f"{admin_url.rpartition('/')[0]}/{dbname}")
+    cfg = Config(os.path.join(os.path.dirname(__file__), "..", "..", "alembic.ini"))
+    cfg.set_main_option("script_location", os.path.join(os.path.dirname(__file__), "..", "..", "alembic"))
+
+    def upgrade(sync_conn: Any) -> None:
+        # A fresh database gets every table from the baseline (and 0001's grants on all of them); the real case is an
+        # existing database where a later migration creates the table: go back before 0008 and upgrade again.
+        cfg.attributes["connection"] = sync_conn
+        command.upgrade(cfg, "head")
+        command.downgrade(cfg, "0007")
+        command.upgrade(cfg, "head")
+
+    try:
+        async with eng.begin() as c:
+            await c.run_sync(upgrade)
+            rows = (
+                await c.execute(
+                    text(
+                        "SELECT tablename, has_table_privilege('crm_app', 'public.' || tablename, 'SELECT, INSERT'), "
+                        "has_table_privilege('crm_app', 'public.' || tablename, 'UPDATE') "
+                        "FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'alembic_version'"
+                    )
+                )
+            ).all()
+        missing = sorted(t for t, can_use, _ in rows if not can_use)
+        assert missing == [], f"no grant for the app role on: {missing}"
+        updatable = {t: can_update for t, _, can_update in rows}
+        assert updatable["membership_number_series"] and updatable["members"]
+        assert not any(updatable[t] for t in ("activity_log", "record_versions", "entitlement_ledger"))
+    finally:
+        await eng.dispose()
+        async with admin.connect() as c:
+            await c.execute(text(f'DROP DATABASE "{dbname}" WITH (FORCE)'))
+        await admin.dispose()
