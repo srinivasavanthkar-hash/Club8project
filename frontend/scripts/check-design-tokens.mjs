@@ -30,7 +30,7 @@ function* files(dir) {
 
 const problems = [];
 for (const f of files(ROOT)) {
-  readFileSync(f, "utf8").split("\n").forEach((line, i) => {
+  readFileSync(f, "utf8").split(/\r?\n/).forEach((line, i) => { // CRLF on Windows checkouts: "." never matches "\r"
     if (line.includes("design-tokens-allow")) return;
     const code = line.replace(/\/\/.*$/, "").replace(/^\s*\*.*$/, "");
     for (const [re, what] of RULES) {
