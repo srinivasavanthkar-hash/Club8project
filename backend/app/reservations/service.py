@@ -571,8 +571,8 @@ async def reschedule(session: AsyncSession, reservation_id: uuid.UUID, data: Res
     audit.record(
         session,
         "RESERVATION_DATES",
-        f"Reservation {r.reservation_number} rescheduled (#{r.reschedule_count})"
-        f" to {data.check_in}..{data.check_out}: {data.reason}",
+        f"Reservation {r.reservation_number} rescheduled (#{r.reschedule_count}):"
+        f" {fmt_date(data.check_in)} to {fmt_date(data.check_out)}; reason: {data.reason}",
         entity_type="reservations",
         entity_id=r.id,
         entity_ref=r.reservation_number,

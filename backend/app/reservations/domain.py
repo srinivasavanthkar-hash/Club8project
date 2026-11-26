@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from app.core.errors import RuleViolation
-from app.core.timeutil import add_months, add_working_days
+from app.core.timeutil import add_months, add_working_days, fmt_date
 
 
 @dataclass(frozen=True)
@@ -30,11 +30,11 @@ def booking_window_warnings(
     if check_in < earliest:
         warnings.append(
             f"Check-in is less than {window.min_working_days} working days after the request "
-            f"(earliest {earliest.isoformat()})"
+            f"(earliest {fmt_date(earliest)})"
         )
     if check_in > latest:
         warnings.append(
-            f"Check-in is more than {window.max_months} months after the request (latest {latest.isoformat()})"
+            f"Check-in is more than {window.max_months} months after the request (latest {fmt_date(latest)})"
         )
     return warnings
 
