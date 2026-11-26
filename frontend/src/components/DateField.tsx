@@ -234,7 +234,7 @@ function Calendar({ selected, min, max, start, onPick, onClose }: {
         <Select aria-label="Month" value={m} onChange={(e) => setMonth(y, Number(e.target.value))} className="h-8 flex-1 text-sm">
           {MONTHS.map((name, i) => <option key={name} value={i + 1}>{name}</option>)}
         </Select>
-        <Select aria-label="Year" value={y} onChange={(e) => setMonth(Number(e.target.value), m)} className="h-8 w-24 text-sm">
+        <Select aria-label="Year" value={y} onChange={(e) => setMonth(Number(e.target.value), m)} className="h-8 w-20 shrink-0 text-sm">
           {years.map((yr) => <option key={yr} value={yr}>{yr}</option>)}
         </Select>
         <Button size="sm" variant="ghost" aria-label="Next month" onClick={() => move(addMonths(focus, 1))}><ChevronRight aria-hidden className="size-4" /></Button>
