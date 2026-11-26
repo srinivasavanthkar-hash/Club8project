@@ -2,9 +2,11 @@
  * Dates are DD-MM-YYYY on every PC. Native date inputs follow the browser's language, and many office PCs run English
  * (United States), which shows and expects month-first dates. This spec runs the browser in en-US with a US time zone:
  * every date field must still show and accept day-first dates, and the API must still get ISO dates.
- * Live stack, signed in; changes the week-start setting (then puts it back) and adds a season-calendar entry.
+ * Times typed into date-and-time fields are India time on any PC. Live stack, signed in; changes the week-start
+ * setting (then puts it back), adds a season-calendar entry and a lead.
  */
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./support/clock";
 import { requireIsolatedStack, signIn } from "./support/stack";
 
 test.beforeAll(requireIsolatedStack);
@@ -109,4 +111,26 @@ test("a date saved through a form is stored as the day that was typed", async ({
   const body = (await posted).postDataJSON() as { start_date: string; end_date: string };
   expect(body).toMatchObject({ start_date: "2039-05-01", end_date: "2039-05-10" }); // not 5 January / 5 October
   await expect(page.getByRole("row").filter({ hasText: "01-05-2039" })).toContainText("10-05-2039");
+});
+
+test("a time typed on a PC in another time zone is recorded as India time", async ({ page }) => {
+  await signIn(page, "demo.sales");
+  await page.goto("/leads/new");
+  await page.getByLabel("Prospect name", { exact: true }).fill("Dates Demo Prospect");
+  await page.getByLabel("Mobile", { exact: true }).fill(`96${String(Date.now()).slice(-8)}`);
+  await page.getByLabel("Email", { exact: true }).fill("dates.demo@example.com");
+  await page.getByLabel("City", { exact: true }).fill("Pune");
+  await page.getByLabel("OPC / marketer name", { exact: true }).fill("Demo OPC");
+  await page.getByRole("button", { name: "Save lead" }).click();
+  await expect(page.getByTestId("lead-status")).toHaveText("NEW");
+  await page.getByRole("button", { name: "CONTACTED" }).click();
+  await expect(page.getByTestId("lead-status")).toHaveText("CONTACTED");
+  expect(await page.locator(NATIVE + ', input[type="datetime-local"]').count()).toBe(0);
+  await page.getByLabel(/Presentation date & time/).pressSequentially("20112026");
+  await page.getByLabel("Presentation time", { exact: true }).fill("4:30 pm");
+  const posted = page.waitForRequest((r) => r.method() === "POST" && /\/api\/v1\/leads\/[^/]+\/status$/.test(r.url()));
+  await page.getByRole("button", { name: "PRESENTATION SCHEDULED" }).click();
+  // 4:30 pm in India is 11:00 UTC, although this browser is in New York (where 4:30 pm would be 21:30 UTC)
+  expect((await posted).postDataJSON()).toMatchObject({ status: "PRESENTATION_SCHEDULED", presentation_at: "2026-11-20T11:00:00.000Z" });
+  await expect(page.getByText("20-11-2026 4:30 pm")).toBeVisible();
 });

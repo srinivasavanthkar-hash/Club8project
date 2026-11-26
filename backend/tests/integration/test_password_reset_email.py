@@ -13,7 +13,7 @@ import pyotp
 import pytest
 from sqlalchemy import text, update
 
-from app.core.timeutil import now_utc
+from app.core.timeutil import real_now_utc
 from app.email import dispatch
 from app.email.sender import OUTBOX
 from tests.integration.helpers import ok
@@ -132,7 +132,7 @@ async def test_tokens_hashed_single_use_expiring_and_replaced_by_newer(api):
         await s.execute(
             update(PasswordResetToken)
             .where(PasswordResetToken.token_hash == hashlib.sha256(third.encode()).hexdigest())
-            .values(expires_at=now_utc() - timedelta(seconds=1))
+            .values(expires_at=real_now_utc() - timedelta(seconds=1))
         )
         await s.commit()
     assert (await check(api, third))["valid"] is False  # expired

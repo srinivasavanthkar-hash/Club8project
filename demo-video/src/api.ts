@@ -68,6 +68,10 @@ export async function apiAs(user: string) {
 export const addDays = (iso: string, n: number) => new Intl.DateTimeFormat("en-CA").format(new Date(new Date(`${iso}T12:00:00`).getTime() + n * 86_400_000));
 export const istMonth = (offsetDays: number) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date(Date.now() + offsetDays * 86_400_000)).slice(0, 7);
 export const istToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+/** What staff type into a date field: "2027-03-05" -> "05-03-2027" (the CRM's date fields are DD-MM-YYYY). */
+export const dmy = (iso: string) => `${iso.slice(8, 10)}-${iso.slice(5, 7)}-${iso.slice(0, 4)}`;
+/** What staff type into a month field: "2027-03" -> "03-2027". */
+export const my = (ym: string) => `${ym.slice(5, 7)}-${ym.slice(0, 4)}`;
 export const monthName = (iso: string) => new Intl.DateTimeFormat("en-IN", { month: "long", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
 
 /** A minimal valid PDF, for document uploads (signed agreement). */

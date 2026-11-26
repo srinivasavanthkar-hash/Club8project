@@ -1,6 +1,6 @@
 import {
-  addMonths, autoDash, autoDashMonth, columnOf, isoToDisplay, longLabel, monthGrid, monthToDisplay, parseDisplay,
-  parseMonthDisplay, weekdayNames,
+  addMonths, autoDash, autoDashMonth, columnOf, instantToIst, isoToDisplay, istToInstant, longLabel, monthGrid,
+  monthToDisplay, parseDisplay, parseMonthDisplay, parseTime, timeToDisplay, weekdayNames,
 } from "./dates";
 
 describe("date entry is always day-month-year", () => {
@@ -43,6 +43,7 @@ describe("date entry is always day-month-year", () => {
     expect(parseMonthDisplay("3/2027")).toEqual({ kind: "ok", ym: "2027-03" });
     expect(parseMonthDisplay("13-2027").kind).toBe("invalid");
     expect(monthToDisplay("2027-03")).toBe("03-2027");
+    expect(parseMonthDisplay("2027-03")).toEqual({ kind: "ok", ym: "2027-03" }); // pasted year-month
     expect([..."032027"].reduce((a, c) => autoDashMonth(a + c), "")).toBe("03-2027");
   });
 });
@@ -73,5 +74,31 @@ describe("calendar", () => {
 
   it("names days in full for screen readers", () => {
     expect(longLabel("2027-03-05")).toBe("Friday 5 March 2027");
+  });
+});
+
+describe("times are India time", () => {
+  it("reads 24-hour and am/pm times", () => {
+    expect(parseTime("16:05")).toBe("16:05");
+    expect(parseTime("4:05 pm")).toBe("16:05");
+    expect(parseTime("4.05PM")).toBe("16:05");
+    expect(parseTime("4 pm")).toBe("16:00");
+    expect(parseTime("12:00 am")).toBe("00:00");
+    expect(parseTime("12:30 pm")).toBe("12:30");
+    expect(parseTime("0930")).toBe("09:30");
+    for (const t of ["25:00", "13:00 pm", "4:65", "noon", ""]) expect(parseTime(t)).toBeNull();
+  });
+
+  it("shows times the way the app does", () => {
+    expect(timeToDisplay("16:05")).toBe("4:05 pm");
+    expect(timeToDisplay("00:15")).toBe("12:15 am");
+    expect(timeToDisplay("12:00")).toBe("12:00 pm");
+  });
+
+  it("a typed time is India time whatever the PC's time zone", () => {
+    // 11:00 in India = 05:30 UTC, on a PC in New York as anywhere else (the test runner's zone does not matter)
+    expect(istToInstant("2026-11-16T11:00")).toBe("2026-11-16T05:30:00.000Z");
+    expect(instantToIst("2026-11-16T05:30:00.000Z")).toBe("2026-11-16T11:00");
+    expect(instantToIst("2026-11-15T20:00:00.000Z")).toBe("2026-11-16T01:30"); // already the next day in India
   });
 });

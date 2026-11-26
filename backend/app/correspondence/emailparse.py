@@ -10,6 +10,8 @@ from datetime import UTC, datetime
 from email.utils import getaddresses, parsedate_to_datetime
 from typing import Protocol
 
+from app.core.timeutil import now_utc
+
 
 @dataclass
 class ParsedAttachment:
@@ -40,11 +42,11 @@ def _addrs(values: list[str]) -> list[str]:
 def parse_eml(raw: bytes) -> ParsedEmail:
     msg = email.message_from_bytes(raw, policy=email.policy.default)
     try:
-        sent = parsedate_to_datetime(msg["date"]) if msg["date"] else datetime.now(UTC)
+        sent = parsedate_to_datetime(msg["date"]) if msg["date"] else now_utc()
         if sent.tzinfo is None:
             sent = sent.replace(tzinfo=UTC)
     except (TypeError, ValueError):
-        sent = datetime.now(UTC)
+        sent = now_utc()
     text_part = msg.get_body(preferencelist=("plain",))
     html_part = msg.get_body(preferencelist=("html",))
     attachments = []
@@ -73,7 +75,7 @@ def parse_msg(raw: bytes) -> ParsedEmail:  # pragma: no cover - needs a real .ms
 
     m = extract_msg.Message(io.BytesIO(raw))  # type: ignore[no-untyped-call]
     try:
-        sent = m.date if isinstance(m.date, datetime) else datetime.now(UTC)
+        sent = m.date if isinstance(m.date, datetime) else now_utc()
         headers = m.header
         return ParsedEmail(
             sender=(_addrs([m.sender or ""]) or [m.sender or ""])[0],

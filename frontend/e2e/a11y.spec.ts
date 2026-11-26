@@ -3,7 +3,8 @@
  * Fails on any serious or critical violation.
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./support/clock";
 import { loadRecording, mockApi } from "./support/fixtures";
 
 const rec = loadRecording();

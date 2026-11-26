@@ -145,6 +145,8 @@ export function parseMonthDisplay(text: string): ParsedMonth {
   if (s === "") return { kind: "empty" };
   let m = /^(\d{1,2})[-/. ](\d{4})$/.exec(s);
   if (!m && /^\d{6}$/.test(s)) m = [s, s.slice(0, 2), s.slice(2)] as unknown as RegExpExecArray;
+  const ym = /^(\d{4})-(\d{1,2})$/.exec(s); // pasted ISO year-month
+  if (!m && ym) m = [s, ym[2], ym[1]] as unknown as RegExpExecArray;
   if (!m) return { kind: "invalid" };
   const [mo, y] = [Number(m[1]), Number(m[2])];
   if (y < 1900 || mo < 1 || mo > 12) return { kind: "invalid" };
@@ -156,4 +158,49 @@ export function autoDashMonth(text: string): string {
   const d = text.slice(0, 6);
   if (d.length < 2) return d;
   return d.length === 2 ? `${d}-` : `${d.slice(0, 2)}-${d.slice(2)}`;
+}
+
+// ---- times and date-times (presentations, emails, calls): always India time, whatever the PC's time zone
+
+/** "16:05", "4:05 pm", "4.05pm", "4 pm", "0405" -> "16:05" / "04:05"; null when it is not a time. */
+export function parseTime(text: string): string | null {
+  const s = text.trim().toLowerCase().replace(/\s+/g, " ");
+  if (s === "") return null;
+  const m = /^(\d{1,2})(?:[:.]?(\d{2}))? ?(am|pm|a\.m\.|p\.m\.)?$/.exec(s);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = m[2] === undefined ? 0 : Number(m[2]);
+  const ampm = m[3]?.replace(/\./g, "");
+  if (min > 59) return null;
+  if (ampm) {
+    if (h < 1 || h > 12) return null;
+    h = (h % 12) + (ampm === "pm" ? 12 : 0);
+  } else if (h > 23 || (m[2] === undefined && s.length > 2)) {
+    return null;
+  }
+  return `${pad(h)}:${pad(min)}`;
+}
+
+/** "16:05" -> "4:05 pm" (how the app shows times). */
+export function timeToDisplay(hhmm: string | null | undefined): string {
+  const m = hhmm ? /^(\d{2}):(\d{2})/.exec(hhmm) : null;
+  if (!m) return "";
+  const h = Number(m[1]);
+  return `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h < 12 ? "am" : "pm"}`;
+}
+
+/** India wall-clock "YYYY-MM-DDTHH:MM" -> UTC ISO instant for the API (never the PC's own time zone). */
+export function istToInstant(wall: string): string {
+  return new Date(`${wall}:00+05:30`).toISOString();
+}
+
+/** UTC instant -> India wall-clock "YYYY-MM-DDTHH:MM". */
+export function instantToIst(iso: string): string {
+  const t = new Date(new Date(iso).getTime() + 330 * 60_000);
+  return t.toISOString().slice(0, 16);
+}
+
+/** Now, as India wall-clock "YYYY-MM-DDTHH:MM". */
+export function nowIst(): string {
+  return instantToIst(new Date().toISOString());
 }

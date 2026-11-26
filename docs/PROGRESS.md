@@ -85,6 +85,14 @@ Still outside this repository: `docs/BUILD_PROMPT.md` Section 3.1 (the file was 
 | 7. egg-info | ✓ | `*.egg-info/` ignored, tracked folder removed |
 | Visual references | ✓ | Made and compared only in Playwright's official Linux image (`scripts/visual.sh`, CI step); a missing reference fails; 24 Linux references; Windows references removed |
 
+## Next phase, Phase 2: membership number series (docs/NEXT_PHASE_PROMPT.md, branch `feature/membership-prefixes`, 26-11-2026)
+| Item | Done | Notes |
+|---|---|---|
+| A. Date fields DD-MM-YYYY on every PC | ✓ | 24 date inputs, the EMI month and 3 date-and-time inputs replaced; calendar popup; week start setting `ui.week_start` (migration 0007); India time on any PC (`datetime-local` used the PC's zone); Playwright spec in an en-US / New York browser (`e2e/dates.spec.ts`). D-UI-2 |
+| Fixed "today" for tests | ✓ | `CRM_FIXED_TODAY=2026-11-16` for backend tests and e2e stacks, browser clock set to match; security clocks keep real time. README "Tests", D-TEST-1 |
+| Client files out of git | ✓ | `docs/*.xlsx` and Office `~$*` lock files ignored |
+| B. Membership number series | | |
+
 ## CI incidents
 | Date | What happened | Fix |
 |---|---|---|

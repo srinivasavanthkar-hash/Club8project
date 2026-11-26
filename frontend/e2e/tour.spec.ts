@@ -4,7 +4,8 @@
  *   TOUR=1 python scripts/run_e2e.py tour   (fresh throwaway database; see support/stack.ts)
  * Needs the demo master data and users (fictitious data only).
  */
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
+import { expect, istToday, stay, test } from "./support/clock";
 import { requireIsolatedStack, signIn } from "./support/stack";
 import path from "node:path";
 
@@ -22,16 +23,6 @@ test.skip(!process.env.TOUR, "set TOUR=1 to capture the demo tour screenshots");
 test.beforeAll(requireIsolatedStack); // creates members and users: never against the demo database
 test.use({ viewport: { width: 1440, height: 900 } });
 
-function istToday(offsetDays = 0): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date(Date.now() + offsetDays * 86_400_000));
-}
-function stay(): [string, string, string, string] {
-  let d = new Date(Date.now() + 21 * 86_400_000);
-  if (d.getMonth() === 11 && d.getDate() > 10) d = new Date(d.getFullYear() + 1, 1, 2);
-  const iso = (x: Date) => new Intl.DateTimeFormat("en-CA").format(x);
-  const plus = (n: number) => new Date(d.getTime() + n * 86_400_000);
-  return [iso(d), iso(plus(4)), iso(plus(7)), iso(plus(9))];
-}
 
 /** Settles spinners, hides toasts and focus, optionally scrolls `at` to `offset` px below the top of the viewport,
  * and saves docs/demo-tour/<name>.png. */
@@ -76,7 +67,8 @@ test("client demo tour", async ({ page }) => {
   const leadStatus = page.getByTestId("lead-status");
   await page.getByRole("button", { name: "CONTACTED" }).click();
   await expect(leadStatus).toHaveText("CONTACTED");
-  await page.getByLabel(/Presentation date & time/).fill(`${istToday()}T11:00`);
+  await page.getByLabel(/Presentation date & time/).fill(istToday());
+  await page.getByLabel("Presentation time", { exact: true }).fill("11:00");
   await page.getByRole("button", { name: "PRESENTATION SCHEDULED" }).click();
   await expect(leadStatus).toHaveText("PRESENTATION SCHEDULED");
   await page.getByRole("button", { name: "ATTENDED" }).click();

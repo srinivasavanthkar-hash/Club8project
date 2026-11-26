@@ -7,6 +7,12 @@ menus and actions your role allows; the server enforces the same rules.
 Dates are shown as DD-MM-YYYY (India time) and amounts as ₹2,55,000.00. Every change you make is recorded with
 your name, the time, and the old and new values.
 
+**Typing dates.** Every date box takes day-month-year, whatever language your PC is set to: type `05032027`,
+`05-03-2027` or `5/3/2027` for 5 March 2027, or pick it from the calendar (the button at the right of the box; arrow
+keys move, Enter chooses, Esc closes). Month boxes (EMI start) take `03-2027`. Times take `16:30` or `4:30 pm` and
+are always India time, even on a PC set to another time zone. A date that does not exist, such as 31-02-2027, is
+reported under the box and is not saved.
+
 ## Your password and two-step verification (everyone)
 * **Show / hide:** every password field has an eye button to check what you typed. It hides again when you submit
   or leave the page. A "Caps Lock is on" note appears under the field when Caps Lock is on.

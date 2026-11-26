@@ -28,7 +28,7 @@ from app.core.config import get_settings
 from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.security import hash_password
 from app.core.settings_store import get_setting, get_settings_map
-from app.core.timeutil import fmt_dt_ist, now_utc
+from app.core.timeutil import fmt_dt_ist, real_now_utc
 
 ADMIN = "ADMIN"
 
@@ -86,7 +86,7 @@ async def issue_temporary_password(
     cfg = await get_settings_map(session, POLICY_KEYS)
     pw = generate_temporary_password(target.username, target.full_name, cfg)
     hours = int(await get_setting(session, "password.temp_expiry_hours"))
-    expires = now_utc() + timedelta(hours=hours)
+    expires = real_now_utc() + timedelta(hours=hours)
     target.password_hash = hash_password(pw)
     target.must_change_password = True
     target.temp_password_expires_at = expires
@@ -189,7 +189,7 @@ async def reset_password(
         requested_by=actor.id,
         reason=reason,
         method=method,
-        expires_at=now_utc() + timedelta(hours=hours),
+        expires_at=real_now_utc() + timedelta(hours=hours),
     )
     session.add(req)
     await session.flush()
@@ -207,7 +207,7 @@ async def _request(session: AsyncSession, request_id: uuid.UUID) -> tuple[AdminR
     req = await session.get(AdminResetRequest, request_id, with_for_update=True)
     if req is None:
         raise NotFound("Request not found")
-    if req.status == "PENDING" and req.expires_at <= now_utc():
+    if req.status == "PENDING" and req.expires_at <= real_now_utc():
         target = await _target(session, req.target_user_id)
         _expire(session, req, target)
     if req.status != "PENDING":
@@ -223,7 +223,7 @@ async def approve_request(session: AsyncSession, actor: User, request_id: uuid.U
         raise Forbidden("Only an administrator can approve this reset.", code="NotAdmin")
     if not target.is_active:
         raise Conflict("This account is inactive. Activate it first.", code="UserInactive")
-    req.status, req.decided_by, req.decision_reason, req.decided_at = "APPROVED", actor.id, reason, now_utc()
+    req.status, req.decided_by, req.decision_reason, req.decided_at = "APPROVED", actor.id, reason, real_now_utc()
     _audit(
         session,
         "ADMIN_RESET_APPROVED",
@@ -247,7 +247,7 @@ async def reject_request(session: AsyncSession, actor: User, request_id: uuid.UU
         raise Forbidden("You can't decide on a reset of your own account.", code="SameAdmin")
     cancelled = actor.id == req.requested_by
     req.status = "CANCELLED" if cancelled else "REJECTED"
-    req.decided_by, req.decision_reason, req.decided_at = actor.id, reason, now_utc()
+    req.decided_by, req.decision_reason, req.decided_at = actor.id, reason, real_now_utc()
     _audit(
         session,
         "ADMIN_RESET_CANCELLED" if cancelled else "ADMIN_RESET_REJECTED",
@@ -259,7 +259,7 @@ async def reject_request(session: AsyncSession, actor: User, request_id: uuid.UU
 
 
 def _expire(session: AsyncSession, req: AdminResetRequest, target: User) -> None:
-    req.status, req.decided_at = "EXPIRED", now_utc()
+    req.status, req.decided_at = "EXPIRED", real_now_utc()
     _audit(session, "ADMIN_RESET_EXPIRED", f"Reset request for administrator {target.username} expired", target)
 
 
@@ -269,7 +269,7 @@ async def expire_reset_requests(session: AsyncSession) -> int:
         (
             await session.execute(
                 select(AdminResetRequest)
-                .where(AdminResetRequest.status == "PENDING", AdminResetRequest.expires_at <= now_utc())
+                .where(AdminResetRequest.status == "PENDING", AdminResetRequest.expires_at <= real_now_utc())
                 .with_for_update()
             )
         ).scalars()
@@ -287,7 +287,7 @@ async def expire_temporary_passwords(session: AsyncSession) -> int:
             await session.execute(
                 select(User)
                 .where(
-                    User.temp_password_expires_at <= now_utc(),
+                    User.temp_password_expires_at <= real_now_utc(),
                     User.temp_password_expired_at.is_(None),
                     User.must_change_password.is_(True),
                 )
@@ -296,7 +296,7 @@ async def expire_temporary_passwords(session: AsyncSession) -> int:
         ).scalars()
     )
     for u in rows:
-        u.temp_password_expired_at = now_utc()
+        u.temp_password_expired_at = real_now_utc()
         _audit(session, "TEMP_PASSWORD_EXPIRED", f"Unused temporary password of {u.username} expired", u)
     return len(rows)
 

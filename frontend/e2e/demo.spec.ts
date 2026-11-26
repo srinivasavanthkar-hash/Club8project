@@ -2,7 +2,8 @@
  * Section 14 initial-delivery demo, driven through the UI with FICTITIOUS data only.
  * Pre-requisite: demo master data + users (scripts/seed-demo.sh --no-scenario).
  */
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, istToday, stay, test } from "./support/clock";
 import { requireIsolatedStack } from "./support/stack";
 
 const PASSWORD = process.env.CRM_DEMO_PASSWORD ?? "Demo-Passw0rd!";
@@ -14,18 +15,6 @@ const PDF = Buffer.from(
   "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n",
 );
 
-function istToday(offsetDays = 0): string {
-  const d = new Date(Date.now() + offsetDays * 86_400_000);
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(d);
-}
-/** A Monday-to-Thursday stay ~3 weeks out, inside the 7-working-day / 12-month window and the same year. */
-function stay(): [string, string, string, string] {
-  let d = new Date(Date.now() + 21 * 86_400_000);
-  if (d.getMonth() === 11 && d.getDate() > 10) d = new Date(d.getFullYear() + 1, 1, 2);
-  const iso = (x: Date) => new Intl.DateTimeFormat("en-CA").format(x);
-  const plus = (n: number) => new Date(d.getTime() + n * 86_400_000);
-  return [iso(d), iso(plus(4)), iso(plus(7)), iso(plus(9))];
-}
 
 /** Fails with the visible validation / server messages instead of a bare timeout. */
 test.beforeAll(requireIsolatedStack); // creates leads, members and payments: never against the demo database
@@ -65,7 +54,8 @@ test("Section 14 demo: lead → member → finance → reservation → correspon
   await expect(leadStatus).toHaveText("NEW");
   await page.getByRole("button", { name: "CONTACTED" }).click();
   await expect(leadStatus).toHaveText("CONTACTED");
-  await page.getByLabel(/Presentation date & time/).fill(`${istToday()}T11:00`);
+  await page.getByLabel(/Presentation date & time/).fill(istToday());
+  await page.getByLabel("Presentation time", { exact: true }).fill("11:00");
   await page.getByRole("button", { name: "PRESENTATION SCHEDULED" }).click();
   await expect(leadStatus).toHaveText("PRESENTATION SCHEDULED");
   await page.getByRole("button", { name: "ATTENDED" }).click();

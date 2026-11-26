@@ -29,7 +29,7 @@ from app.core.security import (
     verify_totp,
 )
 from app.core.settings_store import get_setting
-from app.core.timeutil import fmt_dt_ist, now_utc
+from app.core.timeutil import fmt_dt_ist, real_now_utc
 
 ADMIN_ROLES_REQUIRING_2FA_OPTION = {"ADMIN", "MANAGEMENT"}
 
@@ -60,12 +60,14 @@ async def _issue(session: AsyncSession, user: User, *, mfa: bool) -> Tokens:
     claims = {"tv": user.token_version, "mfa": mfa}
     access, _ = create_token(user.id, "access", timedelta(minutes=s.access_token_minutes), claims)
     refresh, jti = create_token(user.id, "refresh", timedelta(days=s.refresh_token_days), claims)
-    session.add(RefreshToken(user_id=user.id, jti=jti, expires_at=now_utc() + timedelta(days=s.refresh_token_days)))
+    session.add(
+        RefreshToken(user_id=user.id, jti=jti, expires_at=real_now_utc() + timedelta(days=s.refresh_token_days))
+    )
     return Tokens(access, refresh, user)
 
 
 def temp_password_expired(user: User) -> bool:
-    return user.temp_password_expires_at is not None and user.temp_password_expires_at <= now_utc()
+    return user.temp_password_expires_at is not None and user.temp_password_expires_at <= real_now_utc()
 
 
 async def login(session: AsyncSession, username: str, password: str, totp_code: str | None) -> Tokens:
@@ -82,7 +84,7 @@ async def login(session: AsyncSession, username: str, password: str, totp_code: 
         burn_password_check(password)
         audit.record(session, "LOGIN_FAILED", f"Failed login for unknown user '{username[:80]}'")
         raise Unauthorized("Incorrect username or password", code="InvalidCredentials")
-    now = now_utc()
+    now = real_now_utc()
     if user.locked_until and user.locked_until > now:
         _audit_user(session, "LOGIN_FAILED", f"Login attempt on locked account {user.username}", user)
         raise Unauthorized(
@@ -163,9 +165,9 @@ async def refresh(session: AsyncSession, token: str) -> Tokens:
                     select(RefreshToken).where(RefreshToken.user_id == row.user_id, RefreshToken.revoked_at.is_(None))
                 )
             ).scalars():
-                t.revoked_at = now_utc()
+                t.revoked_at = real_now_utc()
         raise Unauthorized("Refresh token revoked", code="RefreshRevoked")
-    row.revoked_at = now_utc()
+    row.revoked_at = real_now_utc()
     user = await session.get(User, row.user_id)
     if user is None or not user.is_active:
         raise Unauthorized("User inactive", code="UserInactive")
@@ -182,7 +184,7 @@ async def logout(session: AsyncSession, user: User, refresh_token: str | None) -
                 await session.execute(select(RefreshToken).where(RefreshToken.jti == data["jti"]))
             ).scalar_one_or_none()
             if row:
-                row.revoked_at = now_utc()
+                row.revoked_at = real_now_utc()
         except Exception:  # noqa: S110 - logout must always succeed
             pass
     _audit_user(session, "LOGOUT", f"{user.username} signed out", user)
@@ -192,7 +194,7 @@ async def revoke_all_sessions(session: AsyncSession, user: User, why: str) -> in
     """End every session of `user` on every device: bump the token version (access tokens stop working on their
     next request) and revoke all refresh tokens. Returns the number of refresh tokens revoked."""
     user.token_version += 1
-    now = now_utc()
+    now = real_now_utc()
     rows = list(
         (
             await session.execute(
@@ -225,7 +227,7 @@ async def change_password(
     if not await hit_account("change-password", str(user.id), s.rate_limit_change_password):
         _audit_user(session, "RATE_LIMITED", f"Change-password rate limit reached for {user.username}", user)
         raise TooManyRequests("Too many attempts. Wait a minute and try again.", code="RateLimited")
-    now = now_utc()
+    now = real_now_utc()
     if user.locked_until and user.locked_until > now:
         raise Forbidden(
             f"Too many incorrect attempts. Try again after {fmt_dt_ist(user.locked_until)} (India time).",

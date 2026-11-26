@@ -36,7 +36,7 @@ from app.core.errors import DomainError, RuleViolation, Unauthorized
 from app.core.ratelimit import hit_account
 from app.core.security import hash_password, verify_totp
 from app.core.settings_store import get_setting, get_settings_map
-from app.core.timeutil import now_utc
+from app.core.timeutil import real_now_utc
 from app.email import dispatch
 
 GENERIC = "If an account matches, we've sent password reset instructions to its registered email."
@@ -90,7 +90,7 @@ async def issue_reset_link(
 ) -> None:
     """Invalidate older unused links, store the new token's hash and email the link to the registered address."""
     assert user.email, "callers check for a registered email"
-    now = now_utc()
+    now = real_now_utc()
     await session.execute(
         update(PasswordResetToken)
         .where(
@@ -216,7 +216,7 @@ async def _valid_token(session: AsyncSession, raw: str) -> tuple[PasswordResetTo
         else "replaced by a newer link"
         if row.invalidated_at
         else "expired"
-        if row.expires_at <= now_utc()
+        if row.expires_at <= real_now_utc()
         else "inactive account"
         if user is None or not user.is_active
         else None
@@ -253,7 +253,7 @@ async def complete_reset(session: AsyncSession, raw: str, new_password: str, tot
             code="PasswordPolicy",
             extra={"problems": [{"code": p.code, "message": p.message} for p in problems]},
         )
-    now = now_utc()
+    now = real_now_utc()
     user.password_hash = hash_password(new_password)
     user.password_changed_at = now
     await remember(session, user.id, user.password_hash, int(await get_setting(session, "password.history_count")))

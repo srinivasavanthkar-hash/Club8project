@@ -62,6 +62,8 @@ services:
       # Only a throwaway CI stack sets this (ci.yml): the Playwright specs that write data refuse to run otherwise,
       # so they can never write to a demo database started from this file.
       CRM_E2E_TARGET: "${CRM_E2E_TARGET:-false}"
+      # Throwaway CI stack only (ci.yml): a fixed business date so date-dependent results do not drift. Empty = real date.
+      CRM_FIXED_TODAY: "${CRM_FIXED_TODAY:-}"
       # Email: Mailpit (above); sent by the worker after commit, with retries. Links use the public web address.
       CRM_EMAIL_PROVIDER: smtp
       CRM_SMTP_HOST: mailpit

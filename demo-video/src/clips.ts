@@ -5,7 +5,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { apiAs, istToday, monthName } from "./api";
+import { apiAs, dmy, istToday, monthName } from "./api";
 import { clipOutput } from "./assemble";
 import { CLIPS, type Scene, type Section, type Shared } from "./scene";
 import { entitlementYears, kavyaDates, requireIntactActivityLog, seedClip2, seedClip3, seedKavya } from "./seed-clips";
@@ -32,8 +32,8 @@ async function newRequest(s: Scene, b: { check_in: string; check_out: string }):
   await d.click(page.getByRole("button", { name: "New reservation" }));
   await d.select(page.getByLabel("Destination", { exact: true }), "Goa");
   await d.select(page.getByLabel("Property", { exact: true }), "Demo Beach Resort (Premium)");
-  await d.fill(page.getByLabel("Check-in", { exact: true }), b.check_in);
-  await d.fill(page.getByLabel("Check-out", { exact: true }), b.check_out);
+  await d.fill(page.getByLabel("Check-in", { exact: true }), dmy(b.check_in));
+  await d.fill(page.getByLabel("Check-out", { exact: true }), dmy(b.check_out));
   await page.getByRole("region", { name: "Entitlement calculation" }).waitFor();
   await page.locator('[aria-busy="true"]').first().waitFor({ state: "detached" });
   await d.settle();
@@ -552,7 +552,7 @@ const clip3: ClipDef = {
         await d.type(unit, "Studio");
         await d.click(dlg.getByRole("option", { name: /Studio/ }).first());
         await d.type(dlg.getByLabel("Annual amount (before GST)", { exact: true }), draft.amount);
-        await d.fill(dlg.getByLabel("Effective from", { exact: true }), draft.effective_from);
+        await d.fill(dlg.getByLabel("Effective from", { exact: true }), dmy(draft.effective_from));
         await d.pause(1500);
         await guard.expect(422, /\/admin\/master\/asf-rates/, async () => {
           await d.click(dlg.getByRole("button", { name: "Add entry", exact: true }));

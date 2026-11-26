@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any, Protocol
 
-from app.core.timeutil import add_working_days, today_ist
+from app.core.timeutil import add_working_days, now_utc, today_ist
 from app.core.validators import verhoeff_check_digit
 
 
@@ -304,7 +304,7 @@ async def run_demo(c: Client, seed: int | None = None) -> dict[str, Any]:
             f"/api/v1/members/{mid}/emails",
             json={
                 "direction": "INCOMING",
-                "sent_at": datetime.now().astimezone().isoformat(),
+                "sent_at": now_utc().isoformat(),
                 "sender": email,
                 "to": ["reservations@example.com"],
                 "subject": "Goa stay - early check-in?",
@@ -319,7 +319,7 @@ async def run_demo(c: Client, seed: int | None = None) -> dict[str, Any]:
             f"/api/v1/members/{mid}/calls",
             json={
                 "direction": "OUTGOING",
-                "called_at": datetime.now().astimezone().isoformat(),
+                "called_at": now_utc().isoformat(),
                 "contact_number": mobile,
                 "summary": "Welcome call (demo)",
                 "next_action": "Send voucher",

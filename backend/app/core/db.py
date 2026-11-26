@@ -4,7 +4,7 @@ import uuid
 from collections.abc import AsyncIterator, Callable, Coroutine
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Any
 
@@ -32,7 +32,10 @@ Rate = Annotated[Decimal, mapped_column(Numeric(7, 4))]
 
 
 def utcnow() -> datetime:
-    return datetime.now(UTC)
+    """Column defaults (created_at, updated_at): the business clock (core/timeutil.now_utc)."""
+    from app.core.timeutil import now_utc
+
+    return now_utc()
 
 
 class Base(DeclarativeBase):

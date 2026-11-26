@@ -14,7 +14,7 @@ import pyotp
 import pytest
 from sqlalchemy import text, update
 
-from app.core.timeutil import now_utc
+from app.core.timeutil import real_now_utc
 from tests.integration.conftest import Api
 from tests.integration.helpers import ok
 
@@ -210,13 +210,13 @@ async def test_temporary_password_expires_after_24_hours(api):
 
     u = await make_user(["SALES"])
     out = await admin_reset(api, u["id"])
-    hours = ((await _dt(out["expires_at"])) - now_utc()).total_seconds() / 3600
+    hours = ((await _dt(out["expires_at"])) - real_now_utc()).total_seconds() / 3600
     assert 23.9 < hours <= 24
     async with sessionmaker()() as s:
         await s.execute(
             update(User)
             .where(User.id == uuid.UUID(u["id"]))
-            .values(temp_password_expires_at=now_utc() - timedelta(minutes=1))
+            .values(temp_password_expires_at=real_now_utc() - timedelta(minutes=1))
         )
         await s.commit()
     r = await login_raw(api, u["username"], out["temporary_password"])
@@ -292,7 +292,7 @@ async def test_admin_reset_request_expires_and_can_be_rejected(api):
         await s.execute(
             update(AdminResetRequest)
             .where(AdminResetRequest.id == uuid.UUID(rid))
-            .values(expires_at=now_utc() - timedelta(seconds=1))
+            .values(expires_at=real_now_utc() - timedelta(seconds=1))
         )
         await s.commit()
     await api.login(approver["username"], PW)

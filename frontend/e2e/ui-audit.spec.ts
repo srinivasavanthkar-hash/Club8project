@@ -3,7 +3,8 @@
  *   UI_AUDIT_DIR=after npx playwright test ui-audit --project=desktop
  * Needs the demo master data and the Section 14 scenario (fictitious data only).
  */
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./support/clock";
 import { signIn } from "./support/stack";
 import path from "node:path";
 

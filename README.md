@@ -67,6 +67,19 @@ cd .. && python scripts/run_e2e.py   # Playwright on a THROWAWAY stack (Docker: 
                                      # Section 14 demo, passwords, axe a11y, visual regression. Specs that write data
                                      # refuse to run against any stack that isn't flagged CRM_E2E_TARGET (the demo).
 ```
+**Fixed "today".** Results that depend on the date (year-end rules, booking lead times, overdue instalments) must not
+change as the calendar moves, so tests run on a fixed business date, **16-11-2026** (a Monday):
+- backend tests: `CRM_FIXED_TODAY=2026-11-16`, set in `backend/tests/conftest.py`;
+- e2e stacks (`scripts/run_e2e.py`, CI): the API runs with `CRM_FIXED_TODAY`, the demo scenario included, and
+  `/api/v1/meta` reports the date. Specs import `test` from `frontend/e2e/support/clock.ts`, which sets each page's
+  clock to that date (keeping the real time of day) and gives `istToday()` / `stay()` for dates worked out in the
+  spec. `requireIsolatedStack()` refuses a stack on another date.
+
+It moves only the business date (`today_ist()`). Event timestamps, sign-in tokens, lockouts, reset links and two-step
+codes keep the real clock. The setting is refused in staging and production. Work out dates from `today_ist()` (backend)
+or `istToday()` (specs), never from the system clock. To move the date, change it in `conftest.py`, `run_e2e.py`
+(`E2E_TODAY`), `clock.ts` and `ci.yml` together.
+
 Status at hand-over: 110 backend tests passing (65 unit/property tests + 45 integration tests on PostgreSQL 16,
 including the full Section 14 demo); 90% coverage on the service + domain layer (CI gate: 80%); ruff and mypy clean;
 13 frontend unit tests; the Playwright Section 14 demo passing against a live stack; Terraform `validate` passing

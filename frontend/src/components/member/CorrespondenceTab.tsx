@@ -13,7 +13,8 @@ import { api } from "@/lib/api";
 import { formatDateTime, formatPhone, humanize } from "@/lib/format";
 import type { Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { DateField } from "@/components/DateField";
+import { DateField, DateTimeField } from "@/components/DateField";
+import { istToInstant, nowIst } from "@/lib/dates";
 
 type Email = { id: string; direction: string; sent_at: string; sender: string; to: string[]; subject: string; body_text: string };
 type Thread = { id: string; subject: string; emails: Email[] };
@@ -21,7 +22,6 @@ type Call = { id: string; direction: string; called_at: string; contact_number: 
 type Doc = { id: string; file_name: string; content_type: string; created_at: string; document_type_id: string; scan_status: string; description: string | null };
 type Item = { type: string; at: string; title: string; id: string };
 
-const nowLocal = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 const TIMELINE_FILTERS = ["email", "call", "document", "payment", "reservation", "entitlement", "status"].filter((t) => TIMELINE_TYPES.includes(t));
 
 function ScanState({ status }: { status: string }) {
@@ -48,9 +48,9 @@ export function CorrespondenceTab({ member }: { member: Member }) {
   const timeline = useQuery({ queryKey: ["timeline", member.id, types], queryFn: () => api.get<Item[]>(`/members/${member.id}/timeline`, { types }) });
   const refresh = () => qc.invalidateQueries({ predicate: (q) => q.queryKey[1] === member.id });
 
-  const [email, setEmail] = useState({ direction: "INCOMING", sent_at: nowLocal(), sender: member.email, to: "", subject: "", body: "" });
+  const [email, setEmail] = useState({ direction: "INCOMING", sent_at: nowIst(), sender: member.email, to: "", subject: "", body: "" });
   const addEmail = useMutation({
-    mutationFn: () => api.post(`/members/${member.id}/emails`, { ...email, sent_at: new Date(email.sent_at).toISOString(), to: email.to.split(",").map((s) => s.trim()).filter(Boolean) }),
+    mutationFn: () => api.post(`/members/${member.id}/emails`, { ...email, sent_at: istToInstant(email.sent_at), to: email.to.split(",").map((s) => s.trim()).filter(Boolean) }),
     onSuccess: () => { setEmail({ ...email, subject: "", body: "" }); refresh(); toast.success("Email added"); },
   });
   const emlRef = useRef<HTMLInputElement>(null);
@@ -58,9 +58,9 @@ export function CorrespondenceTab({ member }: { member: Member }) {
     mutationFn: (file: File) => { const fd = new FormData(); fd.append("file", file); fd.append("direction", "INCOMING"); return api.post(`/members/${member.id}/emails/import`, fd); },
     onSuccess: () => { refresh(); toast.success("Email imported"); },
   });
-  const [call, setCall] = useState({ direction: "OUTGOING", called_at: nowLocal(), contact_number: member.applicants[0]?.mobile ?? "", summary: "", outcome_id: "", next_action: "", next_action_date: "" });
+  const [call, setCall] = useState({ direction: "OUTGOING", called_at: nowIst(), contact_number: member.applicants[0]?.mobile ?? "", summary: "", outcome_id: "", next_action: "", next_action_date: "" });
   const addCall = useMutation({
-    mutationFn: () => api.post(`/members/${member.id}/calls`, { ...call, called_at: new Date(call.called_at).toISOString(), outcome_id: call.outcome_id || null, next_action: call.next_action || null, next_action_date: call.next_action_date || null }),
+    mutationFn: () => api.post(`/members/${member.id}/calls`, { ...call, called_at: istToInstant(call.called_at), outcome_id: call.outcome_id || null, next_action: call.next_action || null, next_action_date: call.next_action_date || null }),
     onSuccess: () => { setCall({ ...call, summary: "" }); refresh(); toast.success("Call logged"); },
   });
   const fileRef = useRef<HTMLInputElement>(null);
@@ -142,7 +142,7 @@ export function CorrespondenceTab({ member }: { member: Member }) {
             <Card title="Log an email">
           <div className="grid gap-3 md:grid-cols-2">
             <Field label="Direction" htmlFor="ed"><Select id="ed" value={email.direction} onChange={(e) => setEmail({ ...email, direction: e.target.value })}><option value="INCOMING">Incoming</option><option value="OUTGOING">Outgoing</option></Select></Field>
-            <Field label="Date/time" htmlFor="et"><Input id="et" type="datetime-local" value={email.sent_at} onChange={(e) => setEmail({ ...email, sent_at: e.target.value })} /></Field>
+            <Field label="Date/time" htmlFor="et"><DateTimeField id="et" timeLabel="Time (email)" value={email.sent_at} onChange={(v) => setEmail({ ...email, sent_at: v })} /></Field>
             <Field label="From" htmlFor="ef"><Input id="ef" type="email" value={email.sender} onChange={(e) => setEmail({ ...email, sender: e.target.value })} /></Field>
             <Field label="To (comma separated)" htmlFor="eto"><Input id="eto" value={email.to} onChange={(e) => setEmail({ ...email, to: e.target.value })} /></Field>
             <Field label="Subject" htmlFor="es" className="md:col-span-2" required><Input id="es" value={email.subject} onChange={(e) => setEmail({ ...email, subject: e.target.value })} /></Field>
@@ -158,7 +158,7 @@ export function CorrespondenceTab({ member }: { member: Member }) {
             <Card title="Log a call">
           <div className="grid gap-3 md:grid-cols-2">
             <Field label="Direction" htmlFor="cd"><Select id="cd" value={call.direction} onChange={(e) => setCall({ ...call, direction: e.target.value })}><option value="OUTGOING">Outgoing</option><option value="INCOMING">Incoming</option></Select></Field>
-            <Field label="Date/time" htmlFor="ct"><Input id="ct" type="datetime-local" value={call.called_at} onChange={(e) => setCall({ ...call, called_at: e.target.value })} /></Field>
+            <Field label="Date/time" htmlFor="ct"><DateTimeField id="ct" timeLabel="Time (call)" value={call.called_at} onChange={(v) => setCall({ ...call, called_at: v })} /></Field>
             <Field label="Contact number" htmlFor="cn"><Input id="cn" type="tel" value={call.contact_number} onChange={(e) => setCall({ ...call, contact_number: e.target.value })} /></Field>
             <Field label="Outcome" htmlFor="co"><Select id="co" value={call.outcome_id} onChange={(e) => setCall({ ...call, outcome_id: e.target.value })}><option value="">—</option>{outcomes.data?.filter((r) => r.kind === "CALL_OUTCOME").map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</Select></Field>
             <Field label="Summary" htmlFor="cs" className="md:col-span-2" required><Textarea id="cs" value={call.summary} onChange={(e) => setCall({ ...call, summary: e.target.value })} /></Field>

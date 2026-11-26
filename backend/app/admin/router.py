@@ -12,7 +12,7 @@ from app.auth.models import Permission, Role, User
 from app.core.db import TransactionalRoute
 from app.core.deps import CurrentUser, SessionDep, has_permission, require_permission
 from app.core.errors import DomainError, Forbidden, NotFound
-from app.core.timeutil import now_utc
+from app.core.timeutil import real_now_utc
 
 router = APIRouter(route_class=TransactionalRoute, prefix="/admin", tags=["admin"])
 
@@ -138,7 +138,7 @@ def _user_out(u: User) -> UserOut:
         totp_enabled=u.totp_enabled,
         must_change_password=u.must_change_password,
         must_enroll_totp=u.must_enroll_totp,
-        locked=bool(u.locked_until and u.locked_until > now_utc()),
+        locked=bool(u.locked_until and u.locked_until > real_now_utc()),
         has_email=bool(u.email),
     )
 

@@ -10,10 +10,12 @@ import { StatusBadge } from "@/components/crm/StatusBadge";
 import { Timeline } from "@/components/crm/Timeline";
 import { useToast } from "@/components/crm/Toast";
 import { ErrorText, useCan } from "@/components/providers";
-import { Button, buttonClasses, Card, Field, Input, KeyValue, Textarea } from "@/components/ui";
+import { Button, buttonClasses, Card, Field, KeyValue, Textarea } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate, formatDateTime, formatPhone, formatRelativeDays, humanize } from "@/lib/format";
 import type { Lead } from "@/lib/types";
+import { DateTimeField } from "@/components/DateField";
+import { istToInstant } from "@/lib/dates";
 
 const NEXT: Record<string, string[]> = {
   NEW: ["CONTACTED", "NOT_INTERESTED"],
@@ -47,7 +49,7 @@ export default function LeadDetail({ params }: { params: Promise<{ id: string }>
     qc.invalidateQueries({ queryKey: ["lead-history", id] });
   };
   const status = useMutation({
-    mutationFn: (s: string) => api.post<Lead>(`/leads/${id}/status`, { status: s, presentation_at: presentationAt ? new Date(presentationAt).toISOString() : null }),
+    mutationFn: (s: string) => api.post<Lead>(`/leads/${id}/status`, { status: s, presentation_at: presentationAt ? istToInstant(presentationAt) : null }),
     onSuccess: async (updated) => {
       // use the server's response directly so an older in-flight refetch cannot overwrite it
       await qc.cancelQueries({ queryKey: ["lead", id] });
@@ -91,8 +93,8 @@ export default function LeadDetail({ params }: { params: Promise<{ id: string }>
           {can("lead.status.change") && next.length > 0 && (
             <div className="flex flex-col gap-3 border-t border-border pt-4">
               {(next.includes("PRESENTATION_SCHEDULED")) && (
-                <Field label="Presentation date & time (for PRESENTATION_SCHEDULED)" htmlFor="pat" className="max-w-xs" hint="Set this before scheduling a presentation.">
-                  <Input id="pat" type="datetime-local" value={presentationAt} onChange={(e) => setPresentationAt(e.target.value)} />
+                <Field label="Presentation date & time (for PRESENTATION_SCHEDULED)" htmlFor="pat" className="max-w-md" hint="Set this before scheduling a presentation.">
+                  <DateTimeField id="pat" timeLabel="Presentation time" value={presentationAt} onChange={setPresentationAt} />
                 </Field>
               )}
               <div className="flex flex-wrap gap-2">

@@ -7,7 +7,7 @@ import { Button, Input, Select } from "@/components/ui";
 import { api } from "@/lib/api";
 import {
   addDays, addMonths, autoDash, autoDashMonth, clampIso, isoOf, isoToDisplay, longLabel, MONTHS, monthGrid,
-  monthToDisplay, parseDisplay, parseMonthDisplay, splitIso, weekdayNames, type WeekStart,
+  monthToDisplay, parseDisplay, parseMonthDisplay, parseTime, splitIso, timeToDisplay, weekdayNames, type WeekStart,
 } from "@/lib/dates";
 import { todayIso } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -393,5 +393,72 @@ export function FormMonthField<T extends FieldValues>({ control, name, rules, ..
   return (
     <Controller control={control} name={name} rules={rules}
       render={({ field }) => <MonthField {...rest} value={(field.value as string | null) ?? ""} onChange={field.onChange} onBlur={field.onBlur} />} />
+  );
+}
+
+/**
+ * Date and time in India time (presentations, emails, calls): a DateField and a time box ("16:05" or "4:05 pm", shown
+ * as "4:05 pm"). Value "YYYY-MM-DDTHH:MM" as India wall-clock time ("" until both parts are valid); convert with
+ * istToInstant() for the API, so a PC in another time zone still records India time.
+ */
+export function DateTimeField({ id, value, onChange, timeLabel = "Time", disabled, ...aria }: Omit<Common, "onBlur" | "required"> & {
+  value: string;
+  onChange: (wall: string) => void;
+  timeLabel?: string;
+}) {
+  const [date, setDate] = React.useState(value.slice(0, 10));
+  const [time, setTime] = React.useState(value.slice(11, 16));
+  const [timeText, setTimeText] = React.useState(timeToDisplay(value.slice(11, 16)));
+  const [problem, setProblem] = React.useState<string | null>(null);
+  const prev = React.useRef(value);
+  const emitted = React.useRef(value);
+  React.useEffect(() => {
+    if (value === prev.current) return;
+    prev.current = value;
+    if (value !== emitted.current) {
+      setDate(value.slice(0, 10));
+      setTime(value.slice(11, 16));
+      setTimeText(timeToDisplay(value.slice(11, 16)));
+    }
+    emitted.current = value;
+  }, [value]);
+  const emit = (d: string, t: string) => {
+    const v = d && t ? `${d}T${t}` : "";
+    emitted.current = v;
+    if (v !== value) onChange(v);
+  };
+  const timeId = `${id}-time`;
+  const errId = `${id}-time-error`;
+  return (
+    <div className="flex flex-wrap items-start gap-2">
+      <DateField id={id} value={date} disabled={disabled} className="min-w-40 flex-1" {...aria}
+        onChange={(d) => { setDate(d); emit(d, time); }} />
+      <div className="w-32">
+        <Input
+          id={timeId}
+          aria-label={timeLabel}
+          placeholder="e.g. 4:30 pm"
+          autoComplete="off"
+          disabled={disabled}
+          value={timeText}
+          aria-invalid={problem ? true : undefined}
+          aria-describedby={problem ? errId : undefined}
+          onChange={(e) => {
+            setTimeText(e.target.value);
+            const t = parseTime(e.target.value) ?? "";
+            setTime(t);
+            if (t) setProblem(null);
+            emit(date, t);
+          }}
+          onBlur={() => {
+            const t = parseTime(timeText);
+            if (t) setTimeText(timeToDisplay(t));
+            setProblem(timeText.trim() && !t ? "Enter a time such as 16:30 or 4:30 pm." : null);
+          }}
+          className="tabular-nums"
+        />
+        {problem && <p id={errId} className="mt-1 text-xs font-medium text-danger">{problem}</p>}
+      </div>
+    </div>
   );
 }

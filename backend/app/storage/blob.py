@@ -14,7 +14,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, Protocol
 
 from app.core.config import get_settings
-from app.core.timeutil import now_utc
+from app.core.timeutil import real_now_utc
 
 if TYPE_CHECKING:
     from azure.storage.blob import UserDelegationKey
@@ -68,7 +68,7 @@ class AzureBlobStore:  # pragma: no cover - needs Azure/Azurite
             self.client = BlobServiceClient(s.blob_account_url, credential=DefaultAzureCredential())
             self._azurite = False
         self._udk: UserDelegationKey | None = None
-        self._udk_expiry = now_utc()
+        self._udk_expiry = real_now_utc()
         # Browser-facing base URL (Azurite runs as "azurite" inside compose but 127.0.0.1 for the browser)
         self.public_base = s.blob_account_url.rstrip("/")
         self._container_ready = False
@@ -104,16 +104,16 @@ class AzureBlobStore:  # pragma: no cover - needs Azure/Azurite
     async def refresh_delegation_key(self) -> None:
         if self._azurite:
             return
-        if self._udk is None or self._udk_expiry - now_utc() < timedelta(minutes=30):
-            start = now_utc() - timedelta(minutes=5)
-            self._udk_expiry = now_utc() + timedelta(hours=6)
+        if self._udk is None or self._udk_expiry - real_now_utc() < timedelta(minutes=30):
+            start = real_now_utc() - timedelta(minutes=5)
+            self._udk_expiry = real_now_utc() + timedelta(hours=6)
             self._udk = await self.client.get_user_delegation_key(start, self._udk_expiry)
 
     def read_url(self, path: str, filename: str, inline: bool) -> str:
         from azure.storage.blob import BlobSasPermissions, generate_blob_sas
 
         disposition = f'{"inline" if inline else "attachment"}; filename="{filename}"'
-        expiry = now_utc() + timedelta(minutes=self.minutes)
+        expiry = real_now_utc() + timedelta(minutes=self.minutes)
         account_name = self.client.account_name
         if not account_name:
             raise RuntimeError("Blob storage account name could not be determined from the configured URL")

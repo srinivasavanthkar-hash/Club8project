@@ -10,6 +10,7 @@
  */
 import { expect, type Page, request } from "@playwright/test";
 import { createHmac } from "node:crypto";
+import { E2E_TODAY } from "./clock";
 
 export const DEMO_PASSWORD = process.env.CRM_DEMO_PASSWORD ?? "Demo-Passw0rd!";
 export const DEMO_TOTP: Record<string, string> = {
@@ -21,11 +22,17 @@ export async function requireIsolatedStack(): Promise<void> {
   const ctx = await request.newContext({ baseURL: BASE });
   try {
     const r = await ctx.get("/api/v1/meta");
-    const meta = r.ok() ? ((await r.json()) as { e2e_target?: boolean }) : {};
+    const meta = r.ok() ? ((await r.json()) as { e2e_target?: boolean; today?: string }) : {};
     if (!meta.e2e_target) {
       throw new Error(
         `Refusing to run: ${BASE} is not a throwaway e2e stack (the API does not report e2e_target). These specs ` +
           "create users and records. Run them with `python scripts/run_e2e.py` (fresh database) instead of against the demo.",
+      );
+    }
+    if (meta.today !== E2E_TODAY) {
+      throw new Error(
+        `The stack's business date is ${meta.today ?? "unknown"}, the specs expect ${E2E_TODAY}: start the API with ` +
+          `CRM_FIXED_TODAY=${E2E_TODAY} (scripts/run_e2e.py and CI do; README "Tests").`,
       );
     }
   } finally {
