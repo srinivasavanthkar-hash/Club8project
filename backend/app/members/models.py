@@ -30,6 +30,9 @@ class Member(Base, UUIDPk, Timestamps, Versioned, SoftDelete):
     product_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("products.id"))
     membership_number: Mapped[str] = mapped_column(String(30), unique=True)  # MSMC8-9030
     membership_seq: Mapped[str] = mapped_column(String(20), index=True)  # 9030 (prefix-free search)
+    number_series_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("membership_number_series.id"), index=True)
+    # Optional: the property the membership is linked to (a number series may apply to one property only)
+    home_property_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("properties.id"))
     status: Mapped[str] = mapped_column(String(30), default="PENDING_APPROVAL", index=True)
 
     email: Mapped[str] = mapped_column(String(255), index=True)

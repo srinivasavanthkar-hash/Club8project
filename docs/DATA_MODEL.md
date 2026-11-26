@@ -9,7 +9,12 @@ Every search column is indexed (trigram GIN when `pg_trgm` is available).
 
 ```mermaid
 erDiagram
-  companies ||--o{ members : "brand / prefix"
+  companies ||--o{ members : brand
+  companies ||--o{ membership_number_series : "prefixes"
+  membership_number_series ||--o{ members : "number from"
+  venues |o--o{ membership_number_series : "only for a venue"
+  properties |o--o{ membership_number_series : "only for a property"
+  properties |o--o{ members : "home property"
   products ||--o{ product_custom_fields : defines
   leads |o--o| members : "source_lead_id / member_id"
   leads ||--o{ lead_notes : has
@@ -49,9 +54,9 @@ erDiagram
 | Group | Tables |
 |---|---|
 | Users and access | `users`, `roles`, `permissions`, `user_roles`, `role_permissions`, `refresh_tokens` |
-| Companies and catalogue | `companies`, `products`, `product_custom_fields`, `joining_offer_types` |
+| Companies and catalogue | `companies`, `membership_number_series` (prefix + counter per company, optionally per sales venue and/or property; D-MN-1), `products`, `product_custom_fields`, `joining_offer_types` |
 | Leads | `leads`, `lead_notes`, `lead_status_history` |
-| Members | `members` (incl. `custom_fields` JSONB), `member_applicants`, `applicant_kyc`, `joining_offers`, `member_status_history` |
+| Members | `members` (incl. `custom_fields` JSONB; `number_series_id`, optional `venue_id` and `home_property_id`), `member_applicants`, `applicant_kyc`, `joining_offers`, `member_status_history` |
 | Finance | `payment_schedules`, `schedule_instalments`, `payments`, `payment_allocations`, `receipts`, `asf_charges`, `reservation_asf_links`, `default_notices` |
 | Reservations and entitlement | `reservations`, `reservation_status_history`, `reservation_date_versions`, `entitlement_years`, `entitlement_ledger`, `reservation_deductions` |
 | Correspondence | `email_threads`, `emails`, `email_recipients`, `calls`, `documents`, `document_links`, `letter_templates` |

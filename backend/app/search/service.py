@@ -23,9 +23,10 @@ def member_search_clause(q: str) -> ColumnElement[bool]:
     phone = normalize_phone(q) if any(c.isdigit() for c in q) else None
     conds: list[ColumnElement[bool]] = [
         Member.membership_number.ilike(f"%{_escape(full)}%"),
-        Member.membership_seq == num,
         Member.email.ilike(like),
     ]
+    if full == num:  # the number part alone ("9030") matches it in every series; with a prefix, only that number
+        conds.append(Member.membership_seq == num)
     sub = [MemberApplicant.name_norm.like(like), MemberApplicant.email.ilike(like)]
     if phone and len(phone) >= 4:
         sub.append(MemberApplicant.mobile.like(f"%{_escape(phone)}%"))

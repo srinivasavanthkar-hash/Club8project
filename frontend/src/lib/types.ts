@@ -50,6 +50,9 @@ export type Applicant = {
 export type Member = {
   id: string;
   membership_number: string;
+  number_series_id: string;
+  home_property_id: string | null;
+  venue_id: string | null;
   status: string;
   company_id: string;
   email: string;

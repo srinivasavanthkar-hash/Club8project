@@ -49,6 +49,36 @@ async def _get_or_add(session: AsyncSession, model: type, key: str, value: objec
     return obj
 
 
+async def _seed_number_series(session: AsyncSession, club8: m.Company, k8: m.Company) -> None:
+    """FICTITIOUS membership number series. Club8 has said prefixes depend on location and property; the prefixes
+    below were seen on their forms, but which location or property each belongs to is not known yet, so every series
+    is marked "to be confirmed" (docs/OPEN_QUESTIONS.md #1). The venues and properties are demo ones."""
+    expo = await _get_or_add(session, m.Venue, "code", "DEMO-BLR-EXPO", name="Demo Expo Centre", city="Bengaluru")
+    thane = await _get_or_add(session, m.Venue, "code", "DEMO-THANE", name="Demo Thane Showroom", city="Thane")
+    props = {p.code: p for p in (await session.execute(select(m.Property))).scalars()}
+    tbc = "FICTITIOUS example: which location / property this prefix belongs to is to be confirmed by Club8."
+    for prefix, company, venue, prop, next_number in (
+        ("MSMC8", club8, None, None, 9001),  # Club8, every location: the prefix used so far
+        ("MSMK8", k8, None, None, 5001),  # K8's prefixes are not known yet
+        ("MSMBL", club8, expo, None, 1001),  # one sales venue
+        ("C8MPR", club8, None, props["GOA-DEMO-PREM"], 1001),  # one property
+        ("C8MTHN", club8, thane, props["OOTY-DEMO-SUP"], 1001),  # a venue and a property
+    ):
+        await _get_or_add(
+            session,
+            m.MembershipNumberSeries,
+            "prefix",
+            prefix,
+            company_id=company.id,
+            venue_id=venue.id if venue else None,
+            property_id=prop.id if prop else None,
+            next_number=next_number,
+            active_from=date(2020, 1, 1),
+            to_be_confirmed=True,
+            notes=tbc,
+        )
+
+
 async def seed_demo(session: AsyncSession) -> None:
     await seed_reference(session)
     club8 = await _get_or_add(
@@ -59,15 +89,13 @@ async def seed_demo(session: AsyncSession) -> None:
         name="CLUB8 Holidays",
         legal_name="Multiple Sales and Marketing LLP",
         brand="CLUB8 Holidays",
-        membership_prefix="MSMC8",
         receipt_prefix="RC8",
         registered_address="DEMO ADDRESS - Bengaluru, Karnataka",
-        next_membership_seq=9001,
         logo_path="club8/club8-logo.png",
         primary_colour="#393186",
         accent_colour="#EF7F1B",
     )
-    await _get_or_add(
+    k8 = await _get_or_add(
         session,
         m.Company,
         "code",
@@ -76,10 +104,8 @@ async def seed_demo(session: AsyncSession) -> None:
         # K8's legal entity and address are not confirmed (docs/OPEN_QUESTIONS.md); never assume the Club8 LLP.
         legal_name="Klub Eight Asia Ventures",
         brand="K8",
-        membership_prefix="MSMK8",
         receipt_prefix="RK8",
         registered_address="DEMO ADDRESS - pending confirmation",
-        next_membership_seq=5001,
         logo_path="k8/k8-logo.png",
         primary_colour="#172040",
         accent_colour="#BC9C23",
@@ -116,6 +142,7 @@ async def seed_demo(session: AsyncSession) -> None:
         destination_id=ooty.id,
         resort_category_id=cats["SUPREME"].id,
     )
+    await _seed_number_series(session, club8, k8)
 
     seasons = {s.code: s for s in (await session.execute(select(m.Season))).scalars()}
     if not (await session.execute(select(m.SeasonCalendar))).first():

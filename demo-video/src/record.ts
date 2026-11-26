@@ -111,7 +111,7 @@ const SECTIONS: Section[] = [
       await d.type(page.getByLabel("Post Code", { exact: true }), "560001");
       await d.select(page.getByLabel("State", { exact: true }), "Karnataka");
       await d.caption("Membership: brand, category, season, unit and nights per year.");
-      await d.select(page.getByLabel("Company / brand", { exact: true }), "CLUB8 Holidays (MSMC8-)");
+      await d.select(page.getByLabel("Company / brand", { exact: true }), "CLUB8 Holidays");
       await d.select(page.getByLabel("Category (Membership Type)", { exact: true }), "Premium (PREMIUM)");
       await d.select(page.getByLabel("Season", { exact: true }), "Red (RED)");
       await d.select(page.getByLabel("Unit Type", { exact: true }), "T0 = Studio (2 adults + 2 children below 10 years)");

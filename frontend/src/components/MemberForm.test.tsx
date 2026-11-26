@@ -69,6 +69,10 @@ describe("MemberForm", { timeout: 15_000 }, () => { // first render of the full 
     await user.type(screen.getByLabelText("Email"), "asha@example.com");
     await waitFor(() => expect(screen.getByRole("option", { name: /CLUB8 Holidays/ })).toBeInTheDocument());
     await user.selectOptions(screen.getByLabelText("Company / brand"), ids.company);
+    // the one series that fits is pre-selected, and its next number is shown
+    await waitFor(() => expect(screen.getByLabelText("Membership number series")).toHaveValue(ids.series));
+    expect(screen.getByRole("option", { name: "MSMC8- (all locations and properties), to be confirmed" })).toBeInTheDocument();
+    expect(screen.getByText(/Leave blank for the next number, MSMC8-9001/)).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Category (Membership Type)"), ids.cat);
     await user.selectOptions(screen.getByLabelText("Season"), ids.season);
     await user.selectOptions(screen.getByLabelText("Unit Type"), ids.unit);
@@ -77,6 +81,7 @@ describe("MemberForm", { timeout: 15_000 }, () => { // first render of the full 
     await user.selectOptions(screen.getByLabelText("By (payment method)"), ids.card);
     await user.click(screen.getByRole("button", { name: "Save application" }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(toPayload(onSubmit.mock.calls[0]![0]).number_series_id).toBe(ids.series);
   }, 20_000); // types a whole application: slower than the 5 s default when the suite runs in parallel
 
   it("builds the API payload with EMI month/year and the down payment entry", () => {

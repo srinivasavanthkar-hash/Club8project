@@ -24,11 +24,9 @@ class Company(Base, _Coded):
     __tablename__ = "companies"
     legal_name: Mapped[str] = mapped_column(String(200))
     brand: Mapped[str] = mapped_column(String(100))
-    membership_prefix: Mapped[str] = mapped_column(String(20))
     receipt_prefix: Mapped[str] = mapped_column(String(20))
     registered_address: Mapped[str] = mapped_column(Text, default="")
     gstin: Mapped[str | None] = mapped_column(String(15))
-    next_membership_seq: Mapped[int] = mapped_column(Integer, default=1)
     # Branding for generated documents (docs/BRAND_PROMPT.md section 5). logo_path is relative to the brand asset
     # folder, e.g. "club8/club8-logo.png"; colours are "#RRGGBB" (validated before use in PDF styles).
     logo_path: Mapped[str] = mapped_column(String(200), default="")
@@ -182,6 +180,31 @@ class Property(Base, _Coded):
     destination_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("destinations.id"))
     resort_category_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("resort_categories.id"))
     address: Mapped[str] = mapped_column(Text, default="")
+
+
+class MembershipNumberSeries(Base, UUIDPk, Timestamps, Versioned):
+    """Where membership numbers come from: a prefix and a counter for a company, optionally only for one sales venue
+    (location), one property, or both (docs/DECISIONS.md D-MN-1). The number is "{prefix}-{number}", e.g. MSMC8-9030.
+    The series that applies to a new member is the one active on the purchase date whose venue and property fit; the
+    most specific one is pre-selected."""
+
+    __tablename__ = "membership_number_series"
+    __audit_ref__ = "prefix"
+    company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"))
+    venue_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("venues.id"))
+    property_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("properties.id"))
+    prefix: Mapped[str] = mapped_column(String(10), unique=True)  # one counter per prefix
+    next_number: Mapped[int] = mapped_column(Integer, default=1)
+    active_from: Mapped[date] = mapped_column()
+    active_to: Mapped[date | None] = mapped_column()
+    # Club8 has not yet said which prefix belongs to which location / property (OPEN_QUESTIONS #1)
+    to_be_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    __table_args__ = (
+        CheckConstraint("prefix ~ '^[A-Z0-9]{2,10}$'", name="ck_series_prefix"),
+        CheckConstraint("next_number >= 1", name="ck_series_next_number"),
+        CheckConstraint("active_to IS NULL OR active_to >= active_from", name="ck_series_dates"),
+    )
 
 
 class Reason(Base, _Coded):

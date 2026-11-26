@@ -84,7 +84,7 @@ test("client demo tour", async ({ page }) => {
   await page.getByLabel("Post Code", { exact: true }).fill("560038");
   await page.getByLabel("State", { exact: true }).selectOption("Karnataka");
   await shot(page, "05-application-purchaser");
-  await page.getByLabel("Company / brand", { exact: true }).selectOption({ label: "CLUB8 Holidays (MSMC8-)" });
+  await page.getByLabel("Company / brand", { exact: true }).selectOption({ label: "CLUB8 Holidays" });
   await page.getByLabel("Category (Membership Type)", { exact: true }).selectOption({ label: "Premium (PREMIUM)" });
   await page.getByLabel("Season", { exact: true }).selectOption({ label: "Red (RED)" });
   await page.getByLabel("Unit Type", { exact: true }).selectOption({ label: "T0 = Studio (2 adults + 2 children below 10 years)" });

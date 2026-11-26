@@ -91,7 +91,7 @@ Still outside this repository: `docs/BUILD_PROMPT.md` Section 3.1 (the file was 
 | A. Date fields DD-MM-YYYY on every PC | ✓ | 24 date inputs, the EMI month and 3 date-and-time inputs replaced; calendar popup; week start setting `ui.week_start` (migration 0007); India time on any PC (`datetime-local` used the PC's zone); Playwright spec in an en-US / New York browser (`e2e/dates.spec.ts`). D-UI-2 |
 | Fixed "today" for tests | ✓ | `CRM_FIXED_TODAY=2026-11-16` for backend tests and e2e stacks, browser clock set to match; security clocks keep real time. README "Tests", D-TEST-1 |
 | Client files out of git | ✓ | `docs/*.xlsx` and Office `~$*` lock files ignored |
-| B. Membership number series | | |
+| B. Membership number series | ✓ | Admin master table (company, optional sales venue and property, prefix, next number, active from/to, to be confirmed) with plain-language checks; member form: sales venue, home property and series (most specific pre-selected); numbers from the chosen series with the row locked; migration 0008 (no number changes; tested up and down); demo series MSMBL, MSMC8, C8MPR, C8MTHN (+ MSMK8) FICTITIOUS, to be confirmed; search with a prefix matches only that number; OPEN_QUESTIONS #1 answered in part. D-MN-1 |
 
 ## CI incidents
 | Date | What happened | Fix |

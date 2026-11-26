@@ -7,17 +7,17 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.admin.models import Company, DocumentType, PaymentMethod, ProductCustomField
+from app.admin.models import Company, DocumentType, MembershipNumberSeries, PaymentMethod, ProductCustomField
 from app.audit import service as audit
 from app.auth.models import User
 from app.core.crypto import decrypt_field, encrypt_field, lookup_hash
 from app.core.errors import Conflict, Forbidden, NotFound, RuleViolation
 from app.core.repository import get_or_404
 from app.core.settings_store import get_settings_map
-from app.core.timeutil import now_utc, today_ist
+from app.core.timeutil import fmt_date, now_utc, today_ist
 from app.core.validators import (
     mask_aadhaar,
     mask_value,
@@ -126,22 +126,98 @@ def _check_applicant(a: ApplicantIn, min_age: int, min_ids: int, label: str) -> 
         raise RuleViolation(f"{label}: duplicate KYC type", code="KycDuplicate")
 
 
-async def _membership_number(session: AsyncSession, company: Company, manual: str | None) -> tuple[str, str]:
+def _specificity(s: MembershipNumberSeries) -> int:
+    return (s.venue_id is not None) + (s.property_id is not None)
+
+
+async def fitting_series(
+    session: AsyncSession,
+    company_id: uuid.UUID,
+    venue_id: uuid.UUID | None,
+    property_id: uuid.UUID | None,
+    on: date,
+) -> list[MembershipNumberSeries]:
+    """Series of this company active on `on` whose sales venue and property fit (a blank one fits any), most
+    specific first (docs/DECISIONS.md D-MN-1)."""
+    S = MembershipNumberSeries
+    rows = (
+        await session.execute(
+            select(S).where(
+                S.company_id == company_id,
+                S.active_from <= on,
+                or_(S.active_to.is_(None), S.active_to >= on),
+                or_(S.venue_id.is_(None), S.venue_id == venue_id) if venue_id else S.venue_id.is_(None),
+                or_(S.property_id.is_(None), S.property_id == property_id) if property_id else S.property_id.is_(None),
+            )
+        )
+    ).scalars()
+    return sorted(rows, key=lambda s: (-_specificity(s), s.prefix))
+
+
+def default_series(fits: list[MembershipNumberSeries]) -> MembershipNumberSeries | None:
+    """The one most specific series, or None when none fits or two are equally specific."""
+    if not fits:
+        return None
+    best = [s for s in fits if _specificity(s) == _specificity(fits[0])]
+    return best[0] if len(best) == 1 else None
+
+
+async def _choose_series(
+    session: AsyncSession,
+    company: Company,
+    venue_id: uuid.UUID | None,
+    property_id: uuid.UUID | None,
+    on: date,
+    requested: uuid.UUID | None,
+) -> MembershipNumberSeries:
+    fits = await fitting_series(session, company.id, venue_id, property_id, on)
+    if requested is not None:
+        chosen = next((s for s in fits if s.id == requested), None)
+        if chosen is None:
+            raise RuleViolation(
+                "The chosen membership number series does not apply to this company, sales venue, property and "
+                f"purchase date ({fmt_date(on)}).",
+                code="NumberSeriesNotApplicable",
+            )
+        return chosen
+    if not fits:
+        raise RuleViolation(
+            f"No membership number series applies to {company.name} on {fmt_date(on)}. An administrator can add "
+            "one in Admin > Master data > Membership number series.",
+            code="NoNumberSeries",
+        )
+    chosen = default_series(fits)
+    if chosen is None:
+        raise RuleViolation(
+            f"More than one membership number series applies: choose one ({', '.join(s.prefix for s in fits)}).",
+            code="ChooseNumberSeries",
+        )
+    return chosen
+
+
+async def _membership_number(
+    session: AsyncSession, series: MembershipNumberSeries, manual: str | None
+) -> tuple[str, str]:
+    """ "{prefix}-{number}". A typed number part (paper members) is used as given (the duplicate check follows);
+    otherwise the series' next free number, with the series row locked so two saves never get the same number."""
     if manual:
         seq = manual.lstrip("0") or "0"
-    else:
-        c = (await session.execute(select(Company).where(Company.id == company.id).with_for_update())).scalar_one()
-        while True:
-            seq = str(c.next_membership_seq)
-            c.next_membership_seq += 1
-            exists = (
-                await session.execute(
-                    select(Member.id).where(Member.membership_number == f"{company.membership_prefix}-{seq}")
-                )
-            ).first()
-            if not exists:
-                break
-    return f"{company.membership_prefix}-{seq}".upper(), seq
+        return f"{series.prefix}-{seq}".upper(), seq
+    S = MembershipNumberSeries
+    locked = (
+        await session.execute(
+            # populate_existing: the series was read before the lock; take the locked row's current counter
+            select(S).where(S.id == series.id).with_for_update().execution_options(populate_existing=True)
+        )
+    ).scalar_one()
+    while True:
+        seq = str(locked.next_number)
+        locked.next_number += 1
+        taken = (
+            await session.execute(select(Member.id).where(Member.membership_number == f"{locked.prefix}-{seq}"))
+        ).first()
+        if not taken:
+            return f"{locked.prefix}-{seq}".upper(), seq
 
 
 async def create(session: AsyncSession, data: MemberIn, user: User, *, from_lead: Lead | None = None) -> Member:
@@ -170,7 +246,11 @@ async def create(session: AsyncSession, data: MemberIn, user: User, *, from_lead
         if data.last_year_of_use < data.first_year_of_use:
             raise RuleViolation("Last year cannot be before the first year", code="LastYear")
         last_year = data.last_year_of_use
-    number, seq = await _membership_number(session, company, data.membership_number)
+    venue_id = from_lead.venue_id if from_lead else data.venue_id
+    series = await _choose_series(
+        session, company, venue_id, data.home_property_id, data.purchase_date, data.number_series_id
+    )
+    number, seq = await _membership_number(session, series, data.membership_number)
     applicants = [data.applicant1] + ([data.applicant2] if data.applicant2 else [])
     pans = [k.value for a in applicants for k in a.kyc if k.id_type == "PAN"]
     matches = await duplicates.check(
@@ -192,6 +272,8 @@ async def create(session: AsyncSession, data: MemberIn, user: User, *, from_lead
         product_id=data.product_id,
         membership_number=number,
         membership_seq=seq,
+        number_series_id=series.id,
+        home_property_id=data.home_property_id,
         status="PENDING_APPROVAL",
         email=normalize_email(data.email),
         address_line1=data.address.line1,
@@ -232,7 +314,7 @@ async def create(session: AsyncSession, data: MemberIn, user: User, *, from_lead
         agreement_signed_date=data.agreement_signed_date,
         source_lead_id=from_lead.id if from_lead else data.source_lead_id,
         opc_name=from_lead.opc_name if from_lead else data.opc_name,
-        venue_id=from_lead.venue_id if from_lead else data.venue_id,
+        venue_id=venue_id,
         custom_fields=custom,
         duplicate_override_reason=override,
         created_by=user.id,
@@ -445,6 +527,7 @@ async def update(session: AsyncSession, member_id: uuid.UUID, data: MemberPatch,
         "agreement_signed_applicant2",
         "agreement_signed_company",
         "agreement_signed_date",
+        "home_property_id",
     ):
         if f in data.model_fields_set:
             setattr(member, f, getattr(data, f))

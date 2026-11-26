@@ -46,6 +46,8 @@ reported under the box and is not saved.
    **Not interested**. Use **Notes** for each conversation; old notes are never overwritten.
 
 ## Sales
+
+**Membership numbers.** On a new application, choose the company, and the sales venue and home property if they apply. The **membership number series** box then shows the prefixes that fit, with the most specific one already chosen (for example a prefix for one venue before the company-wide one); the hint shows the next number. Leave *Membership Number* blank to get that number, or type the number part only for an existing paper member (the prefix is added). If no series fits, or two fit equally, the form says so: ask an administrator. Prefixes marked "to be confirmed" are examples until Club8 confirms which location or property they belong to. Search finds a member by the number part alone (`9030`) or the full number with any prefix (`MSMBL-1001`).
 * **Dashboard → Lead follow-ups** lists your leads due today and overdue.
 * **Convert to member** appears on a lead once it is **Attended**. The application form opens pre-filled and
   follows the **paper form, top to bottom**:
@@ -95,6 +97,11 @@ reported under the box and is not saved.
   form explains any problem next to the field ("The last day must be on or after the first day."). Lists show names,
   dates as DD-MM-YYYY and amounts in ₹. **Edit** changes a row; **Disable** hides it from new choices while keeping
   it on old records.
+* **Admin → Master data & rates → Membership number series**: one row per prefix, for a company and, if needed, only
+  one sales venue, one property or both, with the next number and the dates it is in use. To change a prefix, end the
+  old series (Active to) and add a new one; the prefix and company cannot be edited once the series exists, and the
+  next number cannot go back below a number already issued. **Business-rule settings → ui.week_start** sets whether
+  calendars start on Monday or Sunday.
   * Rates are **effective-dated**: add a new row from a later date; the previous row is closed automatically and
     the current row is highlighted. ASF amounts cannot be edited (add a new rate). ASF increases above 5% need an
     override reason and the special permission.

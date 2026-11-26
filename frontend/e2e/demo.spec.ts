@@ -68,7 +68,7 @@ test("Section 14 demo: lead → member → finance → reservation → correspon
   await page.getByLabel("Address Line 1", { exact: true }).fill("21 Demo Layout");
   await page.getByLabel("Post Code", { exact: true }).fill("560001");
   await page.getByLabel("State", { exact: true }).selectOption("Karnataka");
-  await page.getByLabel("Company / brand", { exact: true }).selectOption({ label: "CLUB8 Holidays (MSMC8-)" });
+  await page.getByLabel("Company / brand", { exact: true }).selectOption({ label: "CLUB8 Holidays" });
   await page.getByLabel("Category (Membership Type)", { exact: true }).selectOption({ label: "Premium (PREMIUM)" });
   await page.getByLabel("Season", { exact: true }).selectOption({ label: "Red (RED)" });
   await page.getByLabel("Unit Type", { exact: true }).selectOption({ label: "T0 = Studio (2 adults + 2 children below 10 years)" });
