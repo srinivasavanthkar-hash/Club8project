@@ -93,9 +93,16 @@ Still outside this repository: `docs/BUILD_PROMPT.md` Section 3.1 (the file was 
 | Client files out of git | ✓ | `docs/*.xlsx` and Office `~$*` lock files ignored |
 | B. Membership number series | ✓ | Admin master table (company, optional sales venue and property, prefix, next number, active from/to, to be confirmed) with plain-language checks; member form: sales venue, home property and series (most specific pre-selected); numbers from the chosen series with the row locked; migration 0008 (no number changes; tested up and down); demo series MSMBL, MSMC8, C8MPR, C8MTHN (+ MSMK8) FICTITIOUS, to be confirmed; search with a prefix matches only that number; OPEN_QUESTIONS #1 answered in part. D-MN-1 |
 
+## After Phase 2 (on master, 27-11-2026)
+| Item | Done | Notes |
+|---|---|---|
+| Brand icons without the image optimiser | ✓ | Next's optimiser once hung on an icon until the web container restarted; images are served as plain files (`images.unoptimized`), brand files cacheable for a day. `e2e/login-load.spec.ts`: login page and images in under 2 s, all from `/brand` |
+| Database grants for the API's role | ✓ | Migration 0009: default privileges grant every new table to `crm_app`; `tests/integration/test_db_grants.py` (upgrade path from 0001 + a table added later) runs as its own CI step. D-DB-1 |
+
 ## CI incidents
 | Date | What happened | Fix |
 |---|---|---|
+| 27-11-2026 | `master` run 45948705807: the e2e job failed in "Start the full stack (docker compose)" before any test ran; backend (including the new grants step), frontend and audit passed. A fresh stack started exactly as in CI came up healthy locally (migrations to 0009, API and web healthy, login 200) | Not reproducible: most likely a transient download or start-up failure on the runner. Re-run by the next push; watch for a repeat |
 | 18-11-2026 | First CI run on `master`: the backend Tests step hung for hours in `test_password_reset_email.py` (admin option A). Only under coverage tracing (with or without greenlet support): a finished inline email task's done-callback never ran, so `dispatch.drain()` (tests only; Docker and Azure send through the worker) looped forever | Email tasks remove themselves from the set when they end (no done-callback); `drain()` skips finished tasks; regression test `tests/unit/test_email_drain.py`; `pytest-timeout` 5 min per test and `timeout-minutes` on every CI job |
 
 ## Before go-live (added 17-11-2026)
