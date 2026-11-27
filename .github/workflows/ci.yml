@@ -39,6 +39,15 @@ jobs:
         run: >
           pytest -q --cov=app --cov-report=xml --cov-report=term
           --junitxml=junit.xml --timeout=300 --timeout-method=thread
+          --ignore=tests/integration/test_db_grants.py
+      - name: Database grants for the app role (every table, upgrade path, tables added by future migrations)
+        # Its own step so the result shows on every push: the API's restricted role (crm_app) must be able to use
+        # every table. Tests otherwise connect as the owner and cannot see a missing grant ("permission denied" in
+        # Docker and Azure). -rA lists the test as passed; a skip would fail the step.
+        run: |
+          set -o pipefail
+          pytest -rA --timeout=300 --timeout-method=thread tests/integration/test_db_grants.py | tee grants.txt
+          grep -q "PASSED tests/integration/test_db_grants.py" grants.txt
       - name: Enforce >= 80% coverage on the service + domain layer
         run: >
           coverage report --fail-under=80
