@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  // Brand logos and icons are served as the plain files in public/brand. Next's image optimiser once hung on the
+  // first conversion of an icon and every later request for it waited (Phase 2 report); the files are small and
+  // used as supplied, so there is nothing to optimise. e2e/login-load.spec.ts fails if the login page or its images
+  // take longer than 2 seconds.
+  images: { unoptimized: true },
   // Same-origin API: the browser calls /api/v1/* on this origin and Next.js forwards to FastAPI.
   // httpOnly auth cookies stay first-party and no CORS is needed. FastAPI is not publicly exposed.
   async rewrites() {
@@ -37,6 +42,8 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "no-store" },
         ],
       },
+      // Brand files are public artwork, never personal data: browsers may keep them for a day (overrides no-store)
+      { source: "/brand/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
     ];
   },
 };
