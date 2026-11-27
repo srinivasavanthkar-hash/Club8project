@@ -5,16 +5,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { BrandIcon } from "@/components/crm/Brand";
 import { ErrorText, useMaster, useStaff } from "@/components/providers";
 import { Alert, AutoTag, Button, Card, Checkbox, Field, Input, Kbd, PrefixInput, Select, Textarea } from "@/components/ui";
-import { ApiError } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { addMoney, formatMoney, subMoney, todayIso } from "@/lib/format";
 import { brandOfCompany } from "@/lib/brand";
 import { useSaveShortcut } from "@/lib/useShortcut";
 import { cn } from "@/lib/utils";
 import { aadhaarSchema, isAdult, mobileSchema, moneySchema, optionalMobile, panSchema, pinSchema } from "@/lib/validation";
+import { FormDateField, FormMonthField } from "@/components/DateField";
 
 export const INDIAN_STATES = [
   "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chandigarh", "Chhattisgarh",
@@ -56,6 +58,9 @@ export const memberFormSchema = z
     }),
     email: z.string().email("Valid email is required"),
     company_id: z.string().uuid("Choose the company / brand"),
+    venue_id: z.string().optional(),
+    home_property_id: z.string().optional(),
+    number_series_id: z.string().optional(),
     membership_number: z.union([z.literal(""), z.string().regex(/^\d{1,10}$/, "Digits only (prefix is added)")]).optional(),
     purchase_date: z.string().min(1, "Required"),
     tenure_years: z.coerce.number().int().min(1).max(99),
@@ -122,6 +127,9 @@ export function toPayload(v: MemberFormValues, sourceLeadId?: string) {
     address: { ...v.address, line2: v.address.line2 || null },
     email: v.email,
     company_id: v.company_id,
+    venue_id: v.venue_id || null,
+    home_property_id: v.home_property_id || null,
+    number_series_id: v.number_series_id || null,
     membership_number: v.membership_number || null,
     purchase_date: v.purchase_date,
     tenure_years: v.tenure_years,
@@ -158,7 +166,7 @@ export function toPayload(v: MemberFormValues, sourceLeadId?: string) {
 
 const SECTIONS = [
   { n: 1, id: "sec-purchaser", title: "Purchaser (Member) Details", keys: ["applicant1", "applicant2", "address", "email"] },
-  { n: 2, id: "sec-membership", title: "Membership Details", keys: ["company_id", "membership_number", "purchase_date", "tenure_years", "first_year_of_use", "resort_category_id", "season_id", "unit_type_id", "nights_per_year"] },
+  { n: 2, id: "sec-membership", title: "Membership Details", keys: ["company_id", "venue_id", "home_property_id", "number_series_id", "membership_number", "purchase_date", "tenure_years", "first_year_of_use", "resort_category_id", "season_id", "unit_type_id", "nights_per_year"] },
   { n: 3, id: "sec-payment", title: "Payment Details", keys: ["purchase_price", "admin_fees", "down_payment_amount", "down_payment_method_id", "down_payment_card_last4", "balance_mode", "emi_amount", "emi_count", "emi_start"] },
   { n: 4, id: "sec-offer", title: "Joining Offer", keys: ["joining_offers"] },
   { n: 5, id: "sec-sales", title: "Sales, Approval & Signatures", keys: ["relationship_manager_id", "team_manager_id", "comments", "duplicate_override_reason"] },
@@ -171,7 +179,7 @@ const FIELD_INDEX: Record<string, [string, string]> = {
   "applicant2.full_name": ["applicant2-name", "2nd Applicant Name"], "applicant2.dob": ["applicant2-dob", "2nd applicant D.O.B"],
   "applicant2.mobile": ["applicant2-mobile", "2nd applicant mobile"], "applicant2.email": ["applicant2-email", "2nd applicant email"],
   "address.line1": ["addr1", "Address Line 1"], "address.city": ["city", "City"], "address.postcode": ["pin", "Post Code"], "address.state": ["state", "State"],
-  email: ["email", "Email"], company_id: ["company", "Company / brand"], membership_number: ["mnum", "Membership Number"], purchase_date: ["pdate", "Purchase Date"],
+  email: ["email", "Email"], company_id: ["company", "Company / brand"], membership_number: ["mnum", "Membership Number"], number_series_id: ["series", "Membership number series"], purchase_date: ["pdate", "Purchase Date"],
   tenure_years: ["tenure", "Tenure"], first_year_of_use: ["fy", "First Year of Use"], resort_category_id: ["cat", "Category"], season_id: ["season", "Season"],
   unit_type_id: ["unit", "Unit Type"], nights_per_year: ["nights", "Nights per Year"], purchase_price: ["pp", "Purchase Price"], admin_fees: ["af", "Admin Fees"],
   down_payment_amount: ["dp", "Down Payment"], down_payment_method_id: ["dpm", "Payment method"], down_payment_card_last4: ["last4", "Card last 4 digits"],
@@ -211,10 +219,18 @@ function amountHint(v: string | undefined, fallback?: string) {
   return v && moneySchema.safeParse(v).success ? `= ${formatMoney(v)}` : fallback;
 }
 
+type SeriesOption = { id: string; prefix: string; next_number: number; venue_id: string | null; property_id: string | null; to_be_confirmed: boolean };
+
 export function MemberForm({
-  defaults, onSubmit, submitLabel,
-}: { defaults?: Partial<MemberFormValues>; onSubmit: (v: MemberFormValues) => Promise<void>; submitLabel: string }) {
+  defaults, onSubmit, submitLabel, venueFromLead = false,
+}: {
+  defaults?: Partial<MemberFormValues>; onSubmit: (v: MemberFormValues) => Promise<void>; submitLabel: string;
+  /** Converting a lead: the sales venue is the lead's and cannot be changed here. */
+  venueFromLead?: boolean;
+}) {
   const companies = useMaster("companies");
+  const venues = useMaster("venues");
+  const properties = useMaster("properties");
   const categories = useMaster("resort-categories");
   const seasons = useMaster("seasons");
   const units = useMaster("unit-types");
@@ -271,6 +287,38 @@ export function MemberForm({
   }, [asfRates.data, unitId]);
   const companyId = watch("company_id");
   const selectedBrand = brandOfCompany(companies.data?.find((c) => c.id === companyId));
+  const [venueId, homePropertyId, purchaseDate, seriesId] = watch(["venue_id", "home_property_id", "purchase_date", "number_series_id"]);
+  // Membership number series that fit this company, sales venue, home property and purchase date (most specific first)
+  const series = useQuery({
+    queryKey: ["number-series", companyId, venueId, homePropertyId, purchaseDate],
+    queryFn: () => api.get<{ items: SeriesOption[]; default_id: string | null }>("/members/number-series", {
+      company_id: companyId, purchase_date: purchaseDate, venue_id: venueId || undefined, home_property_id: homePropertyId || undefined,
+    }),
+    enabled: !!companyId && /^\d{4}-\d{2}-\d{2}$/.test(purchaseDate ?? ""),
+  });
+  useEffect(() => {
+    const d = series.data;
+    if (!d) return;
+    // follow the most specific series (or nothing when two are equal) until staff choose one themselves; keep their
+    // choice while it still fits
+    const chosenByStaff = form.getFieldState("number_series_id").isDirty && d.items.some((s) => s.id === seriesId);
+    if (!chosenByStaff) form.setValue("number_series_id", d.default_id ?? "", { shouldDirty: false });
+  }, [series.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  const chosenSeries = series.data?.items.find((s) => s.id === seriesId);
+  const nameOf = (rows: { id: string; name: string }[] | undefined, id: string | null) => rows?.find((r) => r.id === id)?.name;
+  const seriesLabel = (s: SeriesOption) => {
+    const scope = [nameOf(venues.data, s.venue_id), nameOf(properties.data, s.property_id)].filter(Boolean).join(" + ") || "all locations and properties";
+    return `${s.prefix}- (${scope})${s.to_be_confirmed ? ", to be confirmed" : ""}`;
+  };
+  const seriesHint = !companyId
+    ? "Choose the company first."
+    : series.data && series.data.items.length === 0
+      ? "No series applies to this company on the purchase date. An administrator can add one (Admin > Master data > Membership number series)."
+      : series.data && !series.data.default_id && !seriesId
+        ? "More than one series applies: choose one."
+        : chosenSeries
+          ? `Picked from the company, sales venue, home property and purchase date.${chosenSeries.to_be_confirmed ? " Club8 has still to confirm this prefix." : ""}`
+          : undefined;
   const e = errors as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   const errorPaths = flatten(errors as Record<string, unknown>);
   const sectionHasError = (keys: readonly string[]) => errorPaths.some((p) => keys.some((k) => p === k || p.startsWith(`${k}.`)));
@@ -310,11 +358,11 @@ export function MemberForm({
   const applicantBlock = (prefix: "applicant1" | "applicant2", kyc: typeof kyc1) => (
     <>
       <p className="col-span-full -mb-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">{prefix === "applicant1" ? "1st" : "2nd"} applicant</p>
-      <Field label={`${prefix === "applicant1" ? "1st" : "2nd"} Applicant Name`} htmlFor={`${prefix}-name`} required error={e[prefix]?.full_name?.message} className="sm:col-span-2 lg:col-span-3">
+      <Field label={`${prefix === "applicant1" ? "1st" : "2nd"} Applicant Name`} htmlFor={`${prefix}-name`} required error={e[prefix]?.full_name?.message} className="sm:col-span-2 lg:col-span-2">
         <Input id={`${prefix}-name`} autoCapitalize="words" {...register(`${prefix}.full_name` as const)} />
       </Field>
-      <Field label="D.O.B" htmlFor={`${prefix}-dob`} required error={e[prefix]?.dob?.message} className="lg:col-span-1">
-        <Input id={`${prefix}-dob`} type="date" {...register(`${prefix}.dob` as const)} />
+      <Field label="D.O.B" htmlFor={`${prefix}-dob`} required error={e[prefix]?.dob?.message} className="lg:col-span-2">
+        <FormDateField id={`${prefix}-dob`} control={form.control} name={`${prefix}.dob` as const} max={todayIso()} />
       </Field>
       <Field label="Mobile (+91)" htmlFor={`${prefix}-mobile`} required={prefix === "applicant1"} error={e[prefix]?.mobile?.message} className="lg:col-span-2">
         <Input id={`${prefix}-mobile`} type="tel" inputMode="tel" {...register(`${prefix}.mobile` as const)} />
@@ -339,7 +387,7 @@ export function MemberForm({
                 {e[prefix]?.kyc?.[i]?.value && <p role="alert" className="mt-1 text-xs font-medium text-danger">{e[prefix].kyc[i].value.message}</p>}
               </div>
               <div>
-                <Input aria-label="Expiry (passport)" type="date" title="Passport expiry" {...register(`${prefix}.kyc.${i}.expiry_date` as const)} />
+                <FormDateField id={`${prefix}-kyc-${i}-expiry`} aria-label="Expiry (passport)" title="Passport expiry" control={form.control} name={`${prefix}.kyc.${i}.expiry_date` as const} />
                 {e[prefix]?.kyc?.[i]?.expiry_date && <p role="alert" className="mt-1 text-xs font-medium text-danger">{e[prefix].kyc[i].expiry_date.message}</p>}
               </div>
               <Button type="button" variant="ghost" size="sm" onClick={() => kyc.remove(i)} aria-label={`Remove ID ${i + 1}`}><Trash2 aria-hidden /></Button>
@@ -444,13 +492,34 @@ export function MemberForm({
           >
             <Select id="company" {...register("company_id")}>
               <option value="">Select…</option>
-              {companies.data?.map((c) => <option key={c.id} value={c.id}>{c.name} ({String(c.membership_prefix)}-)</option>)}
+              {companies.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
           </Field>
-          <Field label="Membership Number" htmlFor="mnum" hint="Leave blank to auto-assign" error={e.membership_number?.message} className="lg:col-span-2">
+          <Field label="Sales venue (location)" htmlFor="venue" hint={venueFromLead ? "From the lead." : undefined} className="lg:col-span-3">
+            <Select id="venue" disabled={venueFromLead} {...register("venue_id")}>
+              <option value="">Not recorded</option>
+              {venues.data?.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+            </Select>
+          </Field>
+          <Field label="Home property (optional)" htmlFor="hprop" className="lg:col-span-3">
+            <Select id="hprop" {...register("home_property_id")}>
+              <option value="">None</option>
+              {properties.data?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </Select>
+          </Field>
+          <Field label="Membership number series" htmlFor="series" hint={seriesHint} error={e.number_series_id?.message} className="lg:col-span-3">
+            <Select id="series" disabled={!series.data || series.data.items.length === 0} {...register("number_series_id")}>
+              <option value="">{series.data?.items.length ? "Choose…" : "None available"}</option>
+              {series.data?.items.map((s) => <option key={s.id} value={s.id}>{seriesLabel(s)}</option>)}
+            </Select>
+          </Field>
+          <Field
+            label="Membership Number" htmlFor="mnum" error={e.membership_number?.message} className="lg:col-span-3"
+            hint={chosenSeries ? `Leave blank for the next number, ${chosenSeries.prefix}-${chosenSeries.next_number}. For an existing paper member, type the number part only.` : "Leave blank to auto-assign."}
+          >
             <Input id="mnum" inputMode="numeric" className="font-mono" {...register("membership_number")} />
           </Field>
-          <Field label="Purchase Date" htmlFor="pdate" required error={e.purchase_date?.message} className="lg:col-span-1"><Input id="pdate" type="date" {...register("purchase_date")} /></Field>
+          <Field label="Purchase Date" htmlFor="pdate" required error={e.purchase_date?.message} className="lg:col-span-2"><FormDateField id="pdate" control={form.control} name="purchase_date" /></Field>
           <Field label="Tenure (Years)" htmlFor="tenure" required error={e.tenure_years?.message} className="lg:col-span-1"><Input id="tenure" type="number" min={1} {...register("tenure_years")} /></Field>
           <Field label="Start Year / First Year of Use" htmlFor="fy" required error={e.first_year_of_use?.message} className="lg:col-span-2"><Input id="fy" type="number" {...register("first_year_of_use")} /></Field>
           <Field label="Last Year of Use" htmlFor="ly" hint="Calculated: first year + tenure − 1" tag={auto("First year of use + tenure − 1")} className="lg:col-span-1">
@@ -516,7 +585,7 @@ export function MemberForm({
               </Field>
               {/* the "EMI amount, number and starting month" rule reports on emi_amount, so re-check it when these change */}
               <Field label="No. of EMIs" htmlFor="emin" className="lg:col-span-1"><Input id="emin" type="number" min={1} {...register("emi_count", { deps: ["emi_amount"] })} /></Field>
-              <Field label="Starting From (MM/YYYY)" htmlFor="emis" className="lg:col-span-2"><Input id="emis" type="month" {...register("emi_start", { deps: ["emi_amount"] })} /></Field>
+              <Field label="Starting From (MM/YYYY)" htmlFor="emis" className="lg:col-span-2"><FormMonthField id="emis" control={form.control} name="emi_start" rules={{ deps: ["emi_amount"] }} /></Field>
             </>
           )}
           {watch("balance_mode") === "OTHER" && (
@@ -549,7 +618,7 @@ export function MemberForm({
           <Field label="Team Manager" htmlFor="tm" className="sm:col-span-1 lg:col-span-2">
             <Select id="tm" {...register("team_manager_id")}><option value="">Select…</option>{opts(staff.data?.map((s) => ({ id: s.id, name: s.full_name })))}</Select>
           </Field>
-          <Field label="Agreement signed date" htmlFor="asd" className="lg:col-span-2"><Input id="asd" type="date" {...register("agreement_signed_date")} /></Field>
+          <Field label="Agreement signed date" htmlFor="asd" className="lg:col-span-2"><FormDateField id="asd" control={form.control} name="agreement_signed_date" /></Field>
           <fieldset className="col-span-full flex flex-wrap gap-x-6 gap-y-1">
             <legend className="mb-1 text-sm font-medium text-fg">Agreement signatures</legend>
             <Checkbox label="1st Applicant signed" {...register("agreement_signed_applicant1")} />

@@ -15,7 +15,7 @@ function renderForm(onSubmit = vi.fn().mockResolvedValue(undefined)) {
   return onSubmit;
 }
 
-describe("MemberForm", () => {
+describe("MemberForm", { timeout: 15_000 }, () => { // first render of the full form can take over 5 s on a busy machine
   it("follows the paper form's section order", async () => {
     renderForm();
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
@@ -45,7 +45,7 @@ describe("MemberForm", () => {
     const user = userEvent.setup();
     const onSubmit = renderForm();
     await user.type(screen.getByLabelText("1st Applicant Name"), "Asha Demo");
-    await user.type(screen.getByLabelText("D.O.B"), "2015-01-01");
+    await user.type(screen.getByLabelText("D.O.B"), "01-01-2015");
     await user.type(screen.getByLabelText("Mobile (+91)"), "12345");
     await user.type(screen.getByLabelText("ID number"), "BADPAN");
     await user.click(screen.getByRole("button", { name: "Save application" }));
@@ -59,7 +59,7 @@ describe("MemberForm", () => {
     const user = userEvent.setup();
     const onSubmit = renderForm();
     await user.type(screen.getByLabelText("1st Applicant Name"), "Asha Demo");
-    await user.type(screen.getByLabelText("D.O.B"), "1985-05-05");
+    await user.type(screen.getByLabelText("D.O.B"), "05-05-1985");
     await user.type(screen.getByLabelText("Mobile (+91)"), "9845012345");
     await user.type(screen.getByLabelText("ID number"), "ABCDE1234F");
     await user.type(screen.getByLabelText("Address Line 1"), "1 Demo Road");
@@ -69,6 +69,10 @@ describe("MemberForm", () => {
     await user.type(screen.getByLabelText("Email"), "asha@example.com");
     await waitFor(() => expect(screen.getByRole("option", { name: /CLUB8 Holidays/ })).toBeInTheDocument());
     await user.selectOptions(screen.getByLabelText("Company / brand"), ids.company);
+    // the one series that fits is pre-selected, and its next number is shown
+    await waitFor(() => expect(screen.getByLabelText("Membership number series")).toHaveValue(ids.series));
+    expect(screen.getByRole("option", { name: "MSMC8- (all locations and properties), to be confirmed" })).toBeInTheDocument();
+    expect(screen.getByText(/Leave blank for the next number, MSMC8-9001/)).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Category (Membership Type)"), ids.cat);
     await user.selectOptions(screen.getByLabelText("Season"), ids.season);
     await user.selectOptions(screen.getByLabelText("Unit Type"), ids.unit);
@@ -77,6 +81,7 @@ describe("MemberForm", () => {
     await user.selectOptions(screen.getByLabelText("By (payment method)"), ids.card);
     await user.click(screen.getByRole("button", { name: "Save application" }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(toPayload(onSubmit.mock.calls[0]![0]).number_series_id).toBe(ids.series);
   }, 20_000); // types a whole application: slower than the 5 s default when the suite runs in parallel
 
   it("builds the API payload with EMI month/year and the down payment entry", () => {

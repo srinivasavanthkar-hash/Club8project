@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime
 from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -21,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.timeutil import fmt_dt_ist
+from app.core.timeutil import fmt_dt_ist, now_utc
 from app.email.sender import EmailMessage, get_sender
 
 log = logging.getLogger("crm.email")
@@ -83,7 +82,7 @@ def queue(
 
 
 def now_text() -> str:
-    return fmt_dt_ist(datetime.now().astimezone())
+    return fmt_dt_ist(now_utc())
 
 
 async def _record(job: dict[str, Any], ok: bool, detail: str = "") -> None:

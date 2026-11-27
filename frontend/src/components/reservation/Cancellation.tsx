@@ -6,6 +6,7 @@ import { ErrorText, useMaster } from "@/components/providers";
 import { Alert, Button, Field, Input, Select } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { DateField } from "@/components/DateField";
 
 /** GET /reservations/{id}/cancellation-terms: what cancelling would do (nothing is changed). */
 export type CancellationTerms = {
@@ -98,8 +99,8 @@ export function CancellationDetails({ terms, cancelDate, onCancelDate, dateReaso
       )}
       {terms.default_date && (
         <Field label="Cancellation date" htmlFor="cd" hint={changed ? undefined : "The day the request was received. Change it only with a reason."}>
-          <Input id="cd" type="date" value={cancelDate || terms.default_date} min={terms.confirmed_on ?? undefined} max={terms.max_date}
-            onChange={(e) => onCancelDate(e.target.value === terms.default_date ? "" : e.target.value)} />
+          <DateField id="cd" value={cancelDate || terms.default_date} min={terms.confirmed_on ?? undefined} max={terms.max_date}
+            onChange={(v) => onCancelDate(v === terms.default_date ? "" : v)} />
         </Field>
       )}
       {changed && (

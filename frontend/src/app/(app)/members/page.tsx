@@ -15,6 +15,7 @@ import { buttonClasses, Field, Input, Select } from "@/components/ui";
 import { api, type Page } from "@/lib/api";
 import { formatDate, formatPhoneMasked, humanize } from "@/lib/format";
 import { useListState } from "@/lib/useListState";
+import { DateField } from "@/components/DateField";
 
 type Row = { id: string; membership_number: string; status: string; company_id?: string | null; applicant_name: string | null; mobile: string | null; email: string; city: string; purchase_date: string };
 const STATUSES = ["PENDING_APPROVAL", "ACTIVE", "DEFAULT_NOTICE", "SUSPENDED", "EXPIRED", "TERMINATED"];
@@ -64,8 +65,8 @@ export default function MembersPage() {
         <Field label="Brand" htmlFor="mc">
           <Select id="mc" value={s.filters.company_id} onChange={(e) => s.update({ company_id: e.target.value })}><option value="">All brands</option>{companies.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>
         </Field>
-        <Field label="Purchased from" htmlFor="mf"><Input id="mf" type="date" value={s.filters.purchase_from} onChange={(e) => s.update({ purchase_from: e.target.value })} /></Field>
-        <Field label="Purchased to" htmlFor="mt"><Input id="mt" type="date" value={s.filters.purchase_to} onChange={(e) => s.update({ purchase_to: e.target.value })} /></Field>
+        <Field label="Purchased from" htmlFor="mf"><DateField id="mf" value={s.filters.purchase_from} onChange={(v) => s.update({ purchase_from: v })} /></Field>
+        <Field label="Purchased to" htmlFor="mt"><DateField id="mt" value={s.filters.purchase_to} onChange={(v) => s.update({ purchase_to: v })} /></Field>
       </FilterBar>
       <DataTable caption="Members" columns={columns} data={data?.items ?? []} total={data?.total ?? 0} page={s.page} pageSize={25} loading={isLoading}
         sort={s.sort} onSort={s.setSort} onPage={s.setPage} onRowClick={(m) => router.push(`/members/${m.id}`)}

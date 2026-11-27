@@ -2,7 +2,8 @@
  * Cancelling a confirmed reservation (docs/DECISIONS.md D-31 to D-34), FICTITIOUS data only.
  * The confirmed booking is set up through the API; the member's email and the cancellation are done in the UI.
  */
-import { expect, type APIRequestContext, type Page, test } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+import { expect, istToday, test } from "./support/clock";
 import { requireIsolatedStack } from "./support/stack";
 
 const PASSWORD = process.env.CRM_DEMO_PASSWORD ?? "Demo-Passw0rd!";
@@ -20,7 +21,7 @@ function fakePan(): string {
 }
 
 function istDay(offsetDays = 0): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date(Date.now() + offsetDays * 86_400_000));
+  return istToday(offsetDays); // the fixed business date (support/clock.ts)
 }
 
 /** API calls as `user`, sharing the browser context's cookies (CSRF double-submit header included). */
@@ -124,7 +125,7 @@ test("confirmed reservation: member's email → cancel → nights credited and f
   const picker = page.getByLabel("Member's written request", { exact: true });
   await expect(picker.locator("option", { hasText: "Email: Please cancel my Goa stay" })).toHaveCount(1);
   await picker.selectOption({ label: `${istDay().split("-").reverse().join("-")} · Email: Please cancel my Goa stay` });
-  await expect(page.getByLabel("Cancellation date", { exact: true })).toHaveValue(istDay());
+  await expect(page.getByLabel("Cancellation date", { exact: true })).toHaveValue(istDay().split("-").reverse().join("-")); // DD-MM-YYYY
   const outcome = "25 days' notice → 50%: 2.0 nights credited, 2.0 forfeited";
   await expect(page.getByText(outcome).first()).toBeVisible();
   await page.getByRole("button", { name: "Cancel reservation…" }).click();

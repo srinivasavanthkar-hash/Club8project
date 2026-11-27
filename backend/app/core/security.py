@@ -10,7 +10,7 @@ import jwt
 import pyotp
 
 from app.core.config import get_settings
-from app.core.timeutil import now_utc
+from app.core.timeutil import real_now_utc
 
 
 def hash_password(password: str) -> str:
@@ -35,7 +35,7 @@ def burn_password_check(password: str) -> None:
 def create_token(user_id: uuid.UUID, kind: str, ttl: timedelta, extra: dict[str, Any] | None = None) -> tuple[str, str]:
     s = get_settings()
     jti = secrets.token_hex(16)
-    now = now_utc()
+    now = real_now_utc()
     payload = {"sub": str(user_id), "typ": kind, "jti": jti, "iat": now, "exp": now + ttl, **(extra or {})}
     return jwt.encode(payload, s.jwt_signing_key.get_secret_value(), algorithm=s.jwt_algorithm), jti
 

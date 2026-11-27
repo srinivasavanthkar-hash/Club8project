@@ -7,7 +7,8 @@
  *   python scripts/run_e2e.py passwords            (add TOUR=1 for screenshots)
  */
 import AxeBuilder from "@axe-core/playwright";
-import { type APIRequestContext, type Browser, type Page, expect, request as pwRequest, test } from "@playwright/test";
+import { type APIRequestContext, type Browser, type Page, request as pwRequest } from "@playwright/test";
+import { expect, test } from "./support/clock";
 import path from "node:path";
 import { BASE, DEMO_PASSWORD, DEMO_TOTP, requireIsolatedStack, signIn, totp } from "./support/stack";
 

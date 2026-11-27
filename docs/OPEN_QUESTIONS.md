@@ -3,7 +3,7 @@
 None of these block delivery. The current default is in brackets and is configurable unless noted.
 
 ## Inconsistencies in the sample form and agreement
-1. **Membership number prefix.** The form shows `MSMC8-` and the agreement shows `MSMMBL-` for the same member. Which is correct? Does the prefix differ by brand (Club8 vs K8)? *[Prefix per brand in Companies master data; search ignores the prefix. D-02]*
+1. **Membership number prefix.** ~~Which prefix is correct, and does it differ by brand?~~ **Answered in part (Phase 2):** the prefix depends on the location and the property, not only the brand. Prefixes seen so far: `MSMBL`, `MSMC8`, `C8MPR`, `C8MTHN`. **Follow-up needed:** (a) which prefix belongs to which location (sales venue) and/or property, (b) K8's prefixes, (c) the next number for each prefix, and (d) whether the form (`MSMC8-`) and agreement (`MSMMBL-`) of the same member should still match. *[Membership number series in Admin (company, optional sales venue and property, prefix, next number, active dates); the four prefixes are seeded as FICTITIOUS examples linked to demo venues and properties and marked "to be confirmed"; search works by the number part and by the full number. D-MN-1]*
 2. **Unit type codes.** Please confirm T0 = Studio (2 adults + 2 children under 10) and T1 = One-Bedroom (4 adults). *[Seeded as stated]*
 3. **Seasons.** The agreement offers Red/White tick-boxes but the T&C define Red, White and Blue. Can members buy Blue? *[All three configured]*
 4. **Season on the application form.** The application form has no season field; the agreement does. Where should staff capture it? *[Captured in the Membership Details section]*

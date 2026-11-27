@@ -17,6 +17,7 @@ from app.core.errors import install_handlers
 from app.core.logscrub import install as install_log_scrubber
 from app.core.middleware import CsrfMiddleware, RequestContextMiddleware, SecurityHeadersMiddleware
 from app.core.ratelimit import limiter
+from app.core.timeutil import today_ist
 from app.correspondence.pdf import engine_status, require_engine
 from app.correspondence.router import router as correspondence_router
 from app.dashboard import router as dashboard_router
@@ -28,6 +29,7 @@ from app.leads.router import router as leads_router
 from app.members.router import router as members_router
 from app.reservations.router import router as reservations_router
 from app.search.router import router as search_router
+from app.ui_settings import router as ui_settings_router
 
 
 async def _record_rate_limit(path: str) -> None:
@@ -93,6 +95,7 @@ def create_app() -> FastAPI:
         exports_router,
         search_router,
         dashboard_router,
+        ui_settings_router,
     ):
         api.include_router(r)
     app.include_router(api)
@@ -116,9 +119,10 @@ def create_app() -> FastAPI:
         )
 
     @app.get("/api/v1/meta", include_in_schema=False)
-    async def meta() -> dict[str, bool]:
-        """Lets the Playwright suites confirm they are pointed at a throwaway e2e stack before writing anything."""
-        return {"e2e_target": settings.e2e_target}
+    async def meta() -> dict[str, bool | str]:
+        """Lets the Playwright suites confirm they are pointed at a throwaway e2e stack before writing anything, and
+        set the browser's clock to the API's business date (CRM_FIXED_TODAY on test stacks)."""
+        return {"e2e_target": settings.e2e_target, "today": today_ist().isoformat()}
 
     @app.get("/readyz", include_in_schema=False)
     async def readyz() -> JSONResponse:

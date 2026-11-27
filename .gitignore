@@ -34,3 +34,7 @@ infra/terraform/**/*.tfvars
 demo-video/out/
 demo-video/node_modules/
 frontend/.next-video/
+
+# Client files (open-questions workbooks etc.) stay out of git, as do Office lock files
+docs/*.xlsx
+~$*

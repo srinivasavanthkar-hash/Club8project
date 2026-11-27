@@ -14,6 +14,7 @@ import { api, type Page } from "@/lib/api";
 import { addMoney, daysFromToday, formatDate, formatMoney, formatRelativeDays, humanize, subMoney, todayIso } from "@/lib/format";
 import { SearchSelect } from "@/components/crm/SearchSelect";
 import type { Member, Payment, Reservation } from "@/lib/types";
+import { DateField } from "@/components/DateField";
 
 type Schedule = { id: string; emi_amount: string; emi_count: number; generation_warning: string | null; instalments: { id: string; number: number; due_date: string; amount_due: string; amount_paid: string; status: string; version: number }[] } | null;
 type AsfYear = { membership_year: number; status: string; receipt_numbers: string[]; charge: { id: string; base_amount: string; gst_amount: string; gst_rate: string; total_amount: string; currency: string; reason: string; raised_on: string } | null };
@@ -73,7 +74,7 @@ function PaymentDialog({ member, open, onClose, preset }: { member: Member; open
         <Field label={isAsf ? "Base amount (GST added automatically)" : "Amount"} htmlFor="pa" tag={isAsf ? <span className="rounded-sm bg-primary-subtle px-1.5 text-xs font-medium uppercase text-primary">auto</span> : undefined}>
           <PrefixInput prefix={member.currency === "INR" ? "₹" : member.currency} id="pa" inputMode="decimal" className="text-right" value={v.base_amount} onChange={set("base_amount")} readOnly={isAsf} />
         </Field>
-        <Field label="Payment date" htmlFor="pd"><Input id="pd" type="date" value={v.payment_date} onChange={set("payment_date")} /></Field>
+        <Field label="Payment date" htmlFor="pd"><DateField id="pd" value={v.payment_date} onChange={(d) => setV({ ...v, payment_date: d })} /></Field>
         <Field label="Method" htmlFor="pm">
           <Select id="pm" value={v.payment_method_id} onChange={set("payment_method_id")}><option value="">Select…</option>{methods.data?.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</Select>
         </Field>

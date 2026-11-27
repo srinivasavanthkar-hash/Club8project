@@ -66,8 +66,8 @@ for (const [size, viewport] of Object.entries(SIZES)) {
       await page.getByRole("button", { name: "New reservation" }).click();
       await page.getByLabel("Destination", { exact: true }).selectOption({ label: "Goa" });
       await page.getByLabel("Property", { exact: true }).selectOption({ index: 1 });
-      await page.getByLabel("Check-in", { exact: true }).fill("2026-11-16");
-      await page.getByLabel("Check-out", { exact: true }).fill("2026-11-19");
+      await page.getByLabel("Check-in", { exact: true }).fill("16-11-2026");
+      await page.getByLabel("Check-out", { exact: true }).fill("19-11-2026");
       await expect(page.getByText(/Entitlement nights:/)).toBeVisible();
       await settle(page);
       await expect(page).toHaveScreenshot(`reservation-form-${size}.png`, SHOT);

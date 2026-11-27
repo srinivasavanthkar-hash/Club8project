@@ -2,7 +2,8 @@
  * Key pages load without console errors: no React hydration errors (#418: server and browser rendering different
  * text, e.g. dates in different time zones), no uncaught exceptions, no failed API calls. Live stack, signed in.
  */
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./support/clock";
 import { requireIsolatedStack, signIn } from "./support/stack";
 
 test.beforeAll(requireIsolatedStack); // signing in writes activity-log entries

@@ -6,10 +6,11 @@ injects Key Vault references as environment variables via managed identity
 development-only values.
 """
 
+from datetime import date
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -107,10 +108,25 @@ class Settings(BaseSettings):
 
     otel_enabled: bool = False
 
+    # Business "today" for tests and throwaway e2e stacks (CRM_FIXED_TODAY=YYYY-MM-DD), so results that depend on the
+    # date (year-end rules, lead times, overdue instalments) do not change as the calendar moves. Moves only
+    # today_ist(): event timestamps, sign-in tokens, lockouts and reset links keep the real clock. Refused in staging
+    # and prod.
+    fixed_today: date | None = None
+
+    @field_validator("fixed_today", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, v: object) -> object:
+        return None if v == "" else v  # docker compose passes "" when the variable is not set
+
     @model_validator(mode="after")
-    def _no_pdf_stub_in_staging_or_prod(self) -> "Settings":
+    def _no_test_switches_in_staging_or_prod(self) -> "Settings":
         if self.pdf_engine == "test_stub" and self.env in ("staging", "prod"):
             raise ValueError("CRM_PDF_ENGINE=test_stub is for backend tests only and is refused in staging and prod")
+        if self.fixed_today is not None and self.env in ("staging", "prod"):
+            raise ValueError(
+                "CRM_FIXED_TODAY is for tests and throwaway e2e stacks only and is refused in staging and prod"
+            )
         return self
 
     applicationinsights_connection_string: SecretStr | None = None

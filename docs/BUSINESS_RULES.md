@@ -33,6 +33,7 @@ settings). The defaults below are seed values only.
 | `password.breach_check` | `true` | Reject passwords found in breach data (HIBP range API, offline list fallback) |
 | `password.temp_expiry_hours` | 24 | Lifetime of an unused system-generated temporary password |
 | `password.admin_reset_approval_hours` | 24 | Window for a second admin to approve the reset of an ADMIN's password |
+| `ui.week_start` | `"MONDAY"` | First day of the week in the calendar of every date field: `MONDAY` or `SUNDAY` (Admin shows a dropdown; other values are refused) |
 | `security.require_2fa_roles` | `[]` | Roles that must use two-step verification (enrol at next sign-in). Recommended: `["ADMIN","MANAGEMENT","FINANCE"]` |
 
 ## Members (Section 5)

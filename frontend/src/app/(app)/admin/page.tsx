@@ -22,6 +22,7 @@ const MASTER = [
   ["payment-types", "Payment types"], ["payment-methods", "Payment methods"], ["currencies", "Currencies"], ["document-types", "Document types"],
   ["venues", "Venues"], ["lead-sources", "Lead sources"], ["destinations", "Destinations"], ["properties", "Properties"], ["reasons", "Reasons"],
   ["holidays", "Holiday calendar"], ["settings", "Business-rule settings"], ["letter-templates", "Letter templates"],
+  ["number-series", "Membership number series"],
 ] as const;
 type Role = { code: string; name: string; permissions: string[] };
 

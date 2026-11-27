@@ -2,7 +2,7 @@
  * Brand screenshots for docs/ui-audit/brand/<BRAND_AUDIT_DIR>/ (login, dashboard, member record at 1440px and 390px).
  * Opt-in: BRAND_AUDIT_DIR=after npx playwright test brand-audit --project=desktop. Fictitious demo data only.
  */
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/clock";
 import { signIn } from "./support/stack";
 import path from "node:path";
 

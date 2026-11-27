@@ -81,8 +81,12 @@ class MemberIn(BaseModel):
     company_id: uuid.UUID
     product_id: uuid.UUID | None = None
     membership_number: str | None = Field(
-        None, pattern=r"^\d{1,10}$", description="Number part only; prefix comes from the brand"
+        None, pattern=r"^\d{1,10}$", description="Number part only (paper members); the prefix comes from the series"
     )
+    # The membership number series; when left out, the most specific series that fits is used (or an error asks
+    # for a choice). GET /members/number-series lists the ones that fit.
+    number_series_id: uuid.UUID | None = None
+    home_property_id: uuid.UUID | None = None
     purchase_date: date
     tenure_years: int = Field(ge=1, le=99)
     first_year_of_use: int = Field(ge=2000, le=2100)
@@ -150,6 +154,7 @@ class MemberPatch(BaseModel):
     agreement_signed_company: bool | None = None
     agreement_signed_date: date | None = None
     custom_fields: dict[str, Any] | None = None
+    home_property_id: uuid.UUID | None = None
 
 
 class KycOut(ORM):
@@ -227,6 +232,8 @@ class MemberOut(ORM):
     source_lead_id: uuid.UUID | None
     opc_name: str | None
     venue_id: uuid.UUID | None
+    number_series_id: uuid.UUID
+    home_property_id: uuid.UUID | None
     custom_fields: dict[str, Any]
     credit_balance: DecStr
     version: int

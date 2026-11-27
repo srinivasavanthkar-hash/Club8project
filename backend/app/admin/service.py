@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import secrets
 import uuid
 from datetime import date, timedelta
@@ -9,7 +10,7 @@ from decimal import Decimal
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, create_model
-from sqlalchemy import select
+from sqlalchemy import Integer, cast, func, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.admin import models as m
@@ -19,7 +20,8 @@ from app.auth.policy import policy_problems, remember
 from app.auth.recovery import TemporaryPassword, issue_temporary_password
 from app.core.errors import Conflict, NotFound, OverrideRequired, RuleViolation
 from app.core.security import hash_password
-from app.core.settings_store import get_setting
+from app.core.settings_store import SETTING_CHOICES, get_setting
+from app.core.timeutil import fmt_date
 from app.finance.domain import asf_rate_cap_check
 
 # slug -> model. Every table here is editable in the admin UI (permission admin.masterdata or admin.rates).
@@ -49,9 +51,10 @@ MASTER: dict[str, type[Any]] = {
     "statuses": m.StatusDefinition,
     "settings": m.SystemSetting,
     "letter-templates": m.LetterTemplate,
+    "number-series": m.MembershipNumberSeries,
 }
 RATE_TABLES = {"tax-rates", "asf-rates", "deduction-matrix", "cancellation-tiers", "settings"}
-SYSTEM_COLS = {"id", "version", "created_at", "updated_at", "created_by", "updated_by", "next_membership_seq"}
+SYSTEM_COLS = {"id", "version", "created_at", "updated_at", "created_by", "updated_by"}
 
 _schemas: dict[tuple[str, bool], type[BaseModel]] = {}
 
@@ -91,7 +94,7 @@ async def list_items(session: AsyncSession, slug: str, include_inactive: bool) -
         stmt = stmt.where(model.is_active.is_(True))
     order = [
         getattr(model, c)
-        for c in ("sort_order", "code", "effective_from", "key", "start_date", "holiday_date")
+        for c in ("sort_order", "code", "effective_from", "key", "start_date", "holiday_date", "prefix")
         if hasattr(model, c)
     ]
     return list((await session.execute(stmt.order_by(*order))).scalars())
@@ -165,10 +168,78 @@ def _check(slug: str, row: dict[str, Any]) -> None:
         bad("Nights deducted per night stayed must be more than 0.", "Multiplier")
     if slug == "asf-rates" and row.get("amount") is not None and Decimal(str(row["amount"])) < 0:
         bad("The ASF amount cannot be negative.", "AsfAmount")
+    if slug == "number-series":
+        prefix = row.get("prefix")
+        if prefix is not None and not re.fullmatch(r"[A-Z0-9]{2,10}", prefix):
+            bad("The prefix is 2 to 10 capital letters or digits, e.g. MSMC8.", "SeriesPrefix")
+        if row.get("next_number") is not None and int(row["next_number"]) < 1:
+            bad("The next number must be 1 or more.", "SeriesNextNumber")
+        af, at = row.get("active_from"), row.get("active_to")
+        if af is not None and at is not None and at < af:
+            bad("'Active to' must be on or after 'Active from'.", "SeriesDates")
+    if slug == "settings" and row.get("key") in SETTING_CHOICES:
+        allowed = SETTING_CHOICES[row["key"]]
+        if row.get("value") not in [v for v, _ in allowed]:
+            bad(f"Choose one of: {', '.join(lbl for _, lbl in allowed)}.", "SettingChoice")
     for col in ("primary_colour", "accent_colour"):
         v = row.get(col)
         if v and not (len(v) == 7 and v.startswith("#") and all(c in "0123456789abcdefABCDEF" for c in v[1:])):
             bad("Colours are written as # and six hex digits, e.g. #393186.", "Colour")
+
+
+async def _series_checks(session: AsyncSession, row: dict[str, Any], current: Any) -> None:
+    """Membership number series: one series per prefix; no two active at the same time for the same company, sales
+    venue and property; the prefix and company are fixed once created; the counter never goes back below a number
+    already issued (docs/DECISIONS.md D-MN-1)."""
+    from app.members.models import Member
+
+    S = m.MembershipNumberSeries
+    other = S.id != current.id if current is not None else true()
+    clash = (await session.execute(select(S.id).where(S.prefix == row["prefix"], other))).first()
+    if clash:
+        raise RuleViolation(f"The prefix {row['prefix']} is already used by another series.", code="SeriesPrefixTaken")
+    same_scope = [
+        S.company_id == row["company_id"],
+        S.venue_id.is_(None) if row.get("venue_id") is None else S.venue_id == row["venue_id"],
+        S.property_id.is_(None) if row.get("property_id") is None else S.property_id == row["property_id"],
+    ]
+    ends = row.get("active_to")
+    overlap = (
+        await session.execute(
+            select(S).where(
+                other,
+                *same_scope,
+                or_(S.active_to.is_(None), S.active_to >= row["active_from"]),
+                *([S.active_from <= ends] if ends is not None else []),
+            )
+        )
+    ).scalar_one_or_none()
+    if overlap is not None:
+        until = f" to {fmt_date(overlap.active_to)}" if overlap.active_to else " with no end date"
+        raise RuleViolation(
+            f"Series {overlap.prefix} already applies to the same company, sales venue and property "
+            f"(from {fmt_date(overlap.active_from)}{until}). Give one of them an end date first.",
+            code="SeriesOverlap",
+        )
+    if current is None:
+        return
+    if row["prefix"] != current.prefix or row["company_id"] != current.company_id:
+        raise RuleViolation(
+            "The prefix and company are fixed once the series exists: add a new series instead.",
+            code="SeriesFixed",
+        )
+    issued = (
+        await session.execute(
+            select(func.max(cast(Member.membership_seq, Integer))).where(
+                Member.number_series_id == current.id, Member.membership_seq.op("~")(r"^\d+$")
+            )
+        )
+    ).scalar()
+    if issued is not None and int(row["next_number"]) <= issued:
+        raise RuleViolation(
+            f"The next number must be above {issued}, the highest number already issued from this series.",
+            code="SeriesNextNumberTooLow",
+        )
 
 
 async def create_item(
@@ -176,7 +247,11 @@ async def create_item(
 ) -> tuple[Any, list[str]]:
     model = MASTER[slug]
     data = schema_for(slug)(**payload).model_dump(exclude_unset=False)
+    if slug == "number-series" and isinstance(data.get("prefix"), str):
+        data["prefix"] = data["prefix"].strip().upper()
     _check(slug, data)
+    if slug == "number-series":
+        await _series_checks(session, data, None)
     warnings: list[str] = []
     if slug == "asf-rates":
         warnings = await _asf_checks(
@@ -225,7 +300,11 @@ async def update_item(
     if expected_version is not None and obj.version != expected_version:
         raise Conflict("Record was modified by someone else", code="VersionConflict")
     data = schema_for(slug, partial=True)(**payload).model_dump(exclude_unset=True)
+    if slug == "number-series" and isinstance(data.get("prefix"), str):
+        data["prefix"] = data["prefix"].strip().upper()
     _check(slug, to_dict(obj) | data)
+    if slug == "number-series":
+        await _series_checks(session, to_dict(obj) | data, obj)
     if slug == "asf-rates" and {"amount", "effective_from"} & data.keys():
         raise RuleViolation(
             "ASF rates are effective-dated: add a new rate instead of editing amounts", code="RateImmutable"

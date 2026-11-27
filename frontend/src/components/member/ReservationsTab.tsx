@@ -14,6 +14,8 @@ import { api, type Page } from "@/lib/api";
 import { formatDate, formatMoney, formatNights, humanize } from "@/lib/format";
 import type { Member, Quote, Reservation } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/DateField";
+import { addDays } from "@/lib/dates";
 
 type Form = {
   destination_id: string; property_id: string; unit_type_id: string; rooms: number; adults: number; child_ages: string;
@@ -142,8 +144,8 @@ export function ReservationForm({ member, onCreated, onCancel }: { member: Membe
           </fieldset>
           <fieldset className="grid gap-4 sm:grid-cols-2">
             <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">When</legend>
-            <Field label="Check-in" htmlFor="rci" required><Input id="rci" type="date" value={f.check_in} onChange={(e) => set("check_in", e.target.value)} /></Field>
-            <Field label="Check-out" htmlFor="rco" required error={f.check_in && f.check_out && f.check_out <= f.check_in ? "Check-out must be after check-in" : undefined}><Input id="rco" type="date" min={f.check_in || undefined} value={f.check_out} onChange={(e) => set("check_out", e.target.value)} /></Field>
+            <Field label="Check-in" htmlFor="rci" required><DateField id="rci" value={f.check_in} onChange={(v) => set("check_in", v)} /></Field>
+            <Field label="Check-out" htmlFor="rco" required error={f.check_in && f.check_out && f.check_out <= f.check_in ? "Check-out must be after check-in" : undefined}><DateField id="rco" min={f.check_in ? addDays(f.check_in, 1) : undefined} value={f.check_out} onChange={(v) => set("check_out", v)} /></Field>
           </fieldset>
           <fieldset className="grid gap-4 sm:grid-cols-2">
             <legend className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fg-subtle"><Users aria-hidden className="size-3.5" />Who</legend>

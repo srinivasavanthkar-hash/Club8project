@@ -14,6 +14,7 @@ from sqlalchemy import Boolean, Date, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 
 from app.admin.service import MASTER, RATE_TABLES, SYSTEM_COLS
+from app.core.settings_store import SETTING_CHOICES
 
 # Labels used wherever the column appears (a table may override).
 LABELS = {
@@ -25,7 +26,6 @@ LABELS = {
     "effective_to": "Effective to",
     "legal_name": "Legal name",
     "brand": "Brand name",
-    "membership_prefix": "Membership number prefix",
     "receipt_prefix": "Receipt number prefix",
     "registered_address": "Registered address",
     "gstin": "GSTIN",
@@ -91,6 +91,14 @@ LABELS = {
     "value": "Value",
     "subject": "Subject",
     "body_html": "Letter text",
+    "prefix": "Prefix",
+    "next_number": "Next number",
+    "active_from": "Active from",
+    "active_to": "Active to",
+    "to_be_confirmed": "To be confirmed",
+    "notes": "Notes",
+    "venue_id": "Sales venue (location)",
+    "property_id": "Property",
 }
 
 # Help shown under the field.
@@ -99,7 +107,14 @@ HELP = {
     "effective_from": "The first day this entry applies.",
     "sort_order": "Lower numbers are listed first.",
     "is_active": "Inactive entries stay on existing records but can no longer be chosen.",
-    "membership_prefix": "Start of every new membership number for this company, e.g. MSMC8-.",
+    "prefix": "Capital letters and digits, 2 to 10, e.g. MSMC8. Numbers are written as prefix-number, e.g. MSMC8-9030. "
+    "Each prefix belongs to one series.",
+    "next_number": "The number the next new member gets. It cannot go below a number already issued from this series.",
+    "active_from": "Used for members whose purchase date is on or after this day.",
+    "active_to": "Leave blank while the series is in use.",
+    "to_be_confirmed": "Ticked while Club8 has not confirmed which location or property this prefix belongs to.",
+    "venue_id": "Leave as 'All sales venues' unless this prefix is only for members sold at one venue.",
+    "property_id": "Leave as 'All properties' unless this prefix is only for members linked to one property.",
     "logo_path": "File in the brand folder, e.g. club8/club8-logo.png.",
     "primary_colour": "Hex colour such as #393186, used for headings in generated letters.",
     "accent_colour": "Hex colour such as #EF7F1B, used for the thin line under the letterhead.",
@@ -158,12 +173,24 @@ NONE_LABELS = {
     "destination_id": "All destinations",
     "company_id": "All companies",
     "product_id": "All products",
+    "venue_id": "All sales venues",
+    "property_id": "All properties",
     "tax_code": "No tax",
 }
 
 # Columns shown in the list table, in order (default: the first few form fields).
 LIST_COLUMNS: dict[str, list[str]] = {
-    "companies": ["code", "brand", "legal_name", "membership_prefix", "receipt_prefix", "is_active"],
+    "companies": ["code", "brand", "legal_name", "receipt_prefix", "is_active"],
+    "number-series": [
+        "prefix",
+        "company_id",
+        "venue_id",
+        "property_id",
+        "next_number",
+        "active_from",
+        "active_to",
+        "to_be_confirmed",
+    ],
     "season-calendar": ["season_id", "destination_id", "start_date", "end_date"],
     "unit-types": ["code", "name", "max_adults", "max_children", "max_total", "is_active"],
     "products": ["code", "name", "company_id", "allowed_tenures", "is_active"],
@@ -200,6 +227,9 @@ INTRO = {
     "cancellation-tiers": "How many of the deducted nights are credited back, by how many days before check-in the "
     "reservation is cancelled.",
     "season-calendar": "Which season applies on which dates, for all destinations or one destination.",
+    "number-series": "Where membership numbers come from. Each series has its own prefix and counter, for a company "
+    "and, if needed, only one sales venue (location), one property, or both. A new member gets the most specific "
+    "series that fits their company, venue, property and purchase date; staff can choose another one that fits.",
     "letter-templates": "Wording of generated letters. The logo, company name and address are added automatically. "
     "Use the preview to check the result with fictitious sample data.",
 }
@@ -264,6 +294,9 @@ def field_spec(slug: str, col: Any) -> dict[str, Any]:
         spec["kind"] = "letter"
     if name == "value" and slug == "settings":
         spec["kind"] = "setting_value"
+        spec["setting_choices"] = {
+            k: [{"value": v, "label": lbl} for v, lbl in opts] for k, opts in SETTING_CHOICES.items()
+        }
     if name == "multiplier":
         spec["min_exclusive"] = 0
     if name in ("rate_percent", "credit_percent"):
@@ -272,6 +305,8 @@ def field_spec(slug: str, col: Any) -> dict[str, Any]:
         spec["min"] = 0
     if slug == "asf-rates" and name in ("amount", "effective_from"):
         spec["locked_on_edit"] = "ASF rates are effective-dated: add a new rate instead of changing this."
+    if slug == "number-series" and name in ("prefix", "company_id"):
+        spec["locked_on_edit"] = "Fixed once the series exists: add a new series instead."
     if slug == "settings" and name == "key":
         spec["locked_on_edit"] = "The setting name is fixed."
     return spec

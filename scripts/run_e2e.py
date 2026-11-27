@@ -39,6 +39,8 @@ DB = "club8-crm-e2e-db"
 MAIL = "club8-crm-e2e-mailpit"
 API = "club8-crm-e2e-api"
 IMAGE = "club8-crm-backend:e2e"
+# Fixed business date for the API and the browser (frontend/e2e/support/clock.ts reads E2E_TODAY; README "Tests")
+E2E_TODAY = os.environ.get("E2E_TODAY", "2026-11-16")
 # Development-only credentials for a database that lives for one run; published on 127.0.0.1 only.
 DB_USER, DB_PASSWORD, DB_PORT = "crm_owner", "crm_e2e_dev", 5436
 
@@ -141,6 +143,7 @@ def main() -> int:
             "CRM_DATABASE_URL": db_url,
             "CRM_ENV": "local",
             "CRM_E2E_TARGET": "true",
+            "CRM_FIXED_TODAY": E2E_TODAY,  # same date as frontend/e2e/support/clock.ts (README "Tests")
             "CRM_BLOB_PROVIDER": "memory",
             "CRM_VIRUS_SCAN_PROVIDER": "none",
             "CRM_COOKIE_SECURE": "false",
@@ -198,6 +201,7 @@ def main() -> int:
                 **os.environ,
                 "E2E_BASE_URL": f"http://127.0.0.1:{args.web_port}",
                 "MAILPIT_URL": f"http://127.0.0.1:{args.mailpit_port}",
+                "E2E_TODAY": E2E_TODAY,
             },
         )
         return r2.returncode

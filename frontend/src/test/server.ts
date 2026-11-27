@@ -7,10 +7,13 @@ export const ids = {
   season: "33333333-3333-4333-8333-333333333333",
   unit: "44444444-4444-4444-8444-444444444444",
   card: "55555555-5555-4555-8555-555555555555",
+  series: "66666666-6666-4666-8666-666666666666",
 };
 
 const master: Record<string, unknown[]> = {
-  companies: [{ id: ids.company, code: "CLUB8", name: "CLUB8 Holidays", membership_prefix: "MSMC8" }],
+  companies: [{ id: ids.company, code: "CLUB8", name: "CLUB8 Holidays" }],
+  venues: [],
+  properties: [],
   "resort-categories": [{ id: ids.cat, code: "PREMIUM", name: "Premium" }],
   seasons: [{ id: ids.season, code: "RED", name: "Red" }],
   "unit-types": [{ id: ids.unit, code: "T0", name: "Studio", occupancy_text: "2 adults + 2 children below 10 years" }],
@@ -21,6 +24,12 @@ const master: Record<string, unknown[]> = {
 
 export const handlers = [
   http.get("*/api/v1/admin/master/:slug", ({ params }) => HttpResponse.json(master[String(params.slug)] ?? [])),
+  http.get("*/api/v1/members/number-series", () =>
+    HttpResponse.json({
+      items: [{ id: ids.series, prefix: "MSMC8", next_number: 9001, venue_id: null, property_id: null, to_be_confirmed: true }],
+      default_id: ids.series,
+    }),
+  ),
   http.get("*/api/v1/admin/staff", () => HttpResponse.json([{ id: "u1", username: "demo.sales", full_name: "Demo Sales", roles: ["SALES"] }])),
   http.get("*/api/v1/auth/me", () =>
     HttpResponse.json({

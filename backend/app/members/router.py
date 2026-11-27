@@ -90,6 +90,35 @@ async def create_member(
     return MemberOut.model_validate(await service.create(session, body, user))
 
 
+@router.get("/members/number-series")
+async def number_series(
+    session: SessionDep,
+    company_id: uuid.UUID,
+    purchase_date: date,
+    venue_id: uuid.UUID | None = None,
+    home_property_id: uuid.UUID | None = None,
+    _: User = Depends(require_permission("member.create")),
+) -> dict[str, Any]:
+    """Membership number series that fit a new member (company, sales venue, home property, purchase date), most
+    specific first, and the one to pre-select (null when none fits or two are equally specific)."""
+    fits = await service.fitting_series(session, company_id, venue_id, home_property_id, purchase_date)
+    default = service.default_series(fits)
+    return {
+        "items": [
+            {
+                "id": s.id,
+                "prefix": s.prefix,
+                "next_number": s.next_number,
+                "venue_id": s.venue_id,
+                "property_id": s.property_id,
+                "to_be_confirmed": s.to_be_confirmed,
+            }
+            for s in fits
+        ],
+        "default_id": default.id if default else None,
+    }
+
+
 @router.get("/leads/{lead_id}/conversion-prefill")
 async def prefill(
     lead_id: uuid.UUID, session: SessionDep, _: User = Depends(require_permission("lead.convert"))

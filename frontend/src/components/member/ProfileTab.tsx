@@ -22,6 +22,8 @@ export function ProfileTab({ member: m }: { member: Member }) {
   const cats = useMaster("resort-categories");
   const seasons = useMaster("seasons");
   const units = useMaster("unit-types");
+  const venues = useMaster("venues", true);
+  const properties = useMaster("properties", true);
   const staff = useStaff();
   const row = (rows: { id: string; name: string; code: string }[] | undefined, id: string | null) => rows?.find((r) => r.id === id);
   const summary = useQuery({ queryKey: ["fin-summary", m.id], queryFn: () => api.get<Summary>(`/members/${m.id}/finance-summary`), enabled: can("finance.view") });
@@ -43,9 +45,10 @@ export function ProfileTab({ member: m }: { member: Member }) {
   const [editing, setEditing] = useState(false);
   const [comments, setComments] = useState(m.comments ?? "");
   const [rm, setRm] = useState(m.relationship_manager_id ?? "");
+  const [homeProperty, setHomeProperty] = useState(m.home_property_id ?? "");
   const [reason, setReason] = useState("");
   const save = useMutation({
-    mutationFn: () => api.patch(`/members/${m.id}`, { version: m.version, comments, relationship_manager_id: rm || null, reason: reason || null }),
+    mutationFn: () => api.patch(`/members/${m.id}`, { version: m.version, comments, relationship_manager_id: rm || null, home_property_id: homeProperty || null, reason: reason || null }),
     onSuccess: () => { setEditing(false); qc.invalidateQueries({ queryKey: ["member", m.id] }); toast.success("Profile saved"); },
   });
   useSaveShortcut(() => save.mutate(), editing);
@@ -108,6 +111,8 @@ export function ProfileTab({ member: m }: { member: Member }) {
           ["Approved", m.approved_at ? formatDate(m.approved_at) : "—"],
           ["Source lead", m.source_lead_id ? <Link key="l" className="font-medium text-primary hover:underline" href={`/leads/${m.source_lead_id}`}>Open lead</Link> : "—"],
           ["OPC", m.opc_name],
+          ["Sales venue", row(venues.data, m.venue_id)?.name ?? "—"],
+          ...(editing ? [] : [["Home property", row(properties.data, m.home_property_id)?.name ?? "—"] as [string, React.ReactNode]]),
           ["Agreement signed", [m.agreement_signed_applicant1 && "Applicant 1", m.agreement_signed_applicant2 && "Applicant 2", m.agreement_signed_company && "Company"].filter(Boolean).join(", ") || "—"],
         ]} />
         {m.joining_offers.length > 0 && (
@@ -124,6 +129,12 @@ export function ProfileTab({ member: m }: { member: Member }) {
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Relationship manager" htmlFor="erm">
                 <Select id="erm" value={rm} onChange={(e) => setRm(e.target.value)}><option value="">—</option>{staff.data?.map((u) => <option key={u.id} value={u.id}>{u.full_name}</option>)}</Select>
+              </Field>
+              <Field label="Home property" htmlFor="ehp" hint="Does not change the membership number.">
+                <Select id="ehp" value={homeProperty} onChange={(e) => setHomeProperty(e.target.value)}>
+                  <option value="">None</option>
+                  {properties.data?.filter((x) => x.is_active !== false || x.id === m.home_property_id).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                </Select>
               </Field>
               <Field label="Reason for change (recorded in history)" htmlFor="ere"><Input id="ere" value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
               <Field label="Comments" htmlFor="eco" className="md:col-span-2"><Textarea id="eco" value={comments} onChange={(e) => setComments(e.target.value)} /></Field>

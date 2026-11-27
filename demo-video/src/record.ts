@@ -12,7 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
-import { PASSWORD, PDF, addDays, apiAs, istMonth, istToday, totp } from "./api";
+import { PASSWORD, PDF, addDays, apiAs, dmy, istMonth, istToday, my, totp } from "./api";
 import { MAIN_OUTPUT, assemble, clipOutput } from "./assemble";
 import { CLIP_DEFS, writeClipsIndex } from "./clips";
 import { PACE } from "./overlay";
@@ -80,7 +80,8 @@ const SECTIONS: Section[] = [
       await d.caption("The lead moves through the sales stages as the conversation progresses.");
       await d.click(page.getByRole("button", { name: "CONTACTED" }));
       await page.getByTestId("lead-status").filter({ hasText: "CONTACTED" }).waitFor();
-      await d.fill(page.getByLabel(/Presentation date & time/), `${istToday()}T11:00`);
+      await d.fill(page.getByLabel(/Presentation date & time/), dmy(istToday()));
+      await d.fill(page.getByLabel("Presentation time", { exact: true }), "11:00 am");
       await d.click(page.getByRole("button", { name: "PRESENTATION SCHEDULED" }));
       await page.getByTestId("lead-status").filter({ hasText: "PRESENTATION SCHEDULED" }).waitFor();
       await d.click(page.getByRole("button", { name: "ATTENDED" }));
@@ -104,13 +105,13 @@ const SECTIONS: Section[] = [
       await page.getByLabel("1st Applicant Name", { exact: true }).waitFor();
       await d.settle();
       await s.step("The form follows the paper membership form, top to bottom, already filled from the lead.", 2600);
-      await d.fill(page.getByLabel("D.O.B", { exact: true }), "1990-04-12");
+      await d.fill(page.getByLabel("D.O.B", { exact: true }), "12-04-1990");
       await d.type(page.getByLabel("ID number", { exact: true }), LEAD.pan);
       await d.type(page.getByLabel("Address Line 1", { exact: true }), "21 Demo Layout");
       await d.type(page.getByLabel("Post Code", { exact: true }), "560001");
       await d.select(page.getByLabel("State", { exact: true }), "Karnataka");
       await d.caption("Membership: brand, category, season, unit and nights per year.");
-      await d.select(page.getByLabel("Company / brand", { exact: true }), "CLUB8 Holidays (MSMC8-)");
+      await d.select(page.getByLabel("Company / brand", { exact: true }), "CLUB8 Holidays");
       await d.select(page.getByLabel("Category (Membership Type)", { exact: true }), "Premium (PREMIUM)");
       await d.select(page.getByLabel("Season", { exact: true }), "Red (RED)");
       await d.select(page.getByLabel("Unit Type", { exact: true }), "T0 = Studio (2 adults + 2 children below 10 years)");
@@ -137,7 +138,7 @@ const SECTIONS: Section[] = [
       });
       await d.type(page.getByLabel("EMI Amount", { exact: true }), "20000");
       await d.type(page.getByLabel("No. of EMIs", { exact: true }), "10");
-      await d.fill(page.getByLabel("Starting From (MM/YYYY)", { exact: true }), istMonth(35));
+      await d.fill(page.getByLabel("Starting From (MM/YYYY)", { exact: true }), my(istMonth(35)));
       await page.evaluate(() => {
         const hold = (window as unknown as { __demoHold: (e: Event) => void }).__demoHold;
         window.removeEventListener("focusout", hold, true);
@@ -231,8 +232,8 @@ const SECTIONS: Section[] = [
       await d.click(page.getByRole("button", { name: "New reservation" }));
       await d.select(page.getByLabel("Destination", { exact: true }), "Goa");
       await d.select(page.getByLabel("Property", { exact: true }), "Demo Beach Resort (Premium)");
-      await d.fill(page.getByLabel("Check-in", { exact: true }), ci);
-      await d.fill(page.getByLabel("Check-out", { exact: true }), co);
+      await d.fill(page.getByLabel("Check-in", { exact: true }), dmy(ci));
+      await d.fill(page.getByLabel("Check-out", { exact: true }), dmy(co));
       await page.getByText(/ASF payable: \d{4}: ₹12,600\.00 incl\. GST/).waitFor();
       await d.settle();
       await d.caption("The system calculates nights and the annual fee before anything is submitted.");

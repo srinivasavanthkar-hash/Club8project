@@ -96,6 +96,9 @@ jobs:
     needs: [backend, frontend, audit]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Fixed business date for the stack (docker-compose.yml) and the browser (frontend/e2e/support/clock.ts), so
+    # date-dependent results (year-end rules, lead times) do not drift as the calendar moves. README "Tests".
+    env: { CRM_FIXED_TODAY: "2026-11-16", E2E_TODAY: "2026-11-16" }
     steps:
       - uses: actions/checkout@v4
       - name: Start the full stack (docker compose)
